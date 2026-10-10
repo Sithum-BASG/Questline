@@ -10,6 +10,9 @@ const String supabaseUrl = String.fromEnvironment(
 
 const String supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
+/// Web OAuth client id. Empty until `GOOGLE_WEB_CLIENT_ID` is set. The secret stays on the server.
+const String googleWebClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+
 /// Throws when a launch config left the URL or anon key blank.
 void assertSupabaseConfig() {
   final urlOk = supabaseUrl.startsWith('http://') || supabaseUrl.startsWith('https://');
