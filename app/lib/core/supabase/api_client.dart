@@ -85,6 +85,13 @@ class ApiClient {
       message: json['message'] is String ? json['message'] as String : '',
     );
   }
+
+  Future<void> completeOnboardingStep(String step, {Map<String, dynamic>? data}) {
+    return invoke('account', 'completeOnboardingStep', {
+      'step': step,
+      'data': ?data,
+    });
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

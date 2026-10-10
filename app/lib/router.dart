@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/supabase/auth_providers.dart';
 import 'core/supabase/auth_redirect.dart';
 import 'core/supabase/supabase_providers.dart';
 import 'core/theme/app_spacing.dart';
@@ -12,6 +13,7 @@ import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
+import 'features/onboarding/character_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(ref);
@@ -21,10 +23,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final auth = ref.read(authStateProvider);
+      final step = ref.read(onboardingStepProvider);
+      final signedIn = auth.value?.session != null;
       return authRedirect(
         loading: auth.isLoading,
-        signedIn: auth.value?.session != null,
+        signedIn: signedIn,
         location: state.uri.path,
+        onboardingStep: step.asData?.value,
+        stepLoading: signedIn && step.isLoading,
       );
     },
     routes: [
@@ -73,7 +79,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
-      _screen('/onboarding/character', 'Character'),
+      GoRoute(path: '/onboarding/character', builder: (context, state) => const CharacterScreen()),
       _screen('/onboarding/story', 'Story'),
       _screen('/onboarding/study', 'Study'),
       _screen('/onboarding/first-task', 'First task'),
@@ -124,13 +130,18 @@ class _AuthRefresh extends ChangeNotifier {
     _sub = ref.listen<AsyncValue<AuthState>>(authStateProvider, (_, _) {
       notifyListeners();
     });
+    _step = ref.listen<AsyncValue<String?>>(onboardingStepProvider, (_, _) {
+      notifyListeners();
+    });
   }
 
   late final ProviderSubscription<AsyncValue<AuthState>> _sub;
+  late final ProviderSubscription<AsyncValue<String?>> _step;
 
   @override
   void dispose() {
     _sub.close();
+    _step.close();
     super.dispose();
   }
 }

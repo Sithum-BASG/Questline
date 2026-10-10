@@ -13,14 +13,26 @@ void main() {
     );
   });
 
-  test('a signed-in player leaves welcome for home', () {
+  test('a new account stays on welcome until the player row exists', () {
     expect(
-      authRedirect(loading: false, signedIn: true, location: '/welcome'),
-      '/home',
-    );
-    expect(
-      authRedirect(loading: false, signedIn: true, location: '/quests'),
+      authRedirect(loading: false, signedIn: true, location: '/welcome', onboardingStep: null),
       isNull,
+    );
+  });
+
+  test('onboarding resumes at the step the server stored', () {
+    expect(routeForOnboardingStep('signed_in'), '/onboarding/character');
+    expect(routeForOnboardingStep('character'), '/onboarding/story');
+    expect(routeForOnboardingStep('story'), '/onboarding/study');
+    expect(routeForOnboardingStep('done'), '/home');
+    expect(
+      authRedirect(
+        loading: false,
+        signedIn: true,
+        location: '/home',
+        onboardingStep: 'signed_in',
+      ),
+      '/onboarding/character',
     );
   });
 

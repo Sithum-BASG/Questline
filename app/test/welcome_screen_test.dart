@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:questline/core/supabase/auth_providers.dart';
 import 'package:questline/core/supabase/auth_repository.dart';
+import 'package:questline/core/supabase/supabase_providers.dart';
 import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/features/auth/welcome_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeAuth implements AuthApi {
   int signUps = 0;
@@ -33,6 +35,10 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_FakeAuth()),
+          authStateProvider.overrideWith((ref) => const Stream<AuthState>.empty()),
+          completeOnboardingProvider.overrideWith((ref) {
+            return (String step, {Map<String, dynamic>? data}) async {};
+          }),
         ],
         child: MaterialApp(theme: AppTheme.light, home: const WelcomeScreen()),
       ),
@@ -51,7 +57,13 @@ void main() {
     final auth = _FakeAuth();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(auth),
+          authStateProvider.overrideWith((ref) => const Stream<AuthState>.empty()),
+          completeOnboardingProvider.overrideWith((ref) {
+            return (String step, {Map<String, dynamic>? data}) async {};
+          }),
+        ],
         child: MaterialApp(theme: AppTheme.light, home: const WelcomeScreen()),
       ),
     );

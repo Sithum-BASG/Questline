@@ -49,6 +49,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       } else {
         await auth.signIn(email: email, password: password);
       }
+      await ref.read(completeOnboardingProvider)(
+        'signed_in',
+        data: const {'timezone': 'Asia/Colombo'},
+      );
+      ref.invalidate(onboardingStepProvider);
     } on AuthException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {
@@ -65,6 +70,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     });
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle(serverClientId: googleWebClientId);
+      await ref.read(completeOnboardingProvider)(
+        'signed_in',
+        data: const {'timezone': 'Asia/Colombo'},
+      );
+      ref.invalidate(onboardingStepProvider);
     } on AuthException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {
