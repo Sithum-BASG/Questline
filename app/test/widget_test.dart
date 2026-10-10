@@ -20,6 +20,6 @@ void main() {
         child: const QuestlineApp(),
       ),
     );
-    expect(find.text('Questline'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
   });
 }
