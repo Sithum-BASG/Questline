@@ -14,7 +14,7 @@ M=${QL_AS:-$(ql_active)}
 [ -n "$M" ] || why "no member selected (run: git task <ID>, or git as R5 for the very first commit)"
 ql_load_ids
 U=$(ql_field "$M" GH_USER); T=$(ql_token "$M")
-case "$U$T" in *"<"*) ql_die_unused=1; why "$M's row in section 1 still has placeholders" ;; esac
+case "$U$T" in *"<"*) why "$M's row in section 1 still has placeholders" ;; esac
 [ -n "$U" ] || why "$M has no GitHub username in section 1"
 [ -n "$T" ] || why "$M has no token in section 1"
 echo "username=$U"
