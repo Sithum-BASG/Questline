@@ -6,6 +6,9 @@ docs/VERSION-CONTROL.md
 .env.*
 !.env.example
 supabase/functions/.env
+app/dart_defines.local.json
+app/dart_defines.android.json
+app/dart_defines.cloud.json
 **/key.properties
 *.jks
 *.keystore
