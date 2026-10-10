@@ -5,15 +5,6 @@ SELECT plan(20);
 INSERT INTO auth.users (id, aud, role, email)
 VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'authenticated', 'authenticated', 'owner@questline.test');
 
-INSERT INTO catalog_items (id, type, name, source) VALUES
-  ('skin_starter', 'skin', 'Starter', 'starter'),
-  ('bg_starter', 'background', 'Starter', 'starter'),
-  ('frame_apprentice', 'frame', 'Apprentice', 'starter'),
-  ('skin_coder', 'skin', 'Coder', 'level'),
-  ('badge_deep_worker', 'badge', 'Deep Worker', 'level'),
-  ('title_adept', 'title', 'Adept', 'level'),
-  ('title_archmage', 'title', 'Archmage', 'level');
-
 INSERT INTO profiles (id, username, friend_code, display_name, body_type)
 VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'owner_1', 'OWNER001', 'Owner', 'a');
 INSERT INTO player_state (user_id, week_id, next_rollover_at, owned_titles)

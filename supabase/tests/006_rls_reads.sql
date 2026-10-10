@@ -9,13 +9,6 @@ VALUES
   ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'authenticated', 'authenticated', 'stranger@questline.test'),
   ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'authenticated', 'authenticated', 'party@questline.test');
 
-INSERT INTO catalog_items (id, type, name, source) VALUES
-  ('skin_starter', 'skin', 'Starter', 'starter'),
-  ('bg_starter', 'background', 'Starter', 'starter'),
-  ('frame_apprentice', 'frame', 'Apprentice', 'starter');
-INSERT INTO level_rewards (level, rewards) VALUES (2, '[{"type":"item","id":"frame_margin_notes"}]');
-INSERT INTO game_config (key, value) VALUES ('chest_cost', '500');
-
 INSERT INTO profiles (id, username, friend_code, display_name, body_type)
 VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'owner_1', 'OWNER001', 'Owner', 'a'),
@@ -93,20 +86,20 @@ BEGIN
 END;
 $$;
 
-SELECT is(pg_temp.count_as('catalog_items', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 3, 'owner catalog');
-SELECT is(pg_temp.count_as('catalog_items', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 3, 'friend catalog');
-SELECT is(pg_temp.count_as('catalog_items', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 3, 'stranger catalog');
-SELECT is(pg_temp.count_as('catalog_items', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 3, 'party catalog');
+SELECT is(pg_temp.count_as('catalog_items', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 76, 'owner catalog');
+SELECT is(pg_temp.count_as('catalog_items', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 76, 'friend catalog');
+SELECT is(pg_temp.count_as('catalog_items', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 76, 'stranger catalog');
+SELECT is(pg_temp.count_as('catalog_items', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 76, 'party catalog');
 
-SELECT is(pg_temp.count_as('level_rewards', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 1, 'owner level rewards');
-SELECT is(pg_temp.count_as('level_rewards', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 1, 'friend level rewards');
-SELECT is(pg_temp.count_as('level_rewards', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 1, 'stranger level rewards');
-SELECT is(pg_temp.count_as('level_rewards', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 1, 'party level rewards');
+SELECT is(pg_temp.count_as('level_rewards', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 49, 'owner level rewards');
+SELECT is(pg_temp.count_as('level_rewards', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 49, 'friend level rewards');
+SELECT is(pg_temp.count_as('level_rewards', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 49, 'stranger level rewards');
+SELECT is(pg_temp.count_as('level_rewards', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 49, 'party level rewards');
 
-SELECT is(pg_temp.count_as('game_config', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 1, 'owner game config');
-SELECT is(pg_temp.count_as('game_config', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 1, 'friend game config');
-SELECT is(pg_temp.count_as('game_config', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 1, 'stranger game config');
-SELECT is(pg_temp.count_as('game_config', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 1, 'party game config');
+SELECT is(pg_temp.count_as('game_config', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 66, 'owner game config');
+SELECT is(pg_temp.count_as('game_config', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 66, 'friend game config');
+SELECT is(pg_temp.count_as('game_config', 'cccccccc-cccc-cccc-cccc-cccccccccccc'), 66, 'stranger game config');
+SELECT is(pg_temp.count_as('game_config', 'dddddddd-dddd-dddd-dddd-dddddddddddd'), 66, 'party game config');
 
 SELECT is(pg_temp.count_as('profiles', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 4, 'owner profiles');
 SELECT is(pg_temp.count_as('profiles', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 4, 'friend profiles');
