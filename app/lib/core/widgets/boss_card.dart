@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../assets/game_assets.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 import 'progress_bar.dart';

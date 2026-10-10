@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_spacing.dart';
 import 'core/widgets/floating_tab_bar.dart';
+import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -78,6 +80,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       _screen('/settings', 'Settings', routes: [
         _screen('demo', 'Demo mode'),
       ]),
+      GoRoute(
+        path: '/dev/gallery',
+        builder: (context, state) {
+          if (!kDebugMode) return const PlaceholderScreen(title: 'Not available');
+          return const GalleryScreen();
+        },
+      ),
     ],
   );
 });
