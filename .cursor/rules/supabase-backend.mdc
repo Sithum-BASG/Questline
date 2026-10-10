@@ -1,0 +1,50 @@
+---
+description: Supabase backend rules — migrations, grants/RLS, pgTAP, Edge Functions, game modules, cron, AI provider (Groq), seeds. Applies to supabase/ and scripts/.
+globs: supabase/**, scripts/**
+alwaysApply: false
+---
+
+# Supabase backend (`supabase/`, `scripts/`)
+
+Read with `docs/05-BACKEND-SCHEMA.md` (the contract) and `docs/02-TRD.md` §2, §4, §6–9.
+
+## Migrations and security
+- Every change: `supabase migration new <name>` → SQL in `supabase/migrations/` → `supabase db reset` → `supabase test db`. Never edit the cloud schema by hand (only `game_config` values).
+- Names, types and `check` constraints exactly as `05-BACKEND-SCHEMA.md` §2: `snake_case`, plural tables, `text` + `check` instead of enums, `timestamptz` for times, `date` for day keys, `user_id uuid references auth.users on delete cascade` on every user table.
+- **Grants (§3):** revoke all from `anon` and `authenticated` (including default privileges), then grant `select` and only the listed column-level `insert`/`update`. Nothing for `anon`; nothing on `demo_allowlist` or `processed_requests`.
+- **RLS (§4):** enabled on every table; policies exactly as the table in §4, using the `security definer stable` helpers (`is_friend`, `is_raid_member`, `is_raid_creator`, `is_guild_member`, `radar_hidden`) with `set search_path = public`. Triggers `validate_profile_update` and `validate_task_update` enforce the few client writes.
+- **pgTAP (`supabase/tests/`):** for every table, owner / friend / stranger / party member reads; every column a client must not write → `permission denied`; every trigger rule; task draft→open path; equip only owned items; `demo_allowlist` unreadable. A new table or grant isn't done without tests.
+- Realtime publication only for `raids`, `raid_members`, `raid_events`, `presence`, `inbox`. Indexes from §5.
+
+## Edge Functions (`supabase/functions/`)
+- Client-facing functions grouped by domain (`account`, `tasks`, `sessions`, `bosses`, `raids`, `loot`, `social`); the body carries `action`. Action names, inputs and outputs exactly as `05-BACKEND-SCHEMA.md` §6.
+- Every handler uses `_shared/http.ts` (CORS, JWT → user, zod errors) and `_shared/db.ts` (`postgres` on `SUPABASE_DB_URL`, pooler, `prepare: false`, `sql.begin` transactions).
+- Contract (`02-TRD.md` §6): user id **from the JWT only**; zod-validate the body (`400 {code:'invalid_argument'}`); read `game_config` through `_shared/config.ts` (cached ~60 s, defaults fallback); all value-changing writes in **one transaction**; **every query filtered by the user id** (functions bypass RLS); idempotent where retries could double-pay (`sessions.processed` + stored `summary`, `processed_requests` for `openChest`); typed JSON out; errors `{code, message}`.
+- `endSession` is an orchestrator: it calls pure modules and small tested hooks (damage, guild quest, achievements, feed, friend summaries) — keep each hook its own function. Mind the 2 s CPU limit.
+- Cron functions (`cron-rollover`, `cron-deadlines`, `cron-weekly`): deployed with `--no-verify-jwt`, require the `x-cron-secret` header = `CRON_SECRET`; process in batches (≤ 200 rows per call). Scheduled by pg_cron + pg_net with Vault secrets (`project_url`, `cron_secret`); fallback `.github/workflows/cron.yml` if pg_cron is unavailable. A faked-clock parameter is allowed **only locally** for simulations.
+- Dependencies pinned in `supabase/functions/deno.json`: `@supabase/supabase-js`, `postgres`, `zod`. Groq is called with plain `fetch` (no AI SDK). No others without asking.
+
+## Game modules (`_shared/game/`)
+- Pure TypeScript, no I/O: `xp.ts`, `rewards.ts`, `loot.ts`, `combat.ts`, `streaks.ts`, `achievements.ts`, `time.ts`.
+- **Tests first** with the exact cases in `05-BACKEND-SCHEMA.md` §10 (e.g. d4/60/60 on time → raw 86; ticked → 39; level totals L10 1,110 · L25 6,390 · L50 29,360; loot rates within ±0.5% over 100,000 rolls with an injectable RNG). Every number in `01-PRD.md` §6 has a test; coverage ≥ 90%.
+- Compute in floats, round half up once per output value. XP, coins, HP and damage are integers.
+- Day keys from timestamp + IANA timezone with the **4 a.m.** boundary; `weekId` from `LEADERBOARD_TZ` (Monday 04:00, default `Asia/Colombo`).
+
+## AI provider (`_shared/ai/`) — `docs/02-TRD.md` §7
+- One interface, `AiProvider.generateJson({ system, user, schemaName, schema })`. `AI_PROVIDER` selects `groq` (default) or `fake`.
+- **Groq:** `fetch` `POST https://api.groq.com/openai/v1/chat/completions` with `Authorization: Bearer ${GROQ_API_KEY}`, body `{ model, messages: [system, user], temperature: 0.2, reasoning_effort, response_format: { type: 'json_schema', json_schema: { name, strict: true, schema } } }`; parse `choices[0].message.content`. `reasoning_effort: 'low'` for `openai/gpt-oss-*`, `'none'` for `qwen/*`. Never send `logprobs`, `logit_bias`, `n` or `messages[].name`.
+- **Fallback chain (§7.2):** rotate through `GROQ_MODELS` (default `openai/gpt-oss-120b,openai/gpt-oss-20b,qwen/qwen3.8-27b`) on 429 / 5xx / timeout / invalid JSON → optional backup (`AI_BACKUP_URL`, `AI_BACKUP_KEY`, `AI_BACKUP_MODEL`, same OpenAI-compatible request) → provisional (difficulty 3, 30 min) and re-judge later in `cron-deadlines`. Timeout per attempt from `game_config.ai_timeout_ms`.
+- **Fake provider (§7.3):** deterministic, no network — keyword stat, difficulty 3, 30 min, reason "Development judge (fake mode)."; boss 6 h "The Practice Shade". Always injected in `deno test`; selectable with `AI_PROVIDER=fake` for non-AI work.
+- Prompts and few-shots copied **verbatim** from `docs/00-PROJECT-OVERVIEW.md` §23 into `prompts.ts`; schemas exactly as `05-BACKEND-SCHEMA.md` §11 (strict: all properties required, `additionalProperties: false`).
+- Always re-validate with zod and clamp (difficulty 1–5, minutes 5–180, hours 2–40, reason ≤ 20 words, boss name 2–4 words else "The Deadline Shade"). Count every call against `ai_daily_limit`.
+- Config: `supabase/functions/.env` locally (git-ignored; `supabase/functions/.env.example` ships with the repo; keep it current with `AI_PROVIDER`, `GROQ_API_KEY=`, `GROQ_MODELS`, `AI_BACKUP_URL=`, `AI_BACKUP_KEY=`, `AI_BACKUP_MODEL=`). Cloud: `supabase secrets set`. Never print key values.
+- The AI test-set runner (Phase 4) is a script run by hand with the Groq provider (PowerShell: `$env:AI_PROVIDER = 'groq'` before the `deno run …` line, or set it in `supabase/functions/.env`), pausing ~2 s between calls; it is not part of `deno test`/CI.
+- Send only task text, notes, parent title, due-in-days, participants and optional study context. Never names, emails or ids.
+
+## Seeds and scripts
+- `supabase/seed.sql`: all `catalog_items` (namespaced ids from §9), `level_rewards`, `game_config` (§8). `scripts/seed-cloud.ts` loads the same into the cloud project. `scripts/seed-demo.ts` recreates the demo state in one command (Phase 16).
+- `scripts/git/` is the team's git tooling — don't edit it unless the user asks.
+
+## Before committing backend work
+- `supabase db reset` (migrations + seed build cleanly), `supabase test db` green, `deno test` green in `supabase/functions/`.
+- Re-read every new SQL statement in a function: is it filtered by the caller's user id?

@@ -1,0 +1,9 @@
+# Questline team aliases. Enabled per clone by:  sh scripts/git/setup.sh
+# They run through git's own sh, so they work the same in PowerShell, cmd, Git Bash, macOS and Linux.
+[alias]
+	phase   = "!sh scripts/git/phase.sh"
+	task    = "!sh scripts/git/task.sh"
+	pr      = "!sh scripts/git/pr.sh"
+	whoami  = "!sh scripts/git/whoami.sh"
+	as      = "!sh scripts/git/as.sh"
+	stats   = "!sh scripts/git/stats.sh"

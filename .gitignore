@@ -1,0 +1,14 @@
+
+# Questline — local secrets (never commit)
+# The version control doc holds every member's GitHub token once filled in:
+docs/VERSION-CONTROL.md
+.env
+.env.*
+!.env.example
+supabase/functions/.env
+**/key.properties
+*.jks
+*.keystore
+
+# Hand-off files for Cursor (asset pack etc.) — imported into the app, never committed as-is
+_handoff/

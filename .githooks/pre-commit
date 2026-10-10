@@ -1,0 +1,39 @@
+#!/bin/sh
+# Questline pre-commit hook: right person, right branch, no secrets.
+TOP=$(git rev-parse --show-toplevel)
+
+# 1. Phase branches: a task must be selected, belong to this phase, and the identity must be its owner
+BR=$(git branch --show-current)
+T=$(git config --get questline.task)
+case "$BR" in
+  phase/[0-9][0-9]-*)
+    [ -n "$T" ] || { echo "ERROR: No task selected. Run: git task <ID>  (git phase <n> lists this phase's tasks)" >&2; exit 1; }
+    OUT=$(sh -c '. "$1/scripts/git/lib.sh"; ql_load_ids; ql_task_info "$2"; P=$(ql_phase_of_branch "$3")
+      [ "$P" = "$TASK_PHASE" ] || { echo "WRONGPHASE $TASK_PHASE"; exit 0; }
+      if [ "$(git config --get questline.member)" != "$TASK_OWNER" ] || [ "$(git config user.email)" != "$(ql_field "$TASK_OWNER" EMAIL)" ]; then
+        ql_set_identity "$TASK_OWNER" quiet && echo "SWITCHED $TASK_OWNER"; exit 0; fi
+      echo OK' sh "$TOP" "$T" "$BR" 2>&1)
+    case "$OUT" in
+      OK) ;;
+      WRONGPHASE*) echo "ERROR: Task $T belongs to Phase ${OUT#WRONGPHASE }, not this branch ($BR)." >&2; exit 1 ;;
+      SWITCHED*) echo "ERROR: Identity switched to ${OUT#SWITCHED } (owner of $T). Run the same git commit again." >&2; exit 1 ;;
+      *) echo "$OUT" >&2; exit 1 ;;
+    esac ;;
+  *)
+    [ -n "$(git config --get questline.member)" ] || { echo "ERROR: No identity set. First commit only: git as R5 (then git task T001)" >&2; exit 1; } ;;
+esac
+
+# 2. Never commit straight onto main, develop or release/* (the very first commit of the repo is allowed)
+if git rev-parse -q --verify HEAD >/dev/null; then
+  case "$BR" in
+    main|develop|release/*) echo "ERROR: Don't commit on $BR. Start the phase branch first: git phase <n>" >&2; exit 1 ;;
+  esac
+fi
+
+# 3. No secrets
+BAD=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)(VERSION-CONTROL\.md|identities\.local\.env|\.env|\.env\.[a-z]+|key\.properties|[^/]*\.jks|[^/]*\.keystore)$' | grep -vE '\.env\.example$')
+if [ -n "$BAD" ]; then echo "ERROR: Refusing to commit secret files:" >&2; echo "$BAD" >&2; exit 1; fi
+if git diff --cached -U0 | grep -E '^\+' | grep -qE '(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|gho_[A-Za-z0-9]{20,}|gsk_[A-Za-z0-9]{20,}|sk-or-[A-Za-z0-9_-]{20,}|csk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|sb_secret_[A-Za-z0-9_-]{10,}|eyJhbGciOi[A-Za-z0-9._-]{40,})'; then
+  echo "ERROR: A staged change contains what looks like a token or API key (GitHub / Groq / OpenRouter / Cerebras / Google / Supabase). Remove it." >&2; exit 1
+fi
+exit 0

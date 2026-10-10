@@ -1,0 +1,67 @@
+---
+description: Questline project rules — what we're building, sources of truth, hard rules, how to work. Always applied.
+alwaysApply: true
+---
+
+# Questline — project rules
+
+You are building **Questline**, a gamified productivity app for university students: real tasks are judged by an AI (stat, difficulty, minutes), done in verified focus sessions, and turned into XP, levels, gear, cosmetics, deadline bosses, raids and a friends leaderboard. Six-person student team, about four weeks, **free platforms only** (Supabase Free plan, Groq free API, no credit card anywhere).
+
+Stack: **Flutter** (Android demo, iOS builds) + **Supabase** (Postgres + RLS, Auth, Edge Functions in Deno/TypeScript, Realtime, pg_cron) + **Groq** free API for the AI judge, called only from Edge Functions (`docs/02-TRD.md` §7).
+
+## 1. Sources of truth — read the relevant one before writing code
+
+| File | Use it for |
+|---|---|
+| `docs/README.md` | Reading order and how the docs fit together |
+| `docs/00-PROJECT-OVERVIEW.md` | Game design: every rule and number, theme, story text, AI prompts (§23), art and asset ids (§24), demo |
+| `docs/01-PRD.md` | What to build (Must have) and what not to; the numbers in testable form (§6) |
+| `docs/02-TRD.md` | Fixed stack, packages, repo layout, conventions, Edge Function contract, AI provider (Groq, model rotation, fake mode — §7), notifications approach, secrets |
+| `docs/03-APP-FLOW.md` | Routes, navigation, journeys, empty/loading/error states |
+| `docs/04-UI-UX-BRIEF.md` | Colour/type/spacing tokens, surfaces, shared components, motion, accessibility |
+| `docs/05-BACKEND-SCHEMA.md` | Tables, column grants, RLS, realtime, indexes, Edge Function actions, cron, `game_config`, catalog seed, game formulas and tests, AI response schemas, open decisions D1–D15 |
+| `docs/06-IMPLEMENTATION-PLAN.md` | Build order (Phases 0–16), each step's *Done when* |
+| `docs/VERSION-CONTROL.md` | Git workflow: phases, task owners (§9), commits, PRs (see `git-workflow.mdc`) |
+
+**Precedence when documents disagree**
+1. Technology (backend, database, functions, notifications delivery, packages): `02-TRD.md` and `05-BACKEND-SCHEMA.md` win. The overview's Firebase-era §22 is superseded.
+2. Game rules and numbers: `00-PROJECT-OVERVIEW.md` wins; then fix `01-PRD.md` / `05-BACKEND-SCHEMA.md` to match and mention it in the PR description.
+3. UI specifics: `04-UI-UX-BRIEF.md` wins.
+4. Names (tables, columns, actions, allowed strings, catalog ids): exactly as in `05-BACKEND-SCHEMA.md`.
+If you find a contradiction you can't resolve with these rules, stop and ask.
+
+## 2. Hard rules (never break)
+
+1. **The server owns game state.** The app never writes XP, coins, levels, inventory, damage, chest results, streaks, achievements, scores, feed or inbox entries. It calls an Edge Function action that validates, calculates and writes in one transaction. The only client writes are the column grants in `05-BACKEND-SCHEMA.md` §3.
+2. **The stack is fixed.** Flutter, Riverpod, go_router, freezed + json_serializable, `supabase_flutter`, `flutter_local_notifications` + the `inbox` table; Supabase Auth, Postgres + RLS, Edge Functions (Deno/TS), Realtime, pg_cron + pg_net; AI only from Edge Functions via `_shared/ai` → **Groq** (OpenAI-compatible, plain `fetch`). **No Firebase, no other backend, no other state/router library, no AI SDKs, no other AI provider** (except the optional `AI_BACKUP_*` endpoint the user configures). No new package without asking.
+3. **Deny by default.** Grants revoked, RLS on every table. Never weaken a grant or policy to make a feature work — add an Edge Function action instead.
+4. **Edge Functions bypass RLS.** Every SQL statement in a function filters by the caller's user id taken from the JWT — never from the request body. This is the first thing a reviewer checks.
+5. **Every schema change is a migration** in `supabase/migrations/` with pgTAP coverage in `supabase/tests/`. Never edit the cloud schema by hand (only `game_config` values may be edited live).
+6. **No hard-coded game numbers.** Server: `game_config` via `_shared/config.ts` (with defaults). App: the `core/config/` reader, for display only.
+7. **No hard-coded colours, sizes, radii, shadows or fonts in screens.** Use `core/theme/` tokens and `core/widgets/` components.
+8. **Privacy:** task titles and details are never visible to other users (feed, leaderboard, raids, others' inbox). Only task text, notes, parent title, due-in-days, participants and optional study context go to Groq — never names, emails or ids. Automated tests use the fake provider and never call Groq.
+9. **Game rules that never change:** chests never contain stat gear; no real money; players never lose levels, gear or cosmetics.
+10. **Visual rule:** game visuals only on the character stage card and in reward moments; everything else is clean productivity UI. Light mode only. Respect reduced motion.
+11. **Game logic lives in pure functions** in `supabase/functions/_shared/game/` with `deno test` — tests first, using the cases in `05-BACKEND-SCHEMA.md` §10.
+12. **Every action:** JWT user, zod-validated input, one transaction when values change, idempotent where a retry could double-pay (`endSession`, `openChest`, `submitBoss`), typed JSON out, errors as `{code, message}`.
+13. **Secrets never in the app or git:** `GROQ_API_KEY`, `AI_BACKUP_KEY`, `supabase/functions/.env`, service-role key, `CRON_SECRET`, keystores, and `docs/VERSION-CONTROL.md` (it holds GitHub tokens).
+
+## 3. How to work
+
+- **Phase by phase**, following `docs/VERSION-CONTROL.md` §3 and `git-workflow.mdc`: `git phase <n>`, then for each task in ID order `git task <ID>` → implement its plan step → run checks → commit → `git push`. Don't stop between tasks. At the end of the phase open one PR and **stop** until the user says it's merged.
+- **Per task:** first say in a short paragraph which files you'll create or change and which tests you'll add, then implement. Stay inside the task's plan step; don't build ahead into later phases.
+- **AI calls while developing:** keep `AI_PROVIDER=fake` in `supabase/functions/.env` unless the task is about the AI judge itself (Phase 4, boss/raid estimates) — it saves the free Groq quota. Switch back to `groq` to test AI behaviour.
+- **Terminal:** Cursor's terminal is **PowerShell on Windows**. Follow the PowerShell rules in `git-workflow.mdc` (no bash syntax, single-quoted commit messages, create files with the editor tools — never `echo >` / `Set-Content`).
+- **Checks before every commit** (for what you touched): `flutter analyze`, `flutter test` (in `app/`), `deno test` (in `supabase/functions/`), `supabase db reset` + `supabase test db` for schema changes.
+- **Done means** the plan step's *Done when* line is true, not "the code compiles".
+- **Comments:** explain non-obvious logic briefly. Every team member must be able to explain the code under their name.
+- **Docs:** if a doc is wrong or a decision changes, update the doc in the same phase branch (a `docs(...)` commit) and mention it in the PR description.
+- **Open decisions D1–D15** (`05-BACKEND-SCHEMA.md` §13): use the proposed default unless the user has said otherwise; read their values from `game_config` where possible.
+
+## 4. Stop and ask the user when
+
+- A step needs a new package, a renamed table/column/action, a schema change outside the current task, or a change to another phase's code.
+- Two documents disagree and the precedence rules above don't settle it.
+- A required secret, account or asset is missing (`GROQ_API_KEY` not in `supabase/functions/.env`, OAuth client ids, `questline_assets.zip`).
+- Tests fail and the fix would change a documented number or rule.
+- A git hook or command refuses something and the reason isn't obvious.

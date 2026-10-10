@@ -1,0 +1,29 @@
+#!/bin/sh
+# Questline commit-msg hook
+#  1. Removes every "Co-authored-by:" trailer (and Cursor agent attribution lines). Do not add co-authored-by.
+#  2. Enforces Conventional Commits on the subject line.
+MSG_FILE="$1"
+TMP="$MSG_FILE.ql.tmp"
+tr -d '\r' < "$MSG_FILE" | grep -viE '^[[:space:]]*co-authored-by:|cursoragent@cursor\.com|^[[:space:]]*generated (with|by) (cursor|claude|copilot|chatgpt)' > "$TMP" || true
+# drop trailing blank lines left behind
+awk 'NF{for(i=0;i<blank;i++)print "";blank=0;print;next}{blank++}' "$TMP" > "$MSG_FILE"
+rm -f "$TMP"
+
+SUBJECT=$(grep -vE '^#' "$MSG_FILE" | sed -n '/[^[:space:]]/{p;q;}')
+case "$SUBJECT" in
+  "Merge "*|"Revert "*) exit 0 ;;
+esac
+add_task_trailer() {
+  T=$(git config --get questline.task)
+  BR=$(git branch --show-current)
+  case "$BR" in phase/*|main) ;; *) return ;; esac
+  [ -n "$T" ] && git interpret-trailers --in-place --if-exists doNothing --trailer "Task: $T" "$MSG_FILE"
+}
+if ! printf '%s' "$SUBJECT" | grep -qE '^(feat|fix|test|chore|ci|docs|style|refactor|perf|wip)(\([a-z0-9, /._-]+\))?!?: [^ ].{0,71}$'; then
+  echo "ERROR: Commit subject must look like:  feat(db): add gameplay tables   (max 72 chars after the type)" >&2
+  echo "  types: feat fix test chore ci docs style refactor perf wip" >&2
+  echo "  yours: $SUBJECT" >&2
+  exit 1
+fi
+add_task_trailer
+exit 0

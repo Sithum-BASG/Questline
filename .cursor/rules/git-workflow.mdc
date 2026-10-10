@@ -1,0 +1,46 @@
+---
+description: Questline git workflow — phases, task owners, commits, PRs (always follow)
+alwaysApply: true
+---
+
+# Git workflow
+
+Your full instructions for every git/GitHub action are in `docs/VERSION-CONTROL.md` (the runbook). Read it before your first git action in a chat and follow §3 (Agent protocol). Summary:
+
+## Phase by phase
+- Work one phase at a time (runbook §8): `git phase <n>` switches to or creates its branch (`phase/NN-name`) and lists its tasks.
+- Do the phase's tasks in ID order without stopping between them. For each: `git task <ID>` → implement → checks → commit → `git push`.
+- When all tasks have commits and the phase's Done when is true, open the phase PR (below) and STOP.
+
+## Identity — automatic, never ask
+- Never ask who is working. `git task <ID>` sets the task owner's name, email and token; every commit for that task goes under its owner.
+- If the pre-commit hook says it switched the identity, just run the same commit again.
+- `git as` is only for the very first commit on `main` (T001, as R5).
+- Use tokens only through the `git` commands. Never print, copy, echo or paste token values or the credentials table anywhere.
+
+## Pull requests — one per phase, then stop
+- Write the description to `.git/pr-body.md` **with the file editing tool** (not `echo`, `>` or `Set-Content`): a few plain sentences, like a teammate explaining what was built, how it works, how it was tested, anything left rough. No headings, checklists, task tables, "This PR…" boilerplate, emojis or attribution.
+- `git pr --body-file .git/pr-body.md`. Report the PR number and a one-line summary, then STOP. Don't start the next phase, push more commits, review or merge.
+- You never review or merge. The user merges manually on GitHub. Continue only when the user says the PR is merged.
+- `git phase` refuses while a PR is open; use `--anyway` only if the user explicitly says so.
+
+## Terminal — Windows PowerShell
+- Cursor's terminal is PowerShell. `git phase`, `git task`, `git pr`, `git whoami`, `git stats`, `git as` and the hooks run through Git for Windows' built-in shell automatically — just run them as git commands. Never call `sh` or `bash` yourself.
+- One command per line, or separate them with `;`. No bash syntax: no `&&`/`||` (Windows PowerShell 5.1 doesn't have them), `export`, `VAR=value command`, heredocs (`<<`), `rm -rf`, `mkdir -p`, `touch`, `cat >`.
+- Commit messages in **single quotes**: `git commit -m 'feat(db): add gameplay tables'`. In double quotes PowerShell expands `$` and treats the backtick as an escape. A body is a second `-m '…'`. An apostrophe inside single quotes is written twice (`''`). Don't put backticks in commit subjects.
+- Create and edit files (including `.git/pr-body.md` and `.env` files) with the editor tools. `echo … > file` and `Set-Content` in Windows PowerShell write UTF-16 or a BOM, which breaks `.env` parsing and tooling.
+- Environment variables for one terminal: `$env:AI_PROVIDER = 'groq'`. Paths can use `/` or `\`.
+- If git output shows `$'\r': command not found` or `bad interpreter`, a script got Windows line endings — stop and tell the user (fix: `git add --renormalize .` after checking `.gitattributes`).
+
+## Branches
+- Only `main`, `develop`, `release/v1.0` and `phase/NN-name`. Never put names, roles or owners in branch names. Never commit on `main`, `develop` or `release/v1.0` (except T001).
+- Never force-push, never rebase pushed branches, never delete branches.
+
+## Commits
+- Conventional Commits: `type(scope): summary` — feat, fix, test, chore, ci, docs, style, refactor, perf, wip. Imperative, lowercase, ≤ 72 chars. The hook adds a `Task: T0xx` line.
+- Do not add co-authored-by. Never add `Co-authored-by:` lines, "Generated with Cursor/Claude", or any AI/tool attribution to commit messages or PR descriptions.
+- Stage only the task's files. Never stage `docs/VERSION-CONTROL.md` (it holds tokens), `.env*` (except `.env.example`), keystores or any key.
+
+## Never
+- Use `--no-verify` or edit `.githooks/`, `scripts/git/`, `.gitconfig` unless the user explicitly asks.
+- If a hook blocks a commit, fix the cause and tell the user what it was.

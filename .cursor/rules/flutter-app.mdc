@@ -1,0 +1,60 @@
+---
+description: Flutter app rules — structure, state, routing, data access, UI tokens, notifications, tests. Applies to everything under app/.
+globs: app/**
+alwaysApply: false
+---
+
+# Flutter app (`app/`)
+
+Read with `docs/02-TRD.md` §3 (packages) and §5 (layout), `docs/03-APP-FLOW.md`, `docs/04-UI-UX-BRIEF.md`.
+
+## Structure (02-TRD §5)
+```
+app/lib/
+  main.dart            Supabase.initialize from --dart-define, ProviderScope, timezone init
+  app.dart, router.dart
+  core/theme/          app_colors.dart, app_text.dart, shadows.dart, app_theme.dart  (tokens only live here)
+  core/assets/         game_assets.dart (from questline_assets.zip — paths, ids, placement constants)
+  core/widgets/        shared components (04-UI-UX-BRIEF §6) + /dev/gallery
+  core/supabase/       client providers, api_client.dart (typed Edge Function calls)
+  core/config/         game_config reader (typed getters, cached) — display only
+  core/notifications/  notification_planner.dart
+  data/models/         freezed models mirroring tables (snake_case JSON)
+  data/repositories/   queries + realtime subscriptions per domain
+  features/<feature>/{presentation/, providers/}
+```
+Files `snake_case.dart`, classes `PascalCase`, members `lowerCamelCase`. One widget per file once it's reused.
+
+## State and routing
+- **Riverpod** only (`flutter_riverpod`). Providers live in `features/<feature>/providers/` or `core/supabase/`. Repositories are exposed through providers; widgets never call `Supabase.instance` directly.
+- **go_router** only. Every route from `03-APP-FLOW.md` §2 exists in `router.dart`; the 5 tabs use `StatefulShellRoute`. Full-screen overlays (focus session, reward moments) are pushed routes, reachable from anywhere. Auth/onboarding redirects follow `03-APP-FLOW.md` §3.
+- Deep links (`app_links`) and notification taps resolve to routes in `router.dart`.
+
+## Data access
+- **Reads:** Supabase queries in repositories, relying on RLS (never filter for security in the app — RLS does that). Keep queries narrow (`select` named columns), paginate the feed 20 at a time, leaderboard in one query (`05-BACKEND-SCHEMA.md` §5).
+- **Writes:** only the client-writable columns in `05-BACKEND-SCHEMA.md` §3 (profile cosmetics/privacy, user settings, task draft insert, `stat`, `status` draft→open, delete draft/open, own presence, `inbox.read_at`). Everything else goes through `api_client.dart`: one typed method per action, mapping `{code, message}` errors to friendly text.
+- **Realtime:** subscribe only on screens that need it (raid detail, guild home, Home/Social presence, app-shell inbox); unsubscribe on dispose.
+- **Models:** freezed + json_serializable with `fieldRename: snake` (in `build.yaml`). Run `dart run build_runner build --delete-conflicting-outputs` after model changes and commit the generated files.
+- **Offline:** cache the last Home and task-list JSON in `shared_preferences`; show the "Offline" pill; actions need network.
+
+## UI
+- Colours, type, spacing, radius, shadows: only from `core/theme/` tokens (`04-UI-UX-BRIEF.md` §2–4). Surfaces: white cards on Paper with one soft shadow; clay depth only on tappable things.
+- Build screens from `core/widgets/` components (`QButton`, `QCard`, `QChip`, `StatIcon`, `ProgressBar`, `StatTile`, `StageCard`, `PortraitFrame`, `JudgementCard`, `TaskTile`, `BossCard`, `MemberCard`, `ItemCard`, `BadgeMedallion`, `RadarChart`, `LeaderboardRow`, `EmptyState`, `QBottomSheet`, `RewardOverlay`, `TimerDisplay`). Add a component to the gallery when you create it.
+- Game visuals only in `StageCard`/`PortraitFrame` and `RewardOverlay`. Rarity colours mean rarity only; boss HP is rose, errors use the error colour (never Mythic crimson).
+- Images: use ids/paths from `core/assets/game_assets.dart`; never hand-type asset paths. Skins have `_a`/`_b` per body type.
+- Every screen has its empty, loading and error state from `03-APP-FLOW.md` §7 (including "server waking up").
+- Accessibility: 48 dp touch targets, semantics labels on icon buttons, text scales to 130%, WCAG AA contrast, reduced-motion variants (150 ms fades) for every animation.
+- Copy: short, warm, no guilt (`04-UI-UX-BRIEF.md` §9). Never show a task title outside the owner's own screens.
+
+## Focus sessions (03-APP-FLOW §6)
+- The timer shows time since the **server** `started_at`; the app reports interruptions, the server computes verified minutes.
+- Lifecycle: leaving the app starts the 30 s grace with a local "return" notification; returning in time continues; otherwise the session is broken. Activity mode allows a locked phone.
+- Presence: set own `presence` row to `focusing` (unless `appear_offline`), heartbeat `last_seen` every 60 s, `idle` on finish.
+
+## Notifications (02-TRD §8)
+- `notification_planner.dart` plans the next 7 days of local notifications from current state on app start, resume, after `endSession`/`tickTask`, boss/raid changes and settings changes. It enforces the 2/day cap, quiet hours and category toggles. Unit-test it with a fake clock.
+- Server-only events (guild fight started, raid result, weekly results, friend requests) come through the `inbox` table; the bell shows the unread count.
+
+## Tests
+- `flutter test` for providers, repositories (with fakes), the notification planner and key widgets. `flutter analyze` must be clean.
+- Don't test game formulas in Dart — they live and are tested on the server.

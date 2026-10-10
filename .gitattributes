@@ -1,0 +1,8 @@
+# Line endings: keep shell scripts and hooks LF so they run on Windows (Git for Windows' sh), macOS and Linux.
+* text=auto
+*.sh text eol=lf
+.githooks/* text eol=lf
+.gitconfig text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
