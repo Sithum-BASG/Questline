@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/theme/app_spacing.dart';
+import 'core/widgets/floating_tab_bar.dart';
 import 'core/widgets/placeholder_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -97,18 +99,20 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.checklist_outlined), label: 'Quests'),
-          NavigationDestination(icon: Icon(Icons.shield_outlined), label: 'Bosses'),
-          NavigationDestination(icon: Icon(Icons.people_outline), label: 'Social'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Hero'),
+      body: Stack(
+        children: [
+          navigationShell,
+          Positioned(
+            left: AppSpacing.s16,
+            right: AppSpacing.s16,
+            bottom: AppSpacing.s16,
+            child: FloatingTabBar(
+              index: navigationShell.currentIndex,
+              onSelected: (index) {
+                navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+              },
+            ),
+          ),
         ],
       ),
     );
