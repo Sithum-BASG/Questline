@@ -85,4 +85,6 @@ ql_set_identity() {
   git config --local user.name "$_n"
   git config --local user.email "$_e"
   git config --local questline.email "$_e"
-  [ "$2" = "quiet" ] || echo "OK: Identity: $_m - $_n
+  [ "$2" = "quiet" ] || echo "OK: Identity: $_m - $_n <$_e> (GitHub: $_u)"
+  M="$_m"
+}
