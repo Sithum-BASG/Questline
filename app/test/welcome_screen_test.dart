@@ -8,6 +8,7 @@ import 'package:questline/features/auth/welcome_screen.dart';
 
 class _FakeAuth implements AuthApi {
   int signUps = 0;
+  int googleCalls = 0;
 
   @override
   Future<void> signUp({required String email, required String password}) async {
@@ -16,6 +17,11 @@ class _FakeAuth implements AuthApi {
 
   @override
   Future<void> signIn({required String email, required String password}) async {}
+
+  @override
+  Future<void> signInWithGoogle({required String serverClientId}) async {
+    googleCalls += 1;
+  }
 
   @override
   Future<void> signOut() async {}
@@ -55,5 +61,9 @@ void main() {
     await tester.tap(find.text('Create account'));
     await tester.pump();
     expect(auth.signUps, 1);
+
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pump();
+    expect(auth.googleCalls, 1);
   });
 }

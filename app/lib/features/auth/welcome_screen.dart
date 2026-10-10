@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/supabase/auth_providers.dart';
+import '../../core/supabase/supabase_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
@@ -48,6 +49,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       } else {
         await auth.signIn(email: email, password: password);
       }
+    } on AuthException catch (error) {
+      setState(() => _error = error.message);
+    } catch (_) {
+      setState(() => _error = 'Something went wrong. Try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _google() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle(serverClientId: googleWebClientId);
     } on AuthException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {
@@ -106,6 +123,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     variant: QButtonVariant.secondary,
                     loading: _busy,
                     onPressed: _busy ? null : () => _submit(create: false),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  QButton(
+                    label: 'Continue with Google',
+                    variant: QButtonVariant.text,
+                    loading: _busy,
+                    onPressed: _busy ? null : _google,
                   ),
                 ],
               ),
