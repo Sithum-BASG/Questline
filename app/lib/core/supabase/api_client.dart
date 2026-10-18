@@ -94,6 +94,14 @@ class ApiClient {
     return invoke('tasks', 'challengeTask', {'taskId': taskId, 'context': context});
   }
 
+  Future<Map<String, dynamic>> rescheduleTask(String taskId, String newDueAt, {bool useScroll = false}) {
+    return invoke('tasks', 'rescheduleTask', {
+      'taskId': taskId,
+      'newDueAt': newDueAt,
+      'useScroll': useScroll,
+    });
+  }
+
   Future<void> completeOnboardingStep(String step, {Map<String, dynamic>? data}) {
     return invoke('account', 'completeOnboardingStep', {
       'step': step,

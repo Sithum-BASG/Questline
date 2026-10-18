@@ -83,6 +83,12 @@ final setStatProvider = Provider<Future<void> Function(String taskId, String sta
   return (taskId, stat) => ref.read(taskRepositoryProvider).setStat(taskId, stat);
 });
 
+final rescheduleProvider = Provider<Future<void> Function(String taskId, String newDueAt, bool useScroll)>((ref) {
+  return (taskId, newDueAt, useScroll) async {
+    await ref.read(apiClientProvider).rescheduleTask(taskId, newDueAt, useScroll: useScroll);
+  };
+});
+
 /// Shows the judgement for one task. Save opens it. Discard deletes a draft.
 class TaskScreen extends ConsumerStatefulWidget {
   const TaskScreen({super.key, required this.taskId, this.onboarding = false});
@@ -170,13 +176,27 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 const SizedBox(height: AppSpacing.s20),
                 if (row.status == 'draft' && judged != null)
                   QButton(label: 'Save', onPressed: _busy ? null : () => _save(row.id)),
-                if (row.status == 'open' && judged != null && !judged.challenged && !widget.onboarding) ...[
+                if (row.status == 'open' && !widget.onboarding) ...[
                   const SizedBox(height: AppSpacing.s8),
                   QButton(
-                    label: 'Disagree?',
+                    label: 'Reschedule',
                     variant: QButtonVariant.secondary,
-                    onPressed: () => context.push('/quests/${row.id}/challenge'),
+                    onPressed: _busy ? null : () => _reschedule(false),
                   ),
+                  const SizedBox(height: AppSpacing.s8),
+                  QButton(
+                    label: 'Use a scroll',
+                    variant: QButtonVariant.text,
+                    onPressed: _busy ? null : () => _reschedule(true),
+                  ),
+                  if (judged != null && !judged.challenged) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    QButton(
+                      label: 'Disagree?',
+                      variant: QButtonVariant.secondary,
+                      onPressed: () => context.push('/quests/${row.id}/challenge'),
+                    ),
+                  ],
                 ],
                 if (row.status == 'draft') ...[
                   const SizedBox(height: AppSpacing.s8),
@@ -236,6 +256,27 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       await ref.read(discardTaskProvider)(id);
       ref.invalidate(tasksProvider);
       if (mounted) context.go('/quests');
+    } on ApiException catch (error) {
+      setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reschedule(bool useScroll) async {
+    final picked = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: DateTime.now(),
+    );
+    if (picked == null || !mounted) return;
+    final due = DateTime.utc(picked.year, picked.month, picked.day, 12).toIso8601String();
+    setState(() => _busy = true);
+    try {
+      await ref.read(rescheduleProvider)(widget.taskId, due, useScroll);
+      ref.invalidate(taskProvider(widget.taskId));
+      ref.invalidate(tasksProvider);
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
