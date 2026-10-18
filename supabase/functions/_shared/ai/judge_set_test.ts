@@ -1,6 +1,7 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
 import set from "./judge-set.json" with { type: "json" };
+import { PROMPT_VERSION } from "./prompts.ts";
 
 Deno.test("the judge set covers stats, difficulty, vague tasks and three injections", () => {
   assertEquals(set.length >= 30, true);
@@ -15,4 +16,5 @@ Deno.test("the judge set covers stats, difficulty, vague tasks and three injecti
   const forensics = set.find((item) => item.id === "forensics-intro");
   assertEquals(forensics?.title, "Write introduction for Computer Forensics report (800 words)");
   assertEquals(set.some((item) => "email" in item || "userId" in item), false);
+  assertEquals(PROMPT_VERSION, 1);
 });

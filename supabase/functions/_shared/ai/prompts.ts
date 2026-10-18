@@ -1,3 +1,6 @@
+/// Frozen after the 19 Oct 2026 judge-set run. Bump this if the prompt text changes.
+export const PROMPT_VERSION = 1;
+
 /// Copied verbatim from docs/00-PROJECT-OVERVIEW.md §23.1.
 export const taskJudgeSystem = `You are the task judge for Questline, a productivity app for university students. For each task, classify it into one stat and estimate the effort a typical university student would need.
 
