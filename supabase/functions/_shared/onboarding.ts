@@ -1,5 +1,7 @@
 /** Leaderboard day boundary and week id. Monday 04:00 in the leaderboard timezone. */
 
+export { levelFromXp, totalForLevel, xpForLevel, type LevelCurve } from "./game/rewards.ts";
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export type ZonedParts = {
@@ -95,27 +97,4 @@ export function usernameFromDisplayName(displayName: string, digits: string): st
   const base = (slug.length > 0 ? slug : "player").slice(0, 15);
   const suffix = digits.replace(/\D/g, "").slice(0, 4).padStart(4, "0");
   return `${base}_${suffix}`.slice(0, 20);
-}
-
-export type LevelCurve = { base: number; coef: number; exp: number; roundTo: number; maxLevel: number };
-
-export function xpForLevel(level: number, curve: LevelCurve): number {
-  const raw = curve.base + curve.coef * (level - 2) ** curve.exp;
-  const step = curve.roundTo;
-  return Math.round(raw / step) * step;
-}
-
-export function totalForLevel(level: number, curve: LevelCurve): number {
-  let total = 0;
-  for (let k = 2; k <= level; k++) total += xpForLevel(k, curve);
-  return total;
-}
-
-export function levelFromXp(xp: number, curve: LevelCurve): number {
-  let level = 1;
-  for (let next = 2; next <= curve.maxLevel; next++) {
-    if (totalForLevel(next, curve) <= xp) level = next;
-    else break;
-  }
-  return level;
 }
