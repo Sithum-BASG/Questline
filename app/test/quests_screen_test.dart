@@ -52,6 +52,7 @@ void main() {
           insertDraftProvider.overrideWith((ref) {
             return ({required String title, String? notes, DateTime? dueAt, String? bossId}) async {
               saved = title;
+              return 'task-1';
             };
           }),
         ],
@@ -62,6 +63,7 @@ void main() {
             routes: [
               GoRoute(path: '/quests', builder: (context, state) => const Text('list')),
               GoRoute(path: '/quests/new', builder: (context, state) => const AddTaskScreen()),
+              GoRoute(path: '/quests/:taskId', builder: (context, state) => Text(state.pathParameters['taskId']!)),
             ],
           ),
         ),
@@ -72,6 +74,6 @@ void main() {
     await tester.tap(find.text('Judge'));
     await tester.pumpAndSettle();
     expect(saved, 'Revise chapter 3');
-    expect(find.text('list'), findsOneWidget);
+    expect(find.text('task-1'), findsOneWidget);
   });
 }

@@ -17,7 +17,9 @@ import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/story_screen.dart';
 import 'features/onboarding/study_screen.dart';
 import 'features/quests/add_task_screen.dart';
+import 'features/quests/challenge_screen.dart';
 import 'features/quests/quests_screen.dart';
+import 'features/quests/task_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(ref);
@@ -50,9 +52,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (context, state) => const QuestsScreen(),
               routes: [
                 GoRoute(path: 'new', builder: (context, state) => const AddTaskScreen()),
-                _screen(':taskId', 'Task', routes: [
-                  _screen('challenge', 'Challenge'),
-                ]),
+                GoRoute(
+                  path: ':taskId',
+                  builder: (context, state) => TaskScreen(taskId: state.pathParameters['taskId']!),
+                  routes: [
+                    GoRoute(
+                      path: 'challenge',
+                      builder: (context, state) => ChallengeScreen(taskId: state.pathParameters['taskId']!),
+                    ),
+                  ],
+                ),
               ],
             ),
           ]),

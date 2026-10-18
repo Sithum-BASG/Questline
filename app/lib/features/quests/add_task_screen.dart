@@ -47,18 +47,13 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
       _error = null;
     });
     try {
-      await ref.read(insertDraftProvider)(
+      final id = await ref.read(insertDraftProvider)(
         title: title,
         notes: notes.isEmpty ? null : notes,
         dueAt: _due,
       );
       ref.invalidate(tasksProvider);
-      if (!mounted) return;
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go('/quests');
-      }
+      if (mounted) context.go('/quests/$id');
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } catch (_) {

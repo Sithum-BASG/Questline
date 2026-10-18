@@ -18,19 +18,37 @@ class TaskRepository {
     return [for (final row in rows) Task.fromJson(row)];
   }
 
-  /// Client insert grant: title, notes, due date, and an optional parent boss.
-  Future<void> insertDraft({
+  Future<String> insertDraft({
     required String title,
     String? notes,
     DateTime? dueAt,
     String? bossId,
   }) async {
-    await _client.from('tasks').insert({
+    final row = await _client.from('tasks').insert({
       'title': title,
       'notes': ?notes,
       'due_at': ?dueAt?.toUtc().toIso8601String(),
       'boss_id': ?bossId,
-    });
+    }).select('id').single();
+    return row['id'] as String;
+  }
+
+  Future<Task?> find(String id) async {
+    final row = await _client.from('tasks').select(_columns).eq('id', id).maybeSingle();
+    if (row == null) return null;
+    return Task.fromJson(row);
+  }
+
+  Future<void> saveOpen(String id) async {
+    await _client.from('tasks').update({'status': 'open'}).eq('id', id);
+  }
+
+  Future<void> setStat(String id, String stat) async {
+    await _client.from('tasks').update({'stat': stat}).eq('id', id);
+  }
+
+  Future<void> discard(String id) async {
+    await _client.from('tasks').delete().eq('id', id);
   }
 }
 
@@ -42,7 +60,7 @@ final tasksProvider = FutureProvider<List<Task>>((ref) {
   return ref.watch(taskRepositoryProvider).list();
 });
 
-typedef InsertDraft = Future<void> Function({
+typedef InsertDraft = Future<String> Function({
   required String title,
   String? notes,
   DateTime? dueAt,
@@ -58,4 +76,8 @@ final insertDraftProvider = Provider<InsertDraft>((ref) {
           bossId: bossId,
         );
   };
+});
+
+final taskProvider = FutureProvider.family<Task?, String>((ref, id) {
+  return ref.watch(taskRepositoryProvider).find(id);
 });
