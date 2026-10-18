@@ -16,6 +16,8 @@ import 'features/auth/welcome_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/story_screen.dart';
 import 'features/onboarding/study_screen.dart';
+import 'features/quests/add_task_screen.dart';
+import 'features/quests/quests_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(ref);
@@ -43,12 +45,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           StatefulShellBranch(routes: [_screen('/home', 'Home')]),
           StatefulShellBranch(routes: [
-            _screen('/quests', 'Quests', routes: [
-              _screen('new', 'Add task'),
-              _screen(':taskId', 'Task', routes: [
-                _screen('challenge', 'Challenge'),
-              ]),
-            ]),
+            GoRoute(
+              path: '/quests',
+              builder: (context, state) => const QuestsScreen(),
+              routes: [
+                GoRoute(path: 'new', builder: (context, state) => const AddTaskScreen()),
+                _screen(':taskId', 'Task', routes: [
+                  _screen('challenge', 'Challenge'),
+                ]),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
             _screen('/bosses', 'Bosses', routes: [
