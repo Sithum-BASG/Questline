@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/supabase/api_client.dart';
+import '../../core/supabase/auth_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
@@ -84,9 +85,12 @@ final setStatProvider = Provider<Future<void> Function(String taskId, String sta
 
 /// Shows the judgement for one task. Save opens it. Discard deletes a draft.
 class TaskScreen extends ConsumerStatefulWidget {
-  const TaskScreen({super.key, required this.taskId});
+  const TaskScreen({super.key, required this.taskId, this.onboarding = false});
 
   final String taskId;
+
+  /// The first quest. Save also stores the first_task onboarding step. No boss toggle.
+  final bool onboarding;
 
   @override
   ConsumerState<TaskScreen> createState() => _TaskScreenState();
@@ -166,7 +170,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 const SizedBox(height: AppSpacing.s20),
                 if (row.status == 'draft' && judged != null)
                   QButton(label: 'Save', onPressed: _busy ? null : () => _save(row.id)),
-                if (row.status == 'open' && judged != null && !judged.challenged) ...[
+                if (row.status == 'open' && judged != null && !judged.challenged && !widget.onboarding) ...[
                   const SizedBox(height: AppSpacing.s8),
                   QButton(
                     label: 'Disagree?',
@@ -213,6 +217,10 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     setState(() => _busy = true);
     try {
       await ref.read(saveTaskProvider)(id);
+      if (widget.onboarding) {
+        await ref.read(completeOnboardingProvider)('first_task');
+        ref.invalidate(onboardingStepProvider);
+      }
       ref.invalidate(tasksProvider);
       if (mounted) context.go('/quests');
     } on ApiException catch (error) {

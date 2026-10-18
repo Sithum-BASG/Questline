@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:questline/core/supabase/auth_providers.dart';
 import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/data/models/task.dart';
 import 'package:questline/features/quests/challenge_screen.dart';
@@ -25,7 +26,6 @@ Task _draft() {
 void main() {
   testWidgets('save opens the judged draft and discard deletes it', (tester) async {
     String? saved;
-    String? discarded;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -45,11 +45,6 @@ void main() {
           saveTaskProvider.overrideWith((ref) {
             return (taskId) async {
               saved = taskId;
-            };
-          }),
-          discardTaskProvider.overrideWith((ref) {
-            return (taskId) async {
-              discarded = taskId;
             };
           }),
         ],
@@ -72,6 +67,53 @@ void main() {
     await tester.pumpAndSettle();
     expect(saved, 'task-1');
     expect(find.text('list'), findsOneWidget);
+  });
+
+  testWidgets('the first quest save stores the onboarding step', (tester) async {
+    String? step;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          taskProvider.overrideWith((ref, id) async => _draft()),
+          judgeTaskProvider.overrideWith((ref) {
+            return (taskId) async => {
+                  'stat': 'intellect',
+                  'difficulty': 4,
+                  'estimatedMinutes': 90,
+                  'xpPreview': 129,
+                  'reason': 'Careful writing.',
+                  'provisional': false,
+                  'challenged': false,
+                  'tooBig': false,
+                };
+          }),
+          saveTaskProvider.overrideWith((ref) => (taskId) async {}),
+          completeOnboardingProvider.overrideWith((ref) {
+            return (sent, {data}) async {
+              step = sent;
+            };
+          }),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          routerConfig: GoRouter(
+            initialLocation: '/onboarding/first-task',
+            routes: [
+              GoRoute(path: '/quests', builder: (context, state) => const Text('list')),
+              GoRoute(
+                path: '/onboarding/first-task',
+                builder: (context, state) => const TaskScreen(taskId: 'task-1', onboarding: true),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Disagree?'), findsNothing);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(step, 'first_task');
   });
 
   testWidgets('discard deletes the draft', (tester) async {

@@ -11,9 +11,10 @@ String routeForOnboardingStep(String? step) {
     case 'story':
       return '/onboarding/study';
     case 'study':
+      return '/onboarding/first-task';
     case 'first_task':
     case 'first_session':
-      return '/onboarding/first-task';
+      return '/quests';
     default:
       return '/home';
   }
