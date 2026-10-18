@@ -14,8 +14,13 @@ import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/onboarding/character_screen.dart';
+import 'features/onboarding/first_task_screen.dart';
 import 'features/onboarding/story_screen.dart';
 import 'features/onboarding/study_screen.dart';
+import 'features/quests/add_task_screen.dart';
+import 'features/quests/challenge_screen.dart';
+import 'features/quests/quests_screen.dart';
+import 'features/quests/task_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(ref);
@@ -43,12 +48,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           StatefulShellBranch(routes: [_screen('/home', 'Home')]),
           StatefulShellBranch(routes: [
-            _screen('/quests', 'Quests', routes: [
-              _screen('new', 'Add task'),
-              _screen(':taskId', 'Task', routes: [
-                _screen('challenge', 'Challenge'),
-              ]),
-            ]),
+            GoRoute(
+              path: '/quests',
+              builder: (context, state) => const QuestsScreen(),
+              routes: [
+                GoRoute(path: 'new', builder: (context, state) => const AddTaskScreen()),
+                GoRoute(
+                  path: ':taskId',
+                  builder: (context, state) => TaskScreen(taskId: state.pathParameters['taskId']!),
+                  routes: [
+                    GoRoute(
+                      path: 'challenge',
+                      builder: (context, state) => ChallengeScreen(taskId: state.pathParameters['taskId']!),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
             _screen('/bosses', 'Bosses', routes: [
@@ -84,7 +100,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/character', builder: (context, state) => const CharacterScreen()),
       GoRoute(path: '/onboarding/story', builder: (context, state) => const StoryScreen()),
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
-      _screen('/onboarding/first-task', 'First task'),
+      GoRoute(path: '/onboarding/first-task', builder: (context, state) => const FirstTaskScreen()),
       _screen('/focus/start', 'Start focus'),
       _screen('/focus/:sessionId', 'Focus', routes: [
         _screen('complete', 'Session complete'),
