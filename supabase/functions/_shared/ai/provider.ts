@@ -4,6 +4,8 @@ export interface GenerateJsonRequest {
   user: string;
   schemaName: string;
   schema: object;
+  /// When this throws, a Groq model is skipped and the next one is tried.
+  validate?: (value: unknown) => unknown;
 }
 
 export interface AiProvider {

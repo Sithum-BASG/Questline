@@ -82,7 +82,8 @@ export class GroqProvider implements AiProvider {
           body: JSON.stringify(chatBody(attempt.model, req)),
           signal: AbortSignal.timeout(this.options.timeoutMs),
         });
-        const value = await readJsonContent(response);
+        const parsed = await readJsonContent(response);
+        const value = req.validate ? req.validate(parsed) : parsed;
         this.lastModel = attempt.model;
         return value;
       } catch {

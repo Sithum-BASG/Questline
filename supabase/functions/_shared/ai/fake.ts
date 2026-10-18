@@ -33,7 +33,7 @@ export function fakeBossEstimate(): Record<string, unknown> {
 /// Instant deterministic answers. No network.
 export class FakeProvider implements AiProvider {
   generateJson(req: GenerateJsonRequest): Promise<unknown> {
-    if (req.schemaName === "boss_estimate") return Promise.resolve(fakeBossEstimate());
-    return Promise.resolve(fakeJudgement(req.user));
+    const value = req.schemaName === "boss_estimate" ? fakeBossEstimate() : fakeJudgement(req.user);
+    return Promise.resolve(req.validate ? req.validate(value) : value);
   }
 }
