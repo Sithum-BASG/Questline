@@ -2,13 +2,18 @@ import { z } from "zod";
 
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
-import { invalidArgument, notFound } from "./errors.ts";
+import { invalidArgument, notFound, AppError } from "./errors.ts";
 import { AiExhaustedError, getProvider, type AiProvider } from "./ai/index.ts";
 import { fakeStat } from "./ai/fake.ts";
-import { requestJudgement } from "./ai/judge.ts";
+import { requestChallenge, requestJudgement } from "./ai/judge.ts";
 
 const inputSchema = z.object({
   taskId: z.string().uuid(),
+});
+
+const challengeSchema = z.object({
+  taskId: z.string().uuid(),
+  context: z.string().trim().min(1).max(280),
 });
 
 export interface JudgeResult {
@@ -195,4 +200,103 @@ export async function judgeTask(userId: string, body: unknown, sql: Sql = getSql
   const config = await loadConfig();
   const provider = getProvider({ timeoutMs: numberFrom(config.ai_timeout_ms, 10_000) });
   return await sql.begin(async (tx) => judgeDraft(userId, taskId, tx as unknown as Tx, provider, config));
+}
+
+/// One challenge per open task. The new rating is final. A failed call does not use up the challenge.
+export async function challengeDraft(
+  userId: string,
+  taskId: string,
+  context: string,
+  tx: Tx,
+  provider: AiProvider,
+  config: GameConfig,
+  now = new Date(),
+): Promise<JudgeResult> {
+  const tasks = await tx`
+    select id, title, notes, due_at, boss_id, status, stat, difficulty, est_minutes,
+           too_big, reason, provisional, challenged, judged_at
+    from tasks where id = ${taskId} and user_id = ${userId} for update
+  `;
+  const task = tasks[0] as unknown as TaskRow | undefined;
+  if (!task) throw notFound("Task not found");
+  if (task.status !== "open" || task.difficulty == null) {
+    throw invalidArgument("Only a judged open task can be challenged");
+  }
+  if (task.challenged) throw invalidArgument("This task was already challenged");
+  if (task.provisional) throw invalidArgument("Wait for the judgement before challenging");
+
+  const limit = numberFrom(config.ai_daily_limit, 50);
+  const calls = await tx`select ai_calls_today from player_state where user_id = ${userId} for update`;
+  const used = numberFrom(calls[0]?.ai_calls_today, 0);
+  if (used >= limit) {
+    throw new AppError("unavailable", restingReason, 503);
+  }
+
+  const settings = await tx`select study_context from user_settings where user_id = ${userId}`;
+  let parent: string | null = null;
+  if (task.boss_id) {
+    const bosses = await tx`select title from bosses where id = ${task.boss_id} and user_id = ${userId}`;
+    const title = bosses[0]?.title;
+    parent = typeof title === "string" ? title : null;
+  }
+
+  let judgement;
+  try {
+    judgement = await requestChallenge(provider, {
+      taskTitle: task.title,
+      taskNotes: task.notes,
+      parent,
+      dueInDays: dueInDays(task.due_at, now),
+      studentContext: (settings[0]?.study_context as string | null) ?? null,
+      calibrationRatio: null,
+      previousJudgement: {
+        stat: task.stat,
+        difficulty: task.difficulty,
+        estimated_minutes: task.est_minutes,
+        reason: task.reason,
+      },
+      challengeContext: context,
+    });
+  } catch (error) {
+    if (error instanceof AiExhaustedError) {
+      await tx`update player_state set ai_calls_today = ai_calls_today + 1 where user_id = ${userId}`;
+      throw new AppError("unavailable", "The judge is unavailable. Try the challenge again in a moment.", 503);
+    }
+    throw error;
+  }
+
+  const multipliers = config.xp_difficulty_multipliers as number[];
+  const result: JudgeResult = {
+    stat: judgement.stat,
+    difficulty: judgement.difficulty,
+    estimatedMinutes: judgement.estimated_minutes,
+    tooBig: judgement.too_big,
+    reason: judgement.reason,
+    provisional: false,
+    challenged: true,
+    xpPreview: focusXpPreview(judgement.estimated_minutes, judgement.difficulty, task.due_at != null, multipliers),
+  };
+  await tx`
+    update tasks set
+      stat = ${result.stat},
+      difficulty = ${result.difficulty},
+      est_minutes = ${result.estimatedMinutes},
+      too_big = ${result.tooBig},
+      reason = ${result.reason},
+      provisional = false,
+      challenged = true,
+      judged_at = ${now.toISOString()}
+    where id = ${taskId} and user_id = ${userId}
+  `;
+  await tx`update player_state set ai_calls_today = ai_calls_today + 1 where user_id = ${userId}`;
+  return result;
+}
+
+export async function challengeTask(userId: string, body: unknown, sql: Sql = getSql()): Promise<JudgeResult> {
+  const { taskId, context } = challengeSchema.parse(body);
+  const config = await loadConfig();
+  const provider = getProvider({ timeoutMs: numberFrom(config.ai_timeout_ms, 10_000) });
+  return await sql.begin(async (tx) =>
+    challengeDraft(userId, taskId, context, tx as unknown as Tx, provider, config)
+  );
 }

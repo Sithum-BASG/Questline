@@ -4,7 +4,7 @@ import { AiExhaustedError, type AiProvider, type GenerateJsonRequest } from "./a
 import { defaults } from "./config.ts";
 import type { Sql } from "./db.ts";
 import { AppError } from "./errors.ts";
-import { judgeDraft, judgeTask } from "./judge_task.ts";
+import { judgeDraft, judgeTask, challengeDraft, challengeTask } from "./judge_task.ts";
 
 const userId = "11111111-1111-1111-1111-111111111111";
 const taskId = "22222222-2222-2222-2222-222222222222";
@@ -159,4 +159,59 @@ Deno.test("a bad task id never starts a transaction", async () => {
   } } as unknown as Sql;
   await assertRejects(() => judgeTask(userId, { taskId: "nope" }, sql));
   assertEquals(began, false);
+  await assertRejects(() => challengeTask(userId, { taskId, context: "   " }, sql));
+  assertEquals(began, false);
+});
+
+Deno.test("a challenge re-judges once and marks the result final", async () => {
+  const { tx, queries } = scripted(draft({
+    status: "open",
+    stat: "intellect",
+    difficulty: 4,
+    est_minutes: 90,
+    too_big: false,
+    reason: "Careful writing.",
+    judged_at: "2026-10-10T00:00:00.000Z",
+  }));
+  const ai = provider({ ...good, difficulty: 2, estimated_minutes: 30, reason: "Shorter than it looked." });
+  const result = await challengeDraft(userId, taskId, "It is only a paragraph.", tx, ai, defaults);
+  assertEquals(result.challenged, true);
+  assertEquals(result.difficulty, 2);
+  assertEquals(result.provisional, false);
+  const sent = JSON.parse(ai.calls[0].user);
+  assertEquals(sent.challenge_context, "It is only a paragraph.");
+  assertEquals(sent.previous_judgement.difficulty, 4);
+  assertEquals(JSON.stringify(sent).includes(userId), false);
+  assertEquals(queries.some((query) => query.text.includes("challenged = true")), true);
+
+  const again = scripted(draft({
+    status: "open",
+    difficulty: 2,
+    challenged: true,
+    judged_at: "2026-10-10T00:00:00.000Z",
+  }));
+  await assertRejects(
+    () => challengeDraft(userId, taskId, "Again", again.tx, ai, defaults),
+    AppError,
+    "already challenged",
+  );
+});
+
+Deno.test("a failed challenge does not use up the one chance", async () => {
+  const { tx, queries } = scripted(draft({
+    status: "open",
+    stat: "intellect",
+    difficulty: 4,
+    est_minutes: 90,
+    reason: "Careful writing.",
+    judged_at: "2026-10-10T00:00:00.000Z",
+  }));
+  const ai: AiProvider = { generateJson: () => Promise.reject(new AiExhaustedError()) };
+  await assertRejects(
+    () => challengeDraft(userId, taskId, "It is shorter.", tx, ai, defaults),
+    AppError,
+    "unavailable",
+  );
+  assertEquals(queries.some((query) => query.text.includes("challenged = true")), false);
+  assertEquals(queries.some((query) => query.text.includes("ai_calls_today = ai_calls_today + 1")), true);
 });
