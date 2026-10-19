@@ -100,6 +100,7 @@ class _StartFocusScreenState extends ConsumerState<StartFocusScreen> {
       context.push('/focus/${started.sessionId}', extra: {
         'startedAt': started.startedAt,
         'estimateMinutes': estimate,
+        'mode': _mode,
       });
     } on ApiException catch (error) {
       setState(() => _error = error.message);

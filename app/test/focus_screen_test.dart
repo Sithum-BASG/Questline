@@ -8,9 +8,18 @@ import 'package:questline/features/focus/session_alerts.dart';
 
 class _Alerts implements SessionAlerts {
   int shown = 0;
+  int ongoing = 0;
+
+  @override
+  Future<void> clearOngoing() async {}
 
   @override
   Future<void> clearReturnPrompt() async {}
+
+  @override
+  Future<void> showOngoing(String elapsed) async {
+    ongoing += 1;
+  }
 
   @override
   Future<void> showReturnPrompt() async {
@@ -75,6 +84,29 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(alerts.shown, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('an activity session stays alive in the background', (tester) async {
+    final alerts = _Alerts();
+    await tester.pumpWidget(_app(
+      home: FocusScreen(
+        sessionId: 'session-1',
+        startedAt: DateTime.now(),
+        estimateMinutes: 40,
+        mode: 'activity',
+      ),
+      overrides: [
+        sessionAlertsProvider.overrideWithValue(alerts),
+        endSessionProvider.overrideWith((ref) {
+          return (sessionId, interruptions, {required bool broken}) async {};
+        }),
+      ],
+    ));
+    expect(find.text('Activity'), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    expect(alerts.shown, 0);
     await tester.pumpWidget(const SizedBox());
   });
 }

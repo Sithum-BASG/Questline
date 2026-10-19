@@ -6,6 +6,10 @@ abstract class SessionAlerts {
   Future<void> showReturnPrompt();
 
   Future<void> clearReturnPrompt();
+
+  Future<void> showOngoing(String elapsed);
+
+  Future<void> clearOngoing();
 }
 
 class LocalSessionAlerts implements SessionAlerts {
@@ -15,6 +19,7 @@ class LocalSessionAlerts implements SessionAlerts {
   var _ready = false;
 
   static const _id = 30;
+  static const _ongoingId = 31;
 
   Future<void> _ensure() async {
     if (_ready) return;
@@ -48,6 +53,32 @@ class LocalSessionAlerts implements SessionAlerts {
   @override
   Future<void> clearReturnPrompt() {
     return _plugin.cancel(id: _id);
+  }
+
+  @override
+  Future<void> showOngoing(String elapsed) async {
+    await _ensure();
+    const android = AndroidNotificationDetails(
+      'focus_ongoing',
+      'Session',
+      channelDescription: 'Shows the session timer while you are away',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      onlyAlertOnce: true,
+      showWhen: false,
+    );
+    await _plugin.show(
+      id: _ongoingId,
+      title: 'Questline',
+      body: elapsed,
+      notificationDetails: const NotificationDetails(android: android, iOS: DarwinNotificationDetails()),
+    );
+  }
+
+  @override
+  Future<void> clearOngoing() {
+    return _plugin.cancel(id: _ongoingId);
   }
 }
 

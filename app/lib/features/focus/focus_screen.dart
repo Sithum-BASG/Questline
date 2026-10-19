@@ -26,12 +26,14 @@ class FocusScreen extends ConsumerStatefulWidget {
     required this.sessionId,
     required this.startedAt,
     required this.estimateMinutes,
+    this.mode = 'focus',
     this.grace = const Duration(seconds: 30),
   });
 
   final String sessionId;
   final DateTime startedAt;
   final int estimateMinutes;
+  final String mode;
   final Duration grace;
 
   @override
@@ -40,6 +42,7 @@ class FocusScreen extends ConsumerStatefulWidget {
 
 class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingObserver {
   late final FocusClock _clock;
+  late final SessionAlerts _alerts;
   Timer? _tick;
   String? _error;
   bool _ending = false;
@@ -48,29 +51,38 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
   void initState() {
     super.initState();
     _clock = FocusClock(startedAt: widget.startedAt, grace: widget.grace);
+    _alerts = ref.read(sessionAlertsProvider);
     WidgetsBinding.instance.addObserver(this);
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      if (widget.mode == 'activity') {
+        _alerts.showOngoing(TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())));
+      }
     });
   }
 
   @override
   void dispose() {
     _tick?.cancel();
+    _alerts.clearOngoing();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  bool get _activity => widget.mode == 'activity';
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_activity) return;
     final now = DateTime.now();
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       if (_clock.leave(now)) {
-        ref.read(sessionAlertsProvider).showReturnPrompt();
+        _alerts.showReturnPrompt();
       }
     } else if (state == AppLifecycleState.resumed) {
       _clock.returned(now);
-      ref.read(sessionAlertsProvider).clearReturnPrompt();
+      _alerts.clearReturnPrompt();
       if (_clock.broken) {
         _finish(broken: true);
       } else if (mounted) {
@@ -133,7 +145,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
             child: Column(
               children: [
                 const Spacer(),
-                const Text('Focus', style: AppText.h1),
+                Text(_activity ? 'Activity' : 'Focus', style: AppText.h1),
                 const SizedBox(height: AppSpacing.s24),
                 TimerDisplay(elapsedSeconds: elapsed, estimateSeconds: widget.estimateMinutes * 60),
                 if (_clock.broken) ...[
