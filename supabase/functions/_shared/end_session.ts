@@ -121,7 +121,13 @@ export async function endDraft(
     if (Number.isFinite(left) && Number.isFinite(back) && back > left) awayMs += back - left;
   }
   const elapsedMs = now.getTime() - Date.parse(String(session.started_at));
-  const verifiedMinutes = Math.max(0, Math.floor((elapsedMs - awayMs) / 60_000));
+  let verifiedMinutes = Math.max(0, Math.floor((elapsedMs - awayMs) / 60_000));
+  const settings = await tx`select demo_mode from user_settings where user_id = ${userId}`;
+  const allowed = await tx`select user_id from demo_allowlist where user_id = ${userId}`;
+  if (settings[0]?.demo_mode === true && allowed.length > 0) {
+    const elapsedSeconds = Math.max(0, Math.floor((elapsedMs - awayMs) / 1000));
+    verifiedMinutes = Math.floor(elapsedSeconds / 6);
+  }
   const broken = input.broken === true;
   const onboarding = state.onboarding_step === "first_session";
   const earns = onboarding || verifiedMinutes >= minimumMinutes;

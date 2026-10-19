@@ -8,7 +8,7 @@ const sessionId = "33333333-3333-3333-3333-333333333333";
 const taskId = "22222222-2222-2222-2222-222222222222";
 const now = new Date("2026-10-19T04:00:00.000Z");
 
-function scripted(options: { processed?: boolean; summary?: unknown; startedAt?: string } = {}) {
+function scripted(options: { processed?: boolean; summary?: unknown; startedAt?: string; demo?: boolean } = {}) {
   const queries: { text: string; values: unknown[] }[] = [];
   const started = options.startedAt ?? new Date(now.getTime() - 60 * 60 * 1000).toISOString();
   const tx = (strings: TemplateStringsArray, ...values: unknown[]) => {
@@ -50,6 +50,8 @@ function scripted(options: { processed?: boolean; summary?: unknown; startedAt?:
       }]);
     }
     if (text.includes("from inventory")) return Promise.resolve([]);
+    if (text.includes("from user_settings")) return Promise.resolve([{ demo_mode: options.demo === true }]);
+    if (text.includes("from demo_allowlist")) return Promise.resolve(options.demo ? [{ user_id: userId }] : []);
     if (text.includes("from level_rewards")) {
       return Promise.resolve([{ level: 2, rewards: [{ type: "item", id: "frame_margin_notes" }] }]);
     }
@@ -90,6 +92,15 @@ Deno.test("a processed session returns the stored summary", async () => {
   const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
   assertEquals(summary, stored);
   assertEquals(queries.some((query) => query.text.includes("insert into daily_stats")), false);
+});
+
+Deno.test("demo mode counts 30 seconds as 5 minutes", async () => {
+  const { tx } = scripted({
+    demo: true,
+    startedAt: new Date(now.getTime() - 30 * 1000).toISOString(),
+  });
+  const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
+  assertEquals(summary.verifiedMinutes, 5);
 });
 
 Deno.test("under 5 verified minutes earns nothing and leaves the task open", async () => {
