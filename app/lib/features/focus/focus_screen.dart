@@ -11,6 +11,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/timer_display.dart';
 import 'focus_clock.dart';
+import 'presence_session.dart';
 import 'session_alerts.dart';
 
 final endSessionProvider = Provider<
@@ -28,6 +29,7 @@ class FocusScreen extends ConsumerStatefulWidget {
     required this.startedAt,
     required this.estimateMinutes,
     this.mode = 'focus',
+    this.stat = 'intellect',
     this.grace = const Duration(seconds: 30),
   });
 
@@ -35,6 +37,7 @@ class FocusScreen extends ConsumerStatefulWidget {
   final DateTime startedAt;
   final int estimateMinutes;
   final String mode;
+  final String stat;
   final Duration grace;
 
   @override
@@ -53,6 +56,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     super.initState();
     _clock = FocusClock(startedAt: widget.startedAt, grace: widget.grace);
     _alerts = ref.read(sessionAlertsProvider);
+    ref.read(focusPresenceProvider).begin(stat: widget.stat, startedAt: widget.startedAt);
     WidgetsBinding.instance.addObserver(this);
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
@@ -120,6 +124,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
+      ref.read(focusPresenceProvider).finish(DateTime.now());
       if (!mounted) return;
       context.go('/focus/${widget.sessionId}/complete', extra: summary);
     } on ApiException catch (error) {

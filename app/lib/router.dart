@@ -115,11 +115,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           final startedAt = extra is Map ? extra['startedAt'] as DateTime? : null;
           final estimate = extra is Map ? extra['estimateMinutes'] as int? : null;
           final mode = extra is Map ? extra['mode'] as String? : null;
+          final stat = extra is Map ? extra['stat'] as String? : null;
           return FocusScreen(
             sessionId: state.pathParameters['sessionId']!,
             startedAt: startedAt ?? DateTime.now(),
             estimateMinutes: estimate ?? 25,
             mode: mode ?? 'focus',
+            stat: stat ?? 'intellect',
           );
         },
         routes: [

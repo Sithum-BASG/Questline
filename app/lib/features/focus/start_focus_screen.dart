@@ -75,7 +75,7 @@ class _StartFocusScreenState extends ConsumerState<StartFocusScreen> {
                 QButton(
                   label: 'Start',
                   loading: _busy,
-                  onPressed: _busy ? null : () => _start(estimate),
+                  onPressed: _busy ? null : () => _start(estimate, row.stat ?? 'intellect'),
                 ),
               ],
             );
@@ -85,7 +85,7 @@ class _StartFocusScreenState extends ConsumerState<StartFocusScreen> {
     );
   }
 
-  Future<void> _start(int estimate) async {
+  Future<void> _start(int estimate, String stat) async {
     setState(() {
       _busy = true;
       _error = null;
@@ -101,6 +101,7 @@ class _StartFocusScreenState extends ConsumerState<StartFocusScreen> {
         'startedAt': started.startedAt,
         'estimateMinutes': estimate,
         'mode': _mode,
+        'stat': stat,
       });
     } on ApiException catch (error) {
       setState(() => _error = error.message);

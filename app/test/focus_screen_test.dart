@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/features/focus/focus_screen.dart';
+import 'package:questline/features/focus/presence_session.dart';
 import 'package:questline/features/focus/session_alerts.dart';
 
 class _Alerts implements SessionAlerts {
@@ -25,6 +26,24 @@ class _Alerts implements SessionAlerts {
   Future<void> showReturnPrompt() async {
     shown += 1;
   }
+}
+
+class _Presence implements FocusPresence {
+  int began = 0;
+  int finished = 0;
+
+  @override
+  void begin({required String stat, required DateTime startedAt}) {
+    began += 1;
+  }
+
+  @override
+  void finish(DateTime now) {
+    finished += 1;
+  }
+
+  @override
+  void heartbeat(DateTime now) {}
 }
 
 Widget _app({required Widget home, required List overrides}) {
@@ -54,6 +73,7 @@ void main() {
       ),
       overrides: [
         sessionAlertsProvider.overrideWithValue(_Alerts()),
+        focusPresenceProvider.overrideWithValue(_Presence()),
         endSessionProvider.overrideWith((ref) {
             return (sessionId, interruptions, {required bool broken}) async {
               ended = true;
@@ -79,6 +99,7 @@ void main() {
       home: FocusScreen(sessionId: 'session-1', startedAt: DateTime.now(), estimateMinutes: 25),
       overrides: [
         sessionAlertsProvider.overrideWithValue(alerts),
+        focusPresenceProvider.overrideWithValue(_Presence()),
         endSessionProvider.overrideWith((ref) {
           return (sessionId, interruptions, {required bool broken}) async => {};
         }),
@@ -101,6 +122,7 @@ void main() {
       ),
       overrides: [
         sessionAlertsProvider.overrideWithValue(alerts),
+        focusPresenceProvider.overrideWithValue(_Presence()),
         endSessionProvider.overrideWith((ref) {
           return (sessionId, interruptions, {required bool broken}) async => {};
         }),
