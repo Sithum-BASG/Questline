@@ -43,12 +43,16 @@ function scripted(options: { processed?: boolean; summary?: unknown; startedAt?:
         focus_minutes_today: 0,
         weekly_raw_xp: 0,
         week_id: "2026-W42",
+        xp_total: 0,
         comeback_armed: false,
         potions: 0,
         onboarding_step: "done",
       }]);
     }
     if (text.includes("from inventory")) return Promise.resolve([]);
+    if (text.includes("from level_rewards")) {
+      return Promise.resolve([{ level: 2, rewards: [{ type: "item", id: "frame_margin_notes" }] }]);
+    }
     return Promise.resolve([]);
   };
   return { tx, queries };
@@ -59,15 +63,29 @@ Deno.test("a 60 minute difficulty 4 on-time session is worth 86 raw XP", async (
   const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
   assertEquals(summary.rawXp, 86);
   assertEquals(summary.finalXp, 86);
+  assertEquals(summary.level, 2);
+  assertEquals(summary.xpTotal, 86);
+  assertEquals(summary.rewards, [{ type: "item", id: "frame_margin_notes" }]);
   assertEquals(summary.verifiedMinutes, 60);
   assertEquals(queries.some((query) => query.text.includes("insert into daily_stats")), true);
   assertEquals(queries.some((query) => query.text.includes("insert into weekly_scores")), true);
-  assertEquals(queries.some((query) => query.text.includes("status = 'done'")), true);
-  assertEquals(queries.every((query) => query.values.includes(userId)), true);
+  assertEquals(queries.some((query) => query.text.includes("insert into activity_events")), true);
+  assertEquals(queries.some((query) => query.text.includes("update friend_summaries")), true);
+  const userQueries = queries.filter((query) => !query.text.includes("level_rewards"));
+  assertEquals(userQueries.every((query) => query.values.includes(userId)), true);
 });
 
 Deno.test("a processed session returns the stored summary", async () => {
-  const stored = { rawXp: 86, finalXp: 86, verifiedMinutes: 60, countedMinutes: 60, broken: false };
+  const stored = {
+    rawXp: 86,
+    finalXp: 86,
+    verifiedMinutes: 60,
+    countedMinutes: 60,
+    broken: false,
+    xpTotal: 86,
+    level: 2,
+    rewards: [],
+  };
   const { tx, queries } = scripted({ processed: true, summary: stored });
   const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
   assertEquals(summary, stored);

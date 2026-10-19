@@ -4,6 +4,7 @@ import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { notFound } from "./errors.ts";
 import { sessionXp, type XpRates } from "./game/xp.ts";
+import { levelFromXp, rewardsForLevels, type LevelCurve } from "./game/rewards.ts";
 import { dayKey, weekId } from "./game/time.ts";
 
 const inputSchema = z.object({
@@ -23,8 +24,21 @@ export interface SessionSummary {
   verifiedMinutes: number;
   countedMinutes: number;
   broken: boolean;
+  xpTotal: number;
+  level: number;
+  rewards: unknown[];
 }
 
+function curveFrom(value: unknown): LevelCurve {
+  const raw = value as { base: number; coef: number; exp: number; round_to: number; max_level: number };
+  return {
+    base: Number(raw.base),
+    coef: Number(raw.coef),
+    exp: Number(raw.exp),
+    roundTo: Number(raw.round_to),
+    maxLevel: Number(raw.max_level),
+  };
+}
 const leaderboardTz = "Asia/Colombo";
 const minimumMinutes = 5;
 
@@ -95,7 +109,7 @@ export async function endDraft(
   if (!task) throw notFound("Task not found");
 
   const stateRows = await tx`
-    select timezone, focus_minutes_today, weekly_raw_xp, week_id, comeback_armed, potions, onboarding_step
+    select timezone, focus_minutes_today, weekly_raw_xp, week_id, comeback_armed, potions, onboarding_step, xp_total
     from player_state where user_id = ${userId} for update
   `;
   const state = stateRows[0] ?? {};
@@ -141,15 +155,64 @@ export async function endDraft(
     })
     : { countedMinutes: 0, raw: 0, final: 0 };
 
+  const previousXp = numberFrom(state.xp_total, 0);
+  const xpTotal = previousXp + xp.final;
+  const curve = curveFrom(config.level_curve);
+  const previousLevel = levelFromXp(previousXp, curve);
+  const nextLevel = levelFromXp(xpTotal, curve);
+  const rewardRows = nextLevel > previousLevel
+    ? await tx`
+      select level, rewards from level_rewards
+      where level > ${previousLevel} and level <= ${nextLevel}
+      order by level
+    `
+    : [];
+  const table = rewardRows.map((row) => ({
+    level: numberFrom(row.level, 0),
+    rewards: Array.isArray(row.rewards) ? row.rewards : JSON.parse(String(row.rewards ?? "[]")),
+  }));
+  const rewards = rewardsForLevels(previousLevel, nextLevel, table);
+  for (const reward of rewards as { type?: string; id?: string; amount?: number }[]) {
+    if (reward.type === "item" && reward.id) {
+      await tx`
+        insert into inventory (user_id, catalog_id, source)
+        values (${userId}, ${reward.id}, 'level')
+        on conflict (user_id, catalog_id) do nothing
+      `;
+    } else if (reward.type === "title" && reward.id) {
+      await tx`
+        update player_state
+        set owned_titles = owned_titles || ${`{${reward.id}}`}::text[]
+        where user_id = ${userId} and not (${reward.id} = any (owned_titles))
+      `;
+    } else if (reward.type === "coins" && reward.amount) {
+      await tx`update player_state set coins = coins + ${reward.amount} where user_id = ${userId}`;
+    }
+  }
+  if (nextLevel !== previousLevel) {
+    await tx`update profiles set level = ${nextLevel} where id = ${userId}`;
+    await tx`
+      insert into activity_events (actor_id, type, payload, visible_to)
+      values (
+        ${userId}, 'level_up', ${JSON.stringify({ level: nextLevel })}::jsonb,
+        coalesce((select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'), '{}')
+      )
+    `;
+  }
+
   const summary: SessionSummary = {
     rawXp: xp.raw,
     finalXp: xp.final,
     verifiedMinutes,
     countedMinutes: xp.countedMinutes,
     broken,
+    xpTotal,
+    level: nextLevel,
+    rewards,
   };
   const stat = String(task.stat ?? "intellect");
   const week = weekId(now, leaderboardTz);
+  const weeklyRaw = (state.week_id === week ? numberFrom(state.weekly_raw_xp, 0) : 0) + xp.raw;
   if (stat === "vitality") {
     await tx`
       insert into daily_stats (user_id, day, xp_vitality, raw_xp, focus_minutes, sessions_started, met_minimum)
@@ -207,6 +270,7 @@ export async function endDraft(
       focus_minutes_today = focus_minutes_today + ${xp.countedMinutes},
       weekly_raw_xp = case when week_id = ${week} then weekly_raw_xp + ${xp.raw} else ${xp.raw} end,
       week_id = ${week},
+      xp_total = ${xpTotal},
       comeback_armed = ${state.comeback_armed === true && !earns},
       potions = potions - ${spentPotion ? 1 : 0},
       active_potion = ${session.potion === true && !spentPotion}
@@ -219,6 +283,10 @@ export async function endDraft(
       where id = ${session.task_id} and user_id = ${userId}
     `;
   }
+  await tx`
+    update friend_summaries set weekly_raw_xp = ${weeklyRaw}, updated_at = now()
+    where user_id = ${userId}
+  `;
   const status = broken ? "broken" : "completed";
   await tx`
     update sessions set status = ${status}, ended_at = ${now.toISOString()}, verified_minutes = ${verifiedMinutes},
