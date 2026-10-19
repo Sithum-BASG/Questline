@@ -179,6 +179,11 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 if (row.status == 'open' && !widget.onboarding) ...[
                   const SizedBox(height: AppSpacing.s8),
                   QButton(
+                    label: 'Focus',
+                    onPressed: _busy ? null : () => context.push('/focus/start?taskId=${row.id}'),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  QButton(
                     label: 'Reschedule',
                     variant: QButtonVariant.secondary,
                     onPressed: _busy ? null : () => _reschedule(false),

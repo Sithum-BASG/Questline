@@ -13,6 +13,8 @@ import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
+import 'features/focus/focus_screen.dart';
+import 'features/focus/start_focus_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_task_screen.dart';
 import 'features/onboarding/story_screen.dart';
@@ -101,10 +103,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/story', builder: (context, state) => const StoryScreen()),
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
       GoRoute(path: '/onboarding/first-task', builder: (context, state) => const FirstTaskScreen()),
-      _screen('/focus/start', 'Start focus'),
-      _screen('/focus/:sessionId', 'Focus', routes: [
-        _screen('complete', 'Session complete'),
-      ]),
+      GoRoute(
+        path: '/focus/start',
+        builder: (context, state) => StartFocusScreen(taskId: state.uri.queryParameters['taskId'] ?? ''),
+      ),
+      GoRoute(
+        path: '/focus/:sessionId',
+        builder: (context, state) {
+          final extra = state.extra;
+          final startedAt = extra is Map ? extra['startedAt'] as DateTime? : null;
+          final estimate = extra is Map ? extra['estimateMinutes'] as int? : null;
+          return FocusScreen(
+            sessionId: state.pathParameters['sessionId']!,
+            startedAt: startedAt ?? DateTime.now(),
+            estimateMinutes: estimate ?? 25,
+          );
+        },
+        routes: [
+          _screen('complete', 'Session complete'),
+        ],
+      ),
       _screen('/raids/new', 'Start raid'),
       _screen('/raids/join', 'Join raid'),
       _screen('/raids/:raidId', 'Raid', routes: [
