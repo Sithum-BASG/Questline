@@ -31,7 +31,9 @@ Widget _app({required Widget home, required List overrides}) {
   final router = GoRouter(
     initialLocation: '/focus/session-1',
     routes: [
-      GoRoute(path: '/focus/:sessionId', builder: (context, state) => home),
+      GoRoute(path: '/focus/:sessionId', builder: (context, state) => home, routes: [
+        GoRoute(path: 'complete', builder: (context, state) => const Scaffold(body: Text('Complete'))),
+      ]),
       GoRoute(path: '/quests', builder: (context, state) => const Scaffold(body: Text('Quests'))),
     ],
   );
@@ -53,9 +55,10 @@ void main() {
       overrides: [
         sessionAlertsProvider.overrideWithValue(_Alerts()),
         endSessionProvider.overrideWith((ref) {
-          return (sessionId, interruptions, {required bool broken}) async {
-            ended = true;
-          };
+            return (sessionId, interruptions, {required bool broken}) async {
+              ended = true;
+              return {'rawXp': 86, 'finalXp': 86, 'verifiedMinutes': 60, 'level': 2, 'rewards': []};
+            };
         }),
       ],
     ));
@@ -77,7 +80,7 @@ void main() {
       overrides: [
         sessionAlertsProvider.overrideWithValue(alerts),
         endSessionProvider.overrideWith((ref) {
-          return (sessionId, interruptions, {required bool broken}) async {};
+          return (sessionId, interruptions, {required bool broken}) async => {};
         }),
       ],
     ));
@@ -99,7 +102,7 @@ void main() {
       overrides: [
         sessionAlertsProvider.overrideWithValue(alerts),
         endSessionProvider.overrideWith((ref) {
-          return (sessionId, interruptions, {required bool broken}) async {};
+          return (sessionId, interruptions, {required bool broken}) async => {};
         }),
       ],
     ));

@@ -14,6 +14,7 @@ import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/focus/focus_screen.dart';
+import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_task_screen.dart';
@@ -122,7 +123,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
         routes: [
-          _screen('complete', 'Session complete'),
+          GoRoute(
+            path: 'complete',
+            builder: (context, state) {
+              final extra = state.extra;
+              final summary = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+              return SessionCompleteScreen(summary: summary);
+            },
+          ),
         ],
       ),
       _screen('/raids/new', 'Start raid'),

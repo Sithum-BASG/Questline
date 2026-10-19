@@ -127,7 +127,11 @@ class ApiClient {
     );
   }
 
-  Future<void> endSession(String sessionId, List<Map<String, String>> interruptions, {bool broken = false}) {
+  Future<Map<String, dynamic>> endSession(
+    String sessionId,
+    List<Map<String, String>> interruptions, {
+    bool broken = false,
+  }) {
     return invoke('sessions', 'endSession', {
       'sessionId': sessionId,
       'interruptions': interruptions,

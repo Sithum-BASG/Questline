@@ -14,7 +14,8 @@ import 'focus_clock.dart';
 import 'session_alerts.dart';
 
 final endSessionProvider = Provider<
-    Future<void> Function(String sessionId, List<Map<String, String>> interruptions, {required bool broken})>((ref) {
+    Future<Map<String, dynamic>> Function(String sessionId, List<Map<String, String>> interruptions,
+        {required bool broken})>((ref) {
   return (sessionId, interruptions, {required bool broken}) {
     return ref.read(apiClientProvider).endSession(sessionId, interruptions, broken: broken);
   };
@@ -118,8 +119,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final interruptions = _clock.interruptions.map((item) => item.toJson()).toList();
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
-      await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
-      if (mounted) context.go('/quests');
+      final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
+      if (!mounted) return;
+      context.go('/focus/${widget.sessionId}/complete', extra: summary);
     } on ApiException catch (error) {
       if (mounted) {
         setState(() {
