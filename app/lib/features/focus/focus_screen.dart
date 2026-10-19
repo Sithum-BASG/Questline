@@ -103,11 +103,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       _error = null;
     });
     try {
-      await ref.read(endSessionProvider)(
-        widget.sessionId,
-        _clock.interruptions.map((item) => item.toJson()).toList(),
-        broken: broken,
-      );
+      final interruptions = _clock.interruptions.map((item) => item.toJson()).toList();
+      final left = _clock.leftAt;
+      if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
+      await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
       if (mounted) context.go('/quests');
     } on ApiException catch (error) {
       if (mounted) {
