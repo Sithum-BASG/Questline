@@ -16,6 +16,7 @@ import 'q_bottom_sheet.dart';
 import 'q_button.dart';
 import 'q_card.dart';
 import 'q_chip.dart';
+import 'level_up_entrance.dart';
 import 'reward_overlay.dart';
 import 'stage_card.dart';
 import 'stat_icon.dart';
@@ -147,6 +148,11 @@ class GalleryScreen extends StatelessWidget {
               ])
                 QChip(label: moment.kind.label, selected: true),
             ],
+          ),
+          const _Label('Level-up entrance'),
+          const SizedBox(
+            height: 180,
+            child: LevelUpEntrance(forceReducedMotion: false),
           ),
         ],
       ),

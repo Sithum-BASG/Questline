@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -200,15 +201,35 @@ class _RewardOverlayState extends State<RewardOverlay> with TickerProviderStateM
         ? const AlwaysStoppedAnimation(1.0)
         : Tween(begin: 0.72, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    Widget art = SizedBox(
-      width: 180,
-      height: 180,
-      child: moment.artPath == null
-          ? Icon(moment.kind.fallbackIcon, size: 72, color: moment.burstColor)
-          : Image.asset(moment.artPath!, fit: BoxFit.contain),
-    );
+    Widget art;
+    if (!_reduceMotion && moment.kind == RewardKind.levelUp) {
+      art = SizedBox(
+        width: 220,
+        height: 220,
+        child: Lottie.asset(
+          'assets/animations/level_up.json',
+          controller: _controller,
+          fit: BoxFit.contain,
+          onLoaded: (composition) {
+            final ms = composition.duration.inMilliseconds.clamp(1200, 1800);
+            _controller.duration = Duration(milliseconds: ms);
+            if (!_controller.isAnimating && _controller.value == 0) {
+              _controller.forward();
+            }
+          },
+        ),
+      );
+    } else {
+      art = SizedBox(
+        width: 180,
+        height: 180,
+        child: moment.artPath == null
+            ? Icon(moment.kind.fallbackIcon, size: 72, color: moment.burstColor)
+            : Image.asset(moment.artPath!, fit: BoxFit.contain),
+      );
+    }
 
-    if (!_reduceMotion) {
+    if (!_reduceMotion && moment.kind != RewardKind.levelUp) {
       art = CustomPaint(
         painter: _BurstPainter(
           color: moment.burstColor.withValues(alpha: 0.35),
