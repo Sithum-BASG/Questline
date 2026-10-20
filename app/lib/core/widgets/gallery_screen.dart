@@ -16,6 +16,7 @@ import 'q_bottom_sheet.dart';
 import 'q_button.dart';
 import 'q_card.dart';
 import 'q_chip.dart';
+import 'reward_overlay.dart';
 import 'stage_card.dart';
 import 'stat_icon.dart';
 import 'stat_radar.dart';
@@ -132,6 +133,21 @@ class GalleryScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           const Center(child: TimerDisplay(elapsedSeconds: 125, estimateSeconds: 300)),
+          const _Label('Reward variants'),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              for (final moment in [
+                RewardMoment.levelUp(title: 'Level 2', subtitle: 'You grew'),
+                RewardMoment.loot(title: 'Frame', subtitle: 'Chest', rarity: 'rare'),
+                RewardMoment.boss(title: 'Defeated', subtitle: 'On time'),
+                RewardMoment.badge(title: 'Badge', subtitle: 'Earned'),
+                RewardMoment.streak(title: '7 days', subtitle: 'Streak'),
+              ])
+                QChip(label: moment.kind.label, selected: true),
+            ],
+          ),
         ],
       ),
     );
