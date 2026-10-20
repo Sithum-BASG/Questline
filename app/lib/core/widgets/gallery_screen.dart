@@ -10,13 +10,17 @@ import 'item_card.dart';
 import 'judgement_card.dart';
 import 'leaderboard_row.dart';
 import 'member_card.dart';
+import 'portrait_frame.dart';
 import 'progress_bar.dart';
 import 'q_bottom_sheet.dart';
 import 'q_button.dart';
 import 'q_card.dart';
 import 'q_chip.dart';
+import 'level_up_entrance.dart';
+import 'reward_overlay.dart';
 import 'stage_card.dart';
 import 'stat_icon.dart';
+import 'stat_radar.dart';
 import 'stat_tile.dart';
 import 'task_tile.dart';
 import 'timer_display.dart';
@@ -59,8 +63,20 @@ class GalleryScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s12),
           const ProgressBar(value: 0.6, leading: 'XP', trailing: '86'),
+          const _Label('Radar'),
+          StatRadar(
+            valuesFor30: const StatRadarValues(intellect: 40, vitality: 20, craft: 30, charisma: 10),
+            valuesFor7: const StatRadarValues(intellect: 8, vitality: 4, craft: 6, charisma: 2),
+          ),
           const _Label('Stage'),
           const StageCard(skinId: 'starter', backgroundId: 'starter', body: BodyType.a),
+          const SizedBox(height: AppSpacing.s12),
+          const PortraitFrame(
+            skinId: 'starter',
+            backgroundId: 'starter',
+            frameId: 'apprentice',
+            body: BodyType.a,
+          ),
           const _Label('Tasks and bosses'),
           const TaskTile(title: 'Read chapter 3', stat: 'intellect', dueLabel: 'Today'),
           const SizedBox(height: AppSpacing.s8),
@@ -118,6 +134,26 @@ class GalleryScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           const Center(child: TimerDisplay(elapsedSeconds: 125, estimateSeconds: 300)),
+          const _Label('Reward variants'),
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              for (final moment in [
+                RewardMoment.levelUp(title: 'Level 2', subtitle: 'You grew'),
+                RewardMoment.loot(title: 'Frame', subtitle: 'Chest', rarity: 'rare'),
+                RewardMoment.boss(title: 'Defeated', subtitle: 'On time'),
+                RewardMoment.badge(title: 'Badge', subtitle: 'Earned'),
+                RewardMoment.streak(title: '7 days', subtitle: 'Streak'),
+              ])
+                QChip(label: moment.kind.label, selected: true),
+            ],
+          ),
+          const _Label('Level-up entrance'),
+          const SizedBox(
+            height: 180,
+            child: LevelUpEntrance(forceReducedMotion: false),
+          ),
         ],
       ),
     );
