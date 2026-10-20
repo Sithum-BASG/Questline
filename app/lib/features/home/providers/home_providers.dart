@@ -91,6 +91,13 @@ class HomeRepository {
       nextRewardLabel = gap == 1 ? 'Next level reward' : '$gap levels until the next reward';
     }
 
+    final friends = await _client
+        .from('friendships')
+        .select('friend_id')
+        .eq('status', 'accepted')
+        .limit(1);
+    final showAddFriends = (friends as List).isEmpty;
+
     return HomeSnapshot(
       profile: profile,
       player: player,
@@ -99,6 +106,7 @@ class HomeRepository {
       weeklyRank: weeklyRank,
       unreadInbox: unreadInbox,
       nextRewardLabel: nextRewardLabel,
+      showAddFriends: showAddFriends,
     );
   }
 }

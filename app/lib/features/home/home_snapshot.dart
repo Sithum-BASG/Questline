@@ -13,6 +13,7 @@ class HomeSnapshot {
     this.weeklyRank,
     this.unreadInbox = 0,
     this.nextRewardLabel,
+    this.showAddFriends = false,
     this.offline = false,
   });
 
@@ -23,6 +24,7 @@ class HomeSnapshot {
   final int? weeklyRank;
   final int unreadInbox;
   final String? nextRewardLabel;
+  final bool showAddFriends;
   final bool offline;
 
   HomeSnapshot copyWith({bool? offline}) {
@@ -34,6 +36,7 @@ class HomeSnapshot {
       weeklyRank: weeklyRank,
       unreadInbox: unreadInbox,
       nextRewardLabel: nextRewardLabel,
+      showAddFriends: showAddFriends,
       offline: offline ?? this.offline,
     );
   }
@@ -46,6 +49,7 @@ class HomeSnapshot {
         'weeklyRank': weeklyRank,
         'unreadInbox': unreadInbox,
         'nextRewardLabel': nextRewardLabel,
+        'showAddFriends': showAddFriends,
       };
 
   factory HomeSnapshot.fromJson(Map<String, dynamic> json, {bool offline = false}) {
@@ -64,6 +68,7 @@ class HomeSnapshot {
       weeklyRank: json['weeklyRank'] as int?,
       unreadInbox: (json['unreadInbox'] as num?)?.toInt() ?? 0,
       nextRewardLabel: json['nextRewardLabel'] as String?,
+      showAddFriends: json['showAddFriends'] == true,
       offline: offline,
     );
   }

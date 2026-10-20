@@ -150,6 +150,28 @@ class _HomeBody extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s24),
           _BossSection(boss: snapshot.closestBoss, now: now),
+          if (snapshot.showAddFriends) ...[
+            const SizedBox(height: AppSpacing.s16),
+            QCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Add friends', style: AppText.h2),
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    'Compare weekly XP when you are ready — never required.',
+                    style: AppText.bodySmall,
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  QButton(
+                    label: 'Find friends',
+                    variant: QButtonVariant.secondary,
+                    onPressed: () => context.go('/social/friends'),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.s24),
           Text("Today's quests", style: AppText.h2),
           const SizedBox(height: AppSpacing.s8),

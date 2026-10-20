@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/widgets/reward_overlay.dart';
+import '../onboarding/onboarding_flags.dart';
 
-/// Plays the next reward from the queue, then returns home when the queue is empty.
+/// Plays the next reward from the queue, then Home — or the free chest in onboarding.
 class RewardScreen extends ConsumerStatefulWidget {
   const RewardScreen({super.key});
 
@@ -31,13 +32,18 @@ class _RewardScreenState extends ConsumerState<RewardScreen> {
     if (mounted) setState(() {});
   }
 
+  void _finish() {
+    final next = ref.read(pendingOnboardingChestProvider) ? '/onboarding/chest' : '/home';
+    if (context.mounted) context.go(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     final queue = ref.watch(rewardQueueProvider);
     final moment = queue.current;
     if (moment == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.go('/home');
+        if (context.mounted) _finish();
       });
       return const SizedBox.shrink();
     }
@@ -47,7 +53,7 @@ class _RewardScreenState extends ConsumerState<RewardScreen> {
       onClaim: () {
         queue.claim();
         if (queue.current == null && queue.pending.isEmpty && context.mounted) {
-          context.go('/home');
+          _finish();
         }
       },
     );

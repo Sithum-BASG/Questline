@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/reward_overlay.dart';
+import '../onboarding/onboarding_flags.dart';
 
 class SessionCompleteScreen extends ConsumerStatefulWidget {
   const SessionCompleteScreen({super.key, required this.summary});
@@ -62,6 +63,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
       if (widget.summary['onboarding'] == true) {
         await ref.read(completeOnboardingProvider)('first_session');
         ref.invalidate(onboardingStepProvider);
+        ref.read(pendingOnboardingChestProvider.notifier).setPending(true);
       }
       final queue = ref.read(rewardQueueProvider);
       queue.add(_momentsFromSummary());
@@ -69,8 +71,10 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
       if (queue.pending.isNotEmpty || queue.current != null) {
         queue.next();
         context.go('/reward');
+      } else if (widget.summary['onboarding'] == true) {
+        context.go('/onboarding/chest');
       } else {
-        context.go(widget.summary['onboarding'] == true ? '/home' : '/quests');
+        context.go('/quests');
       }
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);

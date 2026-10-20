@@ -23,6 +23,7 @@ import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_session_screen.dart';
 import 'features/onboarding/first_task_screen.dart';
+import 'features/onboarding/onboarding_chest_screen.dart';
 import 'features/onboarding/story_screen.dart';
 import 'features/onboarding/study_screen.dart';
 import 'features/quests/add_task_screen.dart';
@@ -112,6 +113,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
       GoRoute(path: '/onboarding/first-task', builder: (context, state) => const FirstTaskScreen()),
       GoRoute(path: '/onboarding/first-session', builder: (context, state) => const FirstSessionScreen()),
+      GoRoute(path: '/onboarding/chest', builder: (context, state) => const OnboardingChestScreen()),
       GoRoute(
         path: '/focus/start',
         builder: (context, state) => StartFocusScreen(taskId: state.uri.queryParameters['taskId'] ?? ''),
