@@ -10,6 +10,7 @@ import 'item_card.dart';
 import 'judgement_card.dart';
 import 'leaderboard_row.dart';
 import 'member_card.dart';
+import 'portrait_frame.dart';
 import 'progress_bar.dart';
 import 'q_bottom_sheet.dart';
 import 'q_button.dart';
@@ -61,6 +62,13 @@ class GalleryScreen extends StatelessWidget {
           const ProgressBar(value: 0.6, leading: 'XP', trailing: '86'),
           const _Label('Stage'),
           const StageCard(skinId: 'starter', backgroundId: 'starter', body: BodyType.a),
+          const SizedBox(height: AppSpacing.s12),
+          const PortraitFrame(
+            skinId: 'starter',
+            backgroundId: 'starter',
+            frameId: 'apprentice',
+            body: BodyType.a,
+          ),
           const _Label('Tasks and bosses'),
           const TaskTile(title: 'Read chapter 3', stat: 'intellect', dueLabel: 'Today'),
           const SizedBox(height: AppSpacing.s8),
