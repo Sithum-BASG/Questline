@@ -25,7 +25,8 @@ void main() {
     expect(routeForOnboardingStep('character'), '/onboarding/story');
     expect(routeForOnboardingStep('story'), '/onboarding/study');
     expect(routeForOnboardingStep('study'), '/onboarding/first-task');
-    expect(routeForOnboardingStep('first_task'), '/quests');
+    expect(routeForOnboardingStep('first_task'), '/onboarding/first-task');
+    expect(routeForOnboardingStep('first_session'), '/onboarding/first-session');
     expect(routeForOnboardingStep('done'), '/home');
     expect(
       authRedirect(

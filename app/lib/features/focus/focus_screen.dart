@@ -30,6 +30,7 @@ class FocusScreen extends ConsumerStatefulWidget {
     required this.estimateMinutes,
     this.mode = 'focus',
     this.stat = 'intellect',
+    this.onboarding = false,
     this.grace = const Duration(seconds: 30),
   });
 
@@ -38,6 +39,7 @@ class FocusScreen extends ConsumerStatefulWidget {
   final int estimateMinutes;
   final String mode;
   final String stat;
+  final bool onboarding;
   final Duration grace;
 
   @override
@@ -126,7 +128,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
       ref.read(focusPresenceProvider).finish(DateTime.now());
       if (!mounted) return;
-      context.go('/focus/${widget.sessionId}/complete', extra: summary);
+      context.go('/focus/${widget.sessionId}/complete', extra: {
+        ...summary,
+        'onboarding': widget.onboarding,
+      });
     } on ApiException catch (error) {
       if (mounted) {
         setState(() {

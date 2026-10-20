@@ -247,7 +247,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
         ref.invalidate(onboardingStepProvider);
       }
       ref.invalidate(tasksProvider);
-      if (mounted) context.go('/quests');
+      if (mounted) context.go(widget.onboarding ? '/onboarding/first-session' : '/quests');
     } on ApiException catch (error) {
       setState(() => _error = error.message);
     } finally {
