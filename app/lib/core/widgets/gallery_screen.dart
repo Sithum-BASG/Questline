@@ -18,6 +18,7 @@ import 'q_card.dart';
 import 'q_chip.dart';
 import 'stage_card.dart';
 import 'stat_icon.dart';
+import 'stat_radar.dart';
 import 'stat_tile.dart';
 import 'task_tile.dart';
 import 'timer_display.dart';
@@ -60,6 +61,11 @@ class GalleryScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s12),
           const ProgressBar(value: 0.6, leading: 'XP', trailing: '86'),
+          const _Label('Radar'),
+          StatRadar(
+            valuesFor30: const StatRadarValues(intellect: 40, vitality: 20, craft: 30, charisma: 10),
+            valuesFor7: const StatRadarValues(intellect: 8, vitality: 4, craft: 6, charisma: 2),
+          ),
           const _Label('Stage'),
           const StageCard(skinId: 'starter', backgroundId: 'starter', body: BodyType.a),
           const SizedBox(height: AppSpacing.s12),
