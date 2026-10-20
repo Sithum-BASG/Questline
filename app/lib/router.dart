@@ -16,6 +16,7 @@ import 'features/auth/welcome_screen.dart';
 import 'features/focus/focus_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
+import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_session_screen.dart';
 import 'features/onboarding/first_task_screen.dart';
@@ -148,7 +149,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _screen('/chests', 'Chests', routes: [
         _screen('open', 'Chest opening'),
       ]),
-      _screen('/reward', 'Reward'),
+      GoRoute(path: '/reward', builder: (context, state) => const RewardScreen()),
       _screen('/recap/:weekId', 'Weekly recap'),
       _screen('/inbox', 'Inbox'),
       GoRoute(

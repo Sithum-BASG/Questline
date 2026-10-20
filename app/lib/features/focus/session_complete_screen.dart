@@ -7,17 +7,7 @@ import '../../core/supabase/auth_providers.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
-
-/// Rewards waiting for the reward moment. The overlay itself arrives with the chest work.
-class RewardQueue {
-  final List<Map<String, dynamic>> pending = [];
-
-  void add(Iterable<Map<String, dynamic>> rewards) {
-    pending.addAll(rewards);
-  }
-}
-
-final rewardQueueProvider = Provider<RewardQueue>((ref) => RewardQueue());
+import '../../core/widgets/reward_overlay.dart';
 
 class SessionCompleteScreen extends ConsumerStatefulWidget {
   const SessionCompleteScreen({super.key, required this.summary});
@@ -37,11 +27,33 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     return value is num ? value.round() : 0;
   }
 
-  Future<void> _continue() async {
+  List<RewardMoment> _momentsFromSummary() {
     final rewards = widget.summary['rewards'];
-    final lines = rewards is List
-        ? rewards.whereType<Map>().map(Map<String, dynamic>.from)
-        : const <Map<String, dynamic>>[];
+    if (rewards is! List) return const [];
+    return rewards.whereType<Map>().map((reward) {
+      final type = reward['type'] as String? ?? 'item';
+      final id = reward['id'] as String?;
+      if (type == 'title') {
+        return RewardMoment(kind: RewardKind.levelUp, title: 'New title', subtitle: id ?? 'Title unlocked');
+      }
+      if (type == 'coins') {
+        return RewardMoment(
+          kind: RewardKind.loot,
+          title: '+${reward['amount'] ?? 0} coins',
+          subtitle: 'Level reward',
+          rarity: 'common',
+        );
+      }
+      return RewardMoment(
+        kind: RewardKind.loot,
+        title: id ?? 'New item',
+        subtitle: 'Level reward',
+        rarity: 'common',
+      );
+    }).toList();
+  }
+
+  Future<void> _continue() async {
     setState(() {
       _busy = true;
       _error = null;
@@ -51,9 +63,15 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
         await ref.read(completeOnboardingProvider)('first_session');
         ref.invalidate(onboardingStepProvider);
       }
-      ref.read(rewardQueueProvider).add(lines);
+      final queue = ref.read(rewardQueueProvider);
+      queue.add(_momentsFromSummary());
       if (!mounted) return;
-      context.go(widget.summary['onboarding'] == true ? '/home' : '/quests');
+      if (queue.pending.isNotEmpty || queue.current != null) {
+        queue.next();
+        context.go('/reward');
+      } else {
+        context.go(widget.summary['onboarding'] == true ? '/home' : '/quests');
+      }
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } finally {
