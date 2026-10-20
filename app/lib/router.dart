@@ -16,6 +16,8 @@ import 'features/auth/welcome_screen.dart';
 import 'features/focus/focus_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
+import 'features/chests/chest_open_screen.dart';
+import 'features/chests/chests_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
@@ -149,9 +151,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         _screen('invite', 'Invite'),
         _screen('results', 'Raid results'),
       ]),
-      _screen('/chests', 'Chests', routes: [
-        _screen('open', 'Chest opening'),
-      ]),
+      GoRoute(
+        path: '/chests',
+        builder: (context, state) => const ChestsScreen(),
+        routes: [
+          GoRoute(
+            path: 'open',
+            builder: (context, state) {
+              final extra = state.extra;
+              final result = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+              return ChestOpenScreen(result: result);
+            },
+          ),
+        ],
+      ),
       GoRoute(path: '/reward', builder: (context, state) => const RewardScreen()),
       _screen('/recap/:weekId', 'Weekly recap'),
       _screen('/inbox', 'Inbox'),
