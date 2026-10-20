@@ -18,6 +18,7 @@ import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
 import 'features/chests/chest_open_screen.dart';
 import 'features/chests/chests_screen.dart';
+import 'features/hero/profile_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
@@ -97,13 +98,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             ]),
           ]),
           StatefulShellBranch(routes: [
-            _screen('/hero', 'Hero', routes: [
-              _screen('gear', 'Gear'),
-              _screen('wardrobe', 'Wardrobe'),
-              _screen('achievements', 'Achievements'),
-              _screen('inventory', 'Inventory'),
-              _screen('level-road', 'Level road'),
-            ]),
+            GoRoute(
+              path: '/hero',
+              builder: (context, state) => const ProfileScreen(),
+              routes: [
+                _screen('gear', 'Gear'),
+                _screen('wardrobe', 'Wardrobe'),
+                _screen('achievements', 'Achievements'),
+                _screen('inventory', 'Inventory'),
+                _screen('level-road', 'Level road'),
+              ],
+            ),
           ]),
         ],
       ),
