@@ -14,6 +14,14 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+class StartSessionResult {
+  const StartSessionResult({required this.sessionId, required this.startedAt, required this.capMinutes});
+
+  final String sessionId;
+  final DateTime startedAt;
+  final int capMinutes;
+}
+
 class HelloResult {
   const HelloResult({required this.ok, required this.message});
 
@@ -99,6 +107,35 @@ class ApiClient {
       'taskId': taskId,
       'newDueAt': newDueAt,
       'useScroll': useScroll,
+    });
+  }
+
+  Future<StartSessionResult> startSession({
+    required String taskId,
+    required String mode,
+    bool usePotion = false,
+  }) async {
+    final json = await invoke('sessions', 'startSession', {
+      'taskId': taskId,
+      'mode': mode,
+      'usePotion': usePotion,
+    });
+    return StartSessionResult(
+      sessionId: json['sessionId'] as String,
+      startedAt: DateTime.parse(json['startedAt'] as String),
+      capMinutes: (json['capMinutes'] as num).round(),
+    );
+  }
+
+  Future<Map<String, dynamic>> endSession(
+    String sessionId,
+    List<Map<String, String>> interruptions, {
+    bool broken = false,
+  }) {
+    return invoke('sessions', 'endSession', {
+      'sessionId': sessionId,
+      'interruptions': interruptions,
+      'broken': broken,
     });
   }
 
