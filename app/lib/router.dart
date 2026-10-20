@@ -16,6 +16,7 @@ import 'features/auth/welcome_screen.dart';
 import 'features/focus/focus_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
+import 'features/home/home_screen.dart';
 import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_session_screen.dart';
@@ -51,7 +52,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AppShell(navigationShell: navigationShell);
         },
         branches: [
-          StatefulShellBranch(routes: [_screen('/home', 'Home')]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+          ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/quests',
