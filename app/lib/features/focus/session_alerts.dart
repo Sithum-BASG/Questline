@@ -6,11 +6,11 @@ import '../../core/notifications/notification_channels.dart';
 
 /// Shows the "come back" prompt when a focus session is backgrounded.
 abstract class SessionAlerts {
-  Future<void> showReturnPrompt();
+  Future<void> showReturnPrompt({String? sessionId});
 
   Future<void> clearReturnPrompt();
 
-  Future<void> showOngoing(String elapsed);
+  Future<void> showOngoing(String elapsed, {String? sessionId});
 
   Future<void> clearOngoing();
 }
@@ -30,7 +30,7 @@ class LocalSessionAlerts implements SessionAlerts {
   }
 
   @override
-  Future<void> showReturnPrompt() async {
+  Future<void> showReturnPrompt({String? sessionId}) async {
     await _ensure();
     const android = AndroidNotificationDetails(
       NotificationChannels.focus,
@@ -44,6 +44,7 @@ class LocalSessionAlerts implements SessionAlerts {
       title: 'Return within 30 seconds',
       body: 'Come back to keep your session.',
       notificationDetails: const NotificationDetails(android: android, iOS: DarwinNotificationDetails()),
+      payload: sessionId != null ? '/focus/$sessionId' : '/home',
     );
   }
 
@@ -53,7 +54,7 @@ class LocalSessionAlerts implements SessionAlerts {
   }
 
   @override
-  Future<void> showOngoing(String elapsed) async {
+  Future<void> showOngoing(String elapsed, {String? sessionId}) async {
     await _ensure();
     const android = AndroidNotificationDetails(
       NotificationChannels.focus,
@@ -70,6 +71,7 @@ class LocalSessionAlerts implements SessionAlerts {
       title: 'Questline',
       body: elapsed,
       notificationDetails: const NotificationDetails(android: android, iOS: DarwinNotificationDetails()),
+      payload: sessionId != null ? '/focus/$sessionId' : '/home',
     );
   }
 

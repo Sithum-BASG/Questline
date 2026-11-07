@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notification_channels.dart';
+import 'notification_tap_bus.dart';
 
 const _permissionAskedKey = 'notif_permission_asked';
 
@@ -26,8 +27,15 @@ class LocalNotifications {
     );
     await _plugin.initialize(
       settings: const InitializationSettings(android: android, iOS: ios),
-      onDidReceiveNotificationResponse: onTap,
+      onDidReceiveNotificationResponse: (response) {
+        publishNotificationTap(response.payload);
+        onTap?.call(response);
+      },
     );
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true) {
+      publishNotificationTap(launch!.notificationResponse?.payload);
+    }
     await _ensureAndroidChannels();
     _ready = true;
   }

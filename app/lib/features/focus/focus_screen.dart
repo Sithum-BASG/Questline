@@ -64,7 +64,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       if (!mounted) return;
       setState(() {});
       if (widget.mode == 'activity') {
-        _alerts.showOngoing(TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())));
+        _alerts.showOngoing(
+          TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())),
+          sessionId: widget.sessionId,
+        );
       }
     });
   }
@@ -85,7 +88,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     final now = DateTime.now();
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       if (_clock.leave(now)) {
-        _alerts.showReturnPrompt();
+        _alerts.showReturnPrompt(sessionId: widget.sessionId);
       }
     } else if (state == AppLifecycleState.resumed) {
       _clock.returned(now);
