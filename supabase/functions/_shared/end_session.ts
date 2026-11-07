@@ -132,7 +132,10 @@ export async function endDraft(
   const allowed = await tx`select user_id from demo_allowlist where user_id = ${userId}`;
   if (settings[0]?.demo_mode === true && allowed.length > 0) {
     const elapsedSeconds = Math.max(0, Math.floor((elapsedMs - awayMs) / 1000));
-    verifiedMinutes = Math.floor(elapsedSeconds / 6);
+    // game_config.demo_seconds_per_5_minutes (default 30 → 5 min ⇒ 6 s per verified minute).
+    const demoSecondsPer5 = numberFrom(config.demo_seconds_per_5_minutes, 30);
+    const secondsPerMinute = Math.max(1, demoSecondsPer5 / 5);
+    verifiedMinutes = Math.floor(elapsedSeconds / secondsPerMinute);
   }
   const broken = input.broken === true;
   const onboarding = state.onboarding_step === "first_session";
