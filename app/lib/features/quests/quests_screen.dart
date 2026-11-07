@@ -11,6 +11,7 @@ import '../../core/widgets/q_chip.dart';
 import '../../core/widgets/task_tile.dart';
 import 'providers/task_providers.dart';
 import 'quest_filters.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Today, upcoming and done, with a stat filter. Adding a task opens the draft sheet.
 class QuestsScreen extends ConsumerStatefulWidget {
@@ -89,7 +90,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
             const SizedBox(height: AppSpacing.s8),
             Expanded(
               child: tasks.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const LoadingSkeleton(),
                 error: (error, _) => EmptyState(
                   title: 'Could not load quests',
                   body: 'Check your connection and try again.',

@@ -18,12 +18,12 @@ class _Alerts implements SessionAlerts {
   Future<void> clearReturnPrompt() async {}
 
   @override
-  Future<void> showOngoing(String elapsed) async {
+  Future<void> showOngoing(String elapsed, {String? sessionId}) async {
     ongoing += 1;
   }
 
   @override
-  Future<void> showReturnPrompt() async {
+  Future<void> showReturnPrompt({String? sessionId}) async {
     shown += 1;
   }
 }

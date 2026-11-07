@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/member_card.dart';
 import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
@@ -39,7 +40,7 @@ class RaidDetailScreen extends ConsumerWidget {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load raid',
           body: 'Check your connection and try again.',
@@ -72,6 +73,16 @@ class RaidDetailScreen extends ConsumerWidget {
               AppSpacing.aboveTabBar,
             ),
             children: [
+              if (snap.reconnecting) ...[
+                QCard(
+                  child: Text(
+                    'Reconnecting…',
+                    style: AppText.bodySmall.copyWith(color: AppColors.inkMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
               // Boss art sits on a light card so indigo ink stays readable (UI brief §5.4).
               QCard(
                 child: Column(

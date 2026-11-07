@@ -10,6 +10,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/portrait_frame.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/profile_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 class WardrobeItem {
   const WardrobeItem({required this.id, required this.name, required this.type});
@@ -99,7 +100,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Wardrobe', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load wardrobe',
           body: 'Check your connection and try again.',

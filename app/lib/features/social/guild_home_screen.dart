@@ -15,6 +15,7 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import 'guild_emblems.dart';
 import 'providers/guild_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Guild home: members, focusing dots, weekly quest and trophies.
 class GuildHomeScreen extends ConsumerWidget {
@@ -45,7 +46,7 @@ class GuildHomeScreen extends ConsumerWidget {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load guild',
           body: 'Check your connection and try again.',

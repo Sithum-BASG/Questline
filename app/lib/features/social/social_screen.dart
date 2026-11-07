@@ -12,6 +12,7 @@ import '../../core/widgets/q_card.dart';
 import 'providers/leaderboard_providers.dart';
 import 'providers/presence_providers.dart';
 import 'providers/friends_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Social tab default: weekly friends leaderboard (KEY). Sub-routes cover feed / friends / guild.
 class SocialScreen extends ConsumerWidget {
@@ -30,7 +31,7 @@ class SocialScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => ListView(
             padding: const EdgeInsets.all(AppSpacing.screen),
             children: [

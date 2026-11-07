@@ -10,6 +10,7 @@ import '../../core/widgets/q_card.dart';
 import '../../data/models/inbox_message.dart';
 import 'inbox_copy.dart';
 import 'providers/inbox_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Server-only events: guild fights, raid/weekly results, friend requests, boss escape.
 class InboxScreen extends ConsumerWidget {
@@ -45,7 +46,7 @@ class InboxScreen extends ConsumerWidget {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load inbox',
           body: 'Check your connection and try again.',

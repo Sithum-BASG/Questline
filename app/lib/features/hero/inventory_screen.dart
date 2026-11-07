@@ -11,6 +11,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 class ConsumableCounts {
   const ConsumableCounts({
@@ -86,7 +87,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Inventory', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load inventory',
           body: 'Check your connection and try again.',

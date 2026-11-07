@@ -10,6 +10,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_chip.dart';
 import '../quests/providers/task_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 final startSessionProvider = Provider<
     Future<StartSessionResult> Function({required String taskId, required String mode, bool usePotion})>((ref) {
@@ -42,8 +43,13 @@ class _StartFocusScreenState extends ConsumerState<StartFocusScreen> {
     return Scaffold(
       body: SafeArea(
         child: task.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => EmptyState(title: 'Could not open this quest', body: '$error'),
+          loading: () => const LoadingSkeleton(),
+          error: (error, _) => EmptyState(
+            title: 'Could not open this quest',
+            body: 'Check your connection and try again.',
+            actionLabel: 'Try again',
+            onAction: () => ref.invalidate(taskProvider(widget.taskId)),
+          ),
           data: (row) {
             if (row == null) {
               return const EmptyState(title: 'Quest not found', body: 'It may have been discarded.');

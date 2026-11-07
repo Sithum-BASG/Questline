@@ -10,6 +10,7 @@ import '../../core/widgets/q_button.dart';
 import '../../data/models/boss.dart';
 import 'boss_time.dart';
 import 'providers/boss_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Solo bosses sorted by deadline. Raids land in a later phase.
 class BossesScreen extends ConsumerWidget {
@@ -25,7 +26,7 @@ class BossesScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load bosses',
             body: 'Check your connection and try again.',

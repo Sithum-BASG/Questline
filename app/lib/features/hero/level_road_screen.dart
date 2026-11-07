@@ -8,6 +8,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/profile_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 class LevelRoadRow {
   const LevelRoadRow({required this.level, required this.label, required this.reached});
@@ -58,7 +59,7 @@ class LevelRoadScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text('Level road', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load level road',
           body: 'Check your connection and try again.',

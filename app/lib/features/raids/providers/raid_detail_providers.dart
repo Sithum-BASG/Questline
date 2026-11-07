@@ -17,6 +17,7 @@ class RaidDetailSnapshot {
     required this.events,
     required this.focusingIds,
     required this.isCreator,
+    this.reconnecting = false,
   });
 
   final Raid raid;
@@ -24,6 +25,18 @@ class RaidDetailSnapshot {
   final List<RaidEvent> events;
   final Set<String> focusingIds;
   final bool isCreator;
+  final bool reconnecting;
+
+  RaidDetailSnapshot copyWith({bool? reconnecting}) {
+    return RaidDetailSnapshot(
+      raid: raid,
+      members: members,
+      events: events,
+      focusingIds: focusingIds,
+      isCreator: isCreator,
+      reconnecting: reconnecting ?? this.reconnecting,
+    );
+  }
 }
 
 Future<RaidDetailSnapshot?> loadRaidDetail(SupabaseClient client, String raidId, String? myId) async {
@@ -71,7 +84,12 @@ final raidDetailProvider = StreamProvider.autoDispose.family<RaidDetailSnapshot?
   final client = ref.watch(supabaseClientProvider);
   final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
 
-  Future<RaidDetailSnapshot?> load() => loadRaidDetail(client, raidId, myId);
+  var reconnecting = false;
+
+  Future<RaidDetailSnapshot?> load() async {
+    final snap = await loadRaidDetail(client, raidId, myId);
+    return snap?.copyWith(reconnecting: reconnecting);
+  }
 
   yield await load();
 
@@ -111,7 +129,10 @@ final raidDetailProvider = StreamProvider.autoDispose.family<RaidDetailSnapshot?
         table: 'presence',
         callback: (_) => push(),
       )
-      .subscribe();
+      .subscribe((status, [_]) {
+        reconnecting = status != RealtimeSubscribeStatus.subscribed;
+        push();
+      });
   ref.onDispose(() {
     client.removeChannel(channel);
   });

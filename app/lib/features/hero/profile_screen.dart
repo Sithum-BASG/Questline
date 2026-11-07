@@ -11,6 +11,7 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_radar.dart';
 import 'providers/profile_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
@@ -24,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load profile',
             body: 'Check your connection and try again.',

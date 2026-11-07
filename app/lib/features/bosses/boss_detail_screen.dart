@@ -18,6 +18,7 @@ import '../../data/models/boss.dart';
 import '../../data/models/task.dart';
 import 'boss_time.dart';
 import 'providers/boss_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 final bossDetailProvider = FutureProvider.autoDispose.family<Boss?, String>((ref, id) async {
   final client = ref.watch(supabaseClientProvider);
@@ -96,7 +97,7 @@ class _BossDetailScreenState extends ConsumerState<BossDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Boss', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load boss',
           body: 'Check your connection and try again.',
@@ -185,7 +186,7 @@ class _BossDetailScreenState extends ConsumerState<BossDetailScreen> {
               ),
               const SizedBox(height: AppSpacing.s12),
               tasks.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => Text('Loading tasks…', style: AppText.bodySmall),
                 error: (error, _) => Text('Could not load tasks.', style: AppText.bodySmall),
                 data: (rows) {
                   if (rows.isEmpty) {

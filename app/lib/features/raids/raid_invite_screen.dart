@@ -14,6 +14,7 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../data/models/raid.dart';
 import 'raid_links.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 final raidInviteProvider = FutureProvider.autoDispose.family<Raid?, String>((ref, raidId) async {
   final row = await ref.watch(supabaseClientProvider).from('raids').select().eq('id', raidId).maybeSingle();
@@ -39,7 +40,7 @@ class RaidInviteScreen extends ConsumerWidget {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load invite',
           body: 'Try again in a moment.',

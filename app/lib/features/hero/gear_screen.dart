@@ -10,6 +10,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/item_card.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_chip.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 class GearRow {
   const GearRow({
@@ -127,7 +128,7 @@ class _GearScreenState extends ConsumerState<GearScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Gear', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load gear',
           body: 'Check your connection and try again.',

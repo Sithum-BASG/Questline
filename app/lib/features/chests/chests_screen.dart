@@ -11,6 +11,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/chest_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Rates, pity counter and open actions for chests.
 class ChestsScreen extends ConsumerStatefulWidget {
@@ -51,7 +52,7 @@ class _ChestsScreenState extends ConsumerState<ChestsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Chests', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load chests',
           body: 'Check your connection and try again.',
@@ -147,16 +148,14 @@ class _ChestsScreenState extends ConsumerState<ChestsScreen> {
               ],
               if (canFree)
                 QButton(
-                  label: _busy ? 'Opening…' : 'Open free chest',
+                  label: 'Open free chest',
+                  loading: _busy,
                   onPressed: _busy ? null : () => _open(useFree: true),
                 ),
               if (canFree) const SizedBox(height: AppSpacing.s8),
               QButton(
-                label: _busy
-                    ? 'Opening…'
-                    : canPay
-                        ? 'Open for ${data.chestCost}'
-                        : 'Need $need more coins',
+                label: canPay ? 'Open for ${data.chestCost}' : 'Need $need more coins',
+                loading: _busy,
                 onPressed: _busy || !canPay ? null : () => _open(useFree: false),
               ),
             ],

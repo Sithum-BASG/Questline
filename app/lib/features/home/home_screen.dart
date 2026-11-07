@@ -21,6 +21,7 @@ import '../social/providers/friends_providers.dart';
 import '../social/providers/presence_providers.dart';
 import 'home_snapshot.dart';
 import 'providers/home_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 String _catalogShort(String id, String prefix) =>
     id.startsWith(prefix) ? id.substring(prefix.length) : id;
@@ -43,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load Home',
             body: 'Check your connection and try again.',
