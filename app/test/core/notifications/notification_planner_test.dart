@@ -129,4 +129,53 @@ void main() {
     );
     expect(planned.where((n) => n.kind == NotifKind.bossWarning48), isEmpty);
   });
+
+  test('raid ended schedules deadline + 20 minutes', () {
+    final now = DateTime(2026, 11, 7, 12);
+    final planned = planNotifications(
+      PlannerInput(
+        now: now,
+        settings: settings,
+        raidDeadlines: [
+          (id: 'r1', name: 'Party of Four', deadline: now.add(const Duration(hours: 2))),
+        ],
+      ),
+    );
+    final raid = planned.where((n) => n.kind == NotifKind.raidEnded).single;
+    expect(raid.when, now.add(const Duration(hours: 2, minutes: 20)));
+    expect(raid.route, '/raids/r1/results');
+  });
+
+  test('Monday weekly results and optional Sunday nudge', () {
+    // Saturday noon → next Monday 08:00 and Sunday 18:00 are in range.
+    final now = DateTime(2026, 11, 7, 12);
+    final planned = planNotifications(
+      PlannerInput(
+        now: now,
+        settings: const PlannerSettings(notifLeaderboardNudge: true, dailyCap: 10),
+        xpBehindSecond: 120,
+      ),
+    );
+    final weekly = planned.where((n) => n.kind == NotifKind.weeklyResults).single;
+    expect(weekly.when.weekday, DateTime.monday);
+    expect(weekly.when.hour, 8);
+    expect(weekly.route, startsWith('/recap/'));
+
+    final nudge = planned.where((n) => n.kind == NotifKind.sundayNudge).single;
+    expect(nudge.when.weekday, DateTime.sunday);
+    expect(nudge.when.hour, 18);
+    expect(nudge.body, contains('120 XP'));
+  });
+
+  test('Sunday nudge stays off by default', () {
+    final now = DateTime(2026, 11, 7, 12);
+    final planned = planNotifications(
+      PlannerInput(
+        now: now,
+        settings: const PlannerSettings(dailyCap: 10),
+        xpBehindSecond: 120,
+      ),
+    );
+    expect(planned.where((n) => n.kind == NotifKind.sundayNudge), isEmpty);
+  });
 }

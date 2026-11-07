@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/notifications/local_notifications.dart';
+import '../../core/notifications/notification_replan.dart';
 import '../../core/supabase/api_client.dart';
 import '../../core/supabase/auth_providers.dart';
 import '../../core/theme/app_spacing.dart';
@@ -63,6 +64,9 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     try {
       // Ask once after the first completed session (overview §18 / plan 13.1).
       await ref.read(localNotificationsProvider).requestPermissionAfterFirstSession();
+      try {
+        await replanLocalNotifications(ref);
+      } catch (_) {}
       if (widget.summary['onboarding'] == true) {
         await ref.read(completeOnboardingProvider)('first_session');
         ref.invalidate(onboardingStepProvider);

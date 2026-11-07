@@ -239,8 +239,8 @@ List<PlannedNotification> _weeklyCandidates(PlannerInput input) {
     monday = monday.add(const Duration(days: 7));
   }
   if (!monday.isAfter(horizon)) {
-    final weekId =
-        '${monday.year}-W${((monday.difference(DateTime(monday.year, 1, 4)).inDays + DateTime(monday.year, 1, 4).weekday) ~/ 7).toString().padLeft(2, '0')}';
+    // Monday morning looks at the week that just closed (prior ISO week).
+    final weekId = isoWeekId(monday.subtract(const Duration(days: 7)));
     out.add(
       PlannedNotification(
         id: _stableId(NotifKind.weeklyResults, weekId),
@@ -276,6 +276,17 @@ List<PlannedNotification> _weeklyCandidates(PlannerInput input) {
     }
   }
   return out;
+}
+
+/// ISO week id (`2026-W41`) for the calendar day of [date].
+String isoWeekId(DateTime date) {
+  final utc = DateTime.utc(date.year, date.month, date.day);
+  final thursday = utc.add(Duration(days: 4 - utc.weekday));
+  final year = thursday.year;
+  final jan4 = DateTime.utc(year, 1, 4);
+  final week1Monday = jan4.subtract(Duration(days: jan4.weekday - 1));
+  final week = utc.difference(week1Monday).inDays ~/ 7 + 1;
+  return '$year-W${week.toString().padLeft(2, '0')}';
 }
 
 /// Builds the next week of local notifications from current game state.
