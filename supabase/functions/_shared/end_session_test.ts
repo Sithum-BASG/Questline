@@ -9,6 +9,7 @@ const taskId = "22222222-2222-2222-2222-222222222222";
 const now = new Date("2026-10-19T04:00:00.000Z");
 
 const bossId = "44444444-4444-4444-4444-444444444444";
+const raidId = "55555555-5555-5555-5555-555555555555";
 
 function scripted(options: {
   processed?: boolean;
@@ -16,9 +17,14 @@ function scripted(options: {
   startedAt?: string;
   demo?: boolean;
   bossId?: string | null;
+  raidId?: string | null;
   bossDamage?: number;
   bossMaxHp?: number;
   bossStatus?: string;
+  raidDamage?: number;
+  raidMaxHp?: number;
+  raidParticipants?: number;
+  personalRaidDamage?: number;
   slayer?: boolean;
 } = {}) {
   const queries: { text: string; values: unknown[] }[] = [];
@@ -48,6 +54,7 @@ function scripted(options: {
         scroll_used: false,
         status: "open",
         boss_id: options.bossId === undefined ? null : options.bossId,
+        raid_id: options.raidId === undefined ? null : options.raidId,
       }]);
     }
     if (text.includes("from player_state")) {
@@ -76,6 +83,21 @@ function scripted(options: {
         damage: options.bossDamage ?? 0,
         max_hp: options.bossMaxHp ?? 120,
       }]);
+    }
+    if (text.includes("from raid_members") && text.includes("display_name")) {
+      return Promise.resolve([{ display_name: "Me", left_raid: false }]);
+    }
+    if (text.includes("from raids") && text.includes("status = 'active'")) {
+      return Promise.resolve([{
+        id: raidId,
+        status: "active",
+        damage: options.raidDamage ?? 0,
+        max_hp: options.raidMaxHp ?? 1440,
+        participants: options.raidParticipants ?? 4,
+      }]);
+    }
+    if (text.includes("from raid_damage")) {
+      return Promise.resolve([{ damage: options.personalRaidDamage ?? 0 }]);
     }
     if (text.includes("from user_settings")) return Promise.resolve([{ demo_mode: options.demo === true }]);
     if (text.includes("from demo_allowlist")) return Promise.resolve(options.demo ? [{ user_id: userId }] : []);
@@ -152,4 +174,19 @@ Deno.test("boss slayer adds 20 percent damage on focus", async () => {
   const { tx } = scripted({ bossId, bossDamage: 0, bossMaxHp: 500, slayer: true });
   const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
   assertEquals(summary.bossDamage, 72);
+});
+
+Deno.test("a focus session on a raid task updates raid damage, events and fair share", async () => {
+  // Fair share for 1440 HP / 4 = 360; half share = 180. Prior 130 + 60 = 190 → met.
+  const { tx, queries } = scripted({
+    raidId,
+    personalRaidDamage: 130,
+    raidMaxHp: 1440,
+    raidParticipants: 4,
+  });
+  const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
+  assertEquals(summary.raidDamage, 60);
+  assertEquals(queries.some((query) => query.text.includes("insert into raid_events")), true);
+  assertEquals(queries.some((query) => query.text.includes("update raids set damage")), true);
+  assertEquals(queries.some((query) => query.text.includes("met_fair_share")), true);
 });
