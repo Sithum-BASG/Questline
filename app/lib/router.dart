@@ -41,6 +41,7 @@ import 'features/quests/quests_screen.dart';
 import 'features/quests/task_screen.dart';
 import 'features/raids/create_raid_screen.dart';
 import 'features/raids/join_raid_screen.dart';
+import 'features/raids/raid_detail_screen.dart';
 import 'features/raids/raid_invite_screen.dart';
 import 'features/social/feed_screen.dart';
 import 'features/social/friend_profile_screen.dart';
@@ -228,7 +229,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/raids/:raidId',
-        builder: (context, state) => const PlaceholderScreen(title: 'Raid'),
+        builder: (context, state) => RaidDetailScreen(
+          raidId: state.pathParameters['raidId']!,
+        ),
         routes: [
           GoRoute(
             path: 'invite',
