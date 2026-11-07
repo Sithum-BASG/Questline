@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion/app_motion.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
@@ -77,9 +78,7 @@ class _TabButton extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: AppSpacing.minTap),
           child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? const Duration(milliseconds: 150)
-                : const Duration(milliseconds: 200),
+            duration: AppMotion.standard(context),
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             decoration: selected

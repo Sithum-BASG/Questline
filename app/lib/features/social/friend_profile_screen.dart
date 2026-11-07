@@ -11,6 +11,7 @@ import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_radar.dart';
 import '../../data/models/friend_summary.dart';
 import '../../data/models/profile.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
@@ -61,7 +62,7 @@ class FriendProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text('Friend', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load friend',
           body: 'They may have removed you, or you are offline.',

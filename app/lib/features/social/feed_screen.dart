@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/feed_providers.dart';
@@ -55,7 +56,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         ),
       ),
       body: loadingFirst
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingSkeleton()
           : firstError != null
               ? EmptyState(
                   title: 'Could not load feed',

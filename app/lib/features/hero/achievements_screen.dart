@@ -11,6 +11,7 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import 'achievement_copy.dart';
 import 'providers/achievements_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Badges with pin (max 3) and owned titles to equip.
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -69,7 +70,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Achievements', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load achievements',
           body: 'Check your connection and try again.',
@@ -205,7 +206,7 @@ class _BadgeTile extends StatelessWidget {
               if (pinned)
                 Text(
                   'Pinned',
-                  style: AppText.caption.copyWith(color: AppColors.awakeningTeal),
+                  style: AppText.caption.copyWith(color: AppColors.tealDeep),
                 ),
             ],
           ),

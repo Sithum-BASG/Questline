@@ -12,6 +12,7 @@ import '../../core/widgets/judgement_card.dart';
 import '../../core/widgets/q_button.dart';
 import '../../data/models/task.dart';
 import 'providers/task_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 const questStats = ['intellect', 'vitality', 'craft', 'charisma'];
 
@@ -133,7 +134,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     return Scaffold(
       body: SafeArea(
         child: task.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load this quest',
             body: 'Check your connection and try again.',
@@ -161,12 +162,17 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                     difficulty: judged.difficulty,
                     minutes: judged.minutes,
                     xpPreview: judged.xpPreview,
-                    reason: judged.provisional ? 'Provisional rating, we\'ll re-check it soon' : judged.reason,
+                    reason: judged.reason.isNotEmpty
+                        ? judged.reason
+                        : (judged.provisional
+                            ? 'Provisional rating, we\'ll re-check it soon'
+                            : ''),
                     provisional: judged.provisional,
                     challenged: judged.challenged,
                     tooBig: judged.tooBig,
                     onStatTap: () => _cycleStat(judged),
                     onSplit: () => context.go('/quests/new'),
+                    onMakeBoss: () => context.go('/bosses/new'),
                   ),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.s12),

@@ -10,6 +10,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../focus/start_focus_screen.dart';
 import '../quests/providers/task_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Onboarding step 5–6. A short first session unlocks the starter XP for level 2.
 class FirstSessionScreen extends ConsumerStatefulWidget {
@@ -29,7 +30,7 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
     return Scaffold(
       body: SafeArea(
         child: tasks.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load your quest',
             body: '$error',

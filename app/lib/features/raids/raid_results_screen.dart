@@ -14,6 +14,7 @@ import '../../core/widgets/q_card.dart';
 import '../../data/models/raid.dart';
 import '../../data/models/raid_member.dart';
 import '../social/providers/friends_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 class RaidResultsSnapshot {
   const RaidResultsSnapshot({
@@ -128,7 +129,7 @@ class _RaidResultsScreenState extends ConsumerState<RaidResultsScreen> {
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load results',
           body: 'Try again in a moment.',

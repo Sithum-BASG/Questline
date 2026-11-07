@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../quests/add_task_screen.dart';
 import '../quests/providers/task_providers.dart';
 import '../quests/task_screen.dart';
@@ -14,7 +15,7 @@ class FirstTaskScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(tasksProvider);
     return tasks.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: LoadingSkeleton()),
       error: (error, _) => Scaffold(
         body: EmptyState(
           title: 'Could not load your quest',

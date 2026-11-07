@@ -40,6 +40,7 @@ void main() {
                 xp: 500,
                 skinId: 'starter',
                 backgroundId: 'starter',
+                frameId: 'apprentice',
                 body: BodyType.a,
                 isYou: true,
               ),

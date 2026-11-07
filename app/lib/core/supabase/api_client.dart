@@ -53,9 +53,11 @@ String friendlyApiMessage(String code, String raw) {
     case 'not_found':
       return 'That could not be found.';
     case 'invalid_argument':
+    case 'unavailable':
       return raw;
     case 'network':
-      return 'You are offline. Try again when you are back online.';
+      // Free-plan pause and cold starts look like transport failures (App Flow §7).
+      return 'Server is waking up, try again in a minute';
     default:
       return 'Something went wrong. Try again.';
   }

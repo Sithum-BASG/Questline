@@ -18,6 +18,7 @@ import 'friend_links.dart';
 import 'providers/friends_providers.dart';
 import 'providers/pending_friend_code.dart';
 import 'providers/presence_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Friends list, incoming requests, and add by username or friend code.
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -167,7 +168,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Friends', style: AppText.h2)),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load friends',
           body: 'Check your connection and try again.',
@@ -204,16 +205,28 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           if (mounted) setState(() => _info = 'Code copied.');
                         },
                         icon: const Icon(Icons.copy_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Show QR',
                         onPressed: () => _showMyQr(myCode),
                         icon: const Icon(Icons.qr_code_2_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Share',
                         onPressed: () => _share(myCode),
                         icon: const Icon(Icons.ios_share_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                     ],
                   ),

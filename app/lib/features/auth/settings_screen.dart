@@ -370,8 +370,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: AppSpacing.s8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Appear offline', style: AppText.body),
-            subtitle: Text('Hides the focusing status from friends.', style: AppText.bodySmall),
+            title: Text('Appear offline', style: AppText.body, softWrap: true),
+            subtitle: Text('Hides the focusing status from friends.', style: AppText.bodySmall, softWrap: true),
             value: _appearOffline,
             onChanged: _busy || !_loaded
                 ? null
@@ -382,8 +382,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Hide stat radar', style: AppText.body),
-            subtitle: Text('Friends will not see your radar chart.', style: AppText.bodySmall),
+            title: Text('Hide stat radar', style: AppText.body, softWrap: true),
+            subtitle: Text('Friends will not see your radar chart.', style: AppText.bodySmall, softWrap: true),
             value: _hideRadar,
             onChanged: _busy || !_loaded
                 ? null
@@ -394,8 +394,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Show boss names in feed', style: AppText.body),
-            subtitle: Text('Off keeps boss titles private in activity.', style: AppText.bodySmall),
+            title: Text('Show boss names in feed', style: AppText.body, softWrap: true),
+            subtitle: Text('Off keeps boss titles private in activity.', style: AppText.bodySmall, softWrap: true),
             value: _showBossNames,
             onChanged: _busy || !_loaded
                 ? null

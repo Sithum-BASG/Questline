@@ -96,6 +96,7 @@ class GalleryScreen extends StatelessWidget {
             minutes: 90,
             xpPreview: 86,
             reason: 'A long writing task.',
+            tooBig: true,
           ),
           const _Label('People'),
           const LeaderboardRow(
@@ -105,6 +106,7 @@ class GalleryScreen extends StatelessWidget {
             xp: 500,
             skinId: 'starter',
             backgroundId: 'starter',
+            frameId: 'apprentice',
             body: BodyType.a,
             isYou: true,
           ),
@@ -113,6 +115,7 @@ class GalleryScreen extends StatelessWidget {
             title: 'Freshly awakened',
             skinId: 'starter',
             backgroundId: 'starter',
+            frameId: 'apprentice',
             body: BodyType.b,
             focusing: true,
           ),

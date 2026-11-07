@@ -12,6 +12,7 @@ import '../../core/widgets/reward_overlay.dart';
 import '../../data/models/boss.dart';
 import 'boss_detail_screen.dart';
 import 'providers/boss_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Defeated or escaped result. Claim plays the reward moment then returns to the list.
 class BossResultScreen extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _BossResultScreenState extends ConsumerState<BossResultScreen> {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load result',
             body: 'Try again from the bosses list.',
