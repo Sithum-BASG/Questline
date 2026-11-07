@@ -12,6 +12,8 @@ function scripted(options: {
   freeChests?: number;
   pity?: number;
   processed?: unknown;
+  demoMode?: boolean;
+  allowlisted?: boolean;
   rng?: () => number;
 } = {}) {
   const queries: { text: string; values: unknown[] }[] = [];
@@ -29,6 +31,12 @@ function scripted(options: {
         shields: 0,
         potions: 0,
         scrolls: 0,
+      }]);
+    }
+    if (text.includes("from user_settings") || text.includes("demo_allowlist")) {
+      return Promise.resolve([{
+        demo_mode: options.demoMode === true,
+        allowlisted: options.allowlisted === true,
       }]);
     }
     if (text.includes("from inventory")) return Promise.resolve([]);
@@ -86,4 +94,19 @@ Deno.test("not enough coins is rejected", async () => {
     AppError,
     "coins",
   );
+});
+
+Deno.test("demo mode on an allow-listed account forces Mythic", async () => {
+  // rng would roll common (0); force overrides to mythic Chronomancer set.
+  const { tx } = scripted({ demoMode: true, allowlisted: true });
+  const result = await openChestDraft(userId, { requestId: "demo-chest" }, tx, defaults, () => 0);
+  assertEquals(result.rarity, "mythic");
+  assertEquals((result.drop as { kind: string }).kind, "set");
+  assertEquals((result.drop as { ids: string[] }).ids.includes("skin_chronomancer"), true);
+});
+
+Deno.test("demo_mode alone without allowlist does not force Mythic", async () => {
+  const { tx } = scripted({ demoMode: true, allowlisted: false });
+  const result = await openChestDraft(userId, { requestId: "no-force" }, tx, defaults, () => 0);
+  assertEquals(result.rarity, "common");
 });
