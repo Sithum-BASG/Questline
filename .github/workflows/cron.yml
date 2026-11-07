@@ -1,0 +1,48 @@
+# Fallback when pg_cron is unavailable on the Free plan.
+# Set repository secrets: SUPABASE_FUNCTIONS_URL, CRON_SECRET.
+
+name: Scheduled cron
+
+on:
+  schedule:
+    - cron: '0 * * * *'      # rollover hourly
+    - cron: '*/15 * * * *'   # deadlines every 15 minutes
+    - cron: '30 22 * * 0'    # weekly Sunday 22:30 UTC = Monday 04:00 Asia/Colombo
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'cron-rollover | cron-deadlines | cron-weekly'
+        required: true
+        default: cron-rollover
+
+jobs:
+  call:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick function
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "fn=${{ inputs.target }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 * * * *" ]; then
+            echo "fn=cron-rollover" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "*/15 * * * *" ]; then
+            echo "fn=cron-deadlines" >> "$GITHUB_OUTPUT"
+          else
+            echo "fn=cron-weekly" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: POST Edge Function
+        env:
+          BASE: ${{ secrets.SUPABASE_FUNCTIONS_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          FN: ${{ steps.pick.outputs.fn }}
+        run: |
+          if [ -z "$BASE" ] || [ -z "$CRON_SECRET" ]; then
+            echo "SUPABASE_FUNCTIONS_URL or CRON_SECRET not set; skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "${BASE%/}/$FN" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: $CRON_SECRET" \
+            -d '{}'
