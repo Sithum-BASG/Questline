@@ -305,9 +305,10 @@ class _RewardOverlayState extends State<RewardOverlay> with TickerProviderStateM
                   if (_settled)
                     QButton(
                       label: 'Claim',
-                      onPressed: () async {
-                        await AppHaptics.claim();
+                      onPressed: () {
+                        // Claim first so a missing haptic channel never blocks the queue.
                         widget.onClaim();
+                        AppHaptics.claim();
                       },
                     )
                   else

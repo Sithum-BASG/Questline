@@ -4,7 +4,15 @@ import 'package:flutter/services.dart';
 class AppHaptics {
   const AppHaptics._();
 
-  static Future<void> claim() => HapticFeedback.lightImpact();
+  static Future<void> claim() => _light();
 
-  static Future<void> chestOpen() => HapticFeedback.lightImpact();
+  static Future<void> chestOpen() => _light();
+
+  static Future<void> _light() async {
+    try {
+      await HapticFeedback.lightImpact();
+    } on MissingPluginException {
+      // Tests and hosts without a haptic channel.
+    } catch (_) {}
+  }
 }
