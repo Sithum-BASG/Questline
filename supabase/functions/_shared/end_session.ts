@@ -3,7 +3,8 @@ import { z } from "zod";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { notFound } from "./errors.ts";
-import { sessionDamage } from "./game/combat.ts";
+import { metFairShare, sessionDamage } from "./game/combat.ts";
+import { applyGuildQuestProgress } from "./guild_quest.ts";
 import { sessionXp, type XpRates } from "./game/xp.ts";
 import { levelFromXp, rewardsForLevels, type LevelCurve } from "./game/rewards.ts";
 import { dayKey, weekId } from "./game/time.ts";
@@ -29,6 +30,7 @@ export interface SessionSummary {
   level: number;
   rewards: unknown[];
   bossDamage?: number;
+  raidDamage?: number;
 }
 
 function curveFrom(value: unknown): LevelCurve {
@@ -104,7 +106,7 @@ export async function endDraft(
   if (session.processed && session.summary) return session.summary as SessionSummary;
 
   const tasks = await tx`
-    select difficulty, est_minutes, stat, due_at, rescheduled, scroll_used, status, boss_id
+    select difficulty, est_minutes, stat, due_at, rescheduled, scroll_used, status, boss_id, raid_id
     from tasks where id = ${session.task_id} and user_id = ${userId} for update
   `;
   const task = tasks[0];
@@ -210,31 +212,79 @@ export async function endDraft(
   }
 
   let bossDamageDealt = 0;
+  let raidDamageDealt = 0;
+  const mode = session.mode === "activity" ? "activity" : "focus";
+  const hit = xp.countedMinutes > 0 ? sessionDamage(xp.countedMinutes, mode, bossSlayer) : 0;
   const bossId = typeof task.boss_id === "string" ? task.boss_id : null;
-  if (bossId && xp.countedMinutes > 0) {
-    const mode = session.mode === "activity" ? "activity" : "focus";
-    bossDamageDealt = sessionDamage(xp.countedMinutes, mode, bossSlayer);
-    if (bossDamageDealt > 0) {
-      const bosses = await tx`
-        select id, status, damage, max_hp
-        from bosses
-        where id = ${bossId} and user_id = ${userId} and status in ('active', 'staggered')
+  if (bossId && hit > 0) {
+    bossDamageDealt = hit;
+    const bosses = await tx`
+      select id, status, damage, max_hp
+      from bosses
+      where id = ${bossId} and user_id = ${userId} and status in ('active', 'staggered')
+      for update
+    `;
+    const boss = bosses[0];
+    if (boss) {
+      const max = numberFrom(boss.max_hp, 0);
+      const nextDamage = Math.min(max, numberFrom(boss.damage, 0) + bossDamageDealt);
+      const nextStatus = nextDamage >= max && max > 0 ? "staggered" : String(boss.status);
+      await tx`
+        update bosses set
+          damage = ${nextDamage},
+          last_work_day = ${day},
+          status = ${nextStatus}
+        where id = ${bossId} and user_id = ${userId}
+      `;
+    } else {
+      bossDamageDealt = 0;
+    }
+  }
+
+  const raidId = typeof task.raid_id === "string" ? task.raid_id : null;
+  if (raidId && hit > 0) {
+    const membership = await tx`
+      select display_name, left_raid from raid_members
+      where raid_id = ${raidId} and user_id = ${userId}
+      for update
+    `;
+    const member = membership[0];
+    if (member && member.left_raid !== true) {
+      const raids = await tx`
+        select id, status, damage, max_hp, participants
+        from raids
+        where id = ${raidId} and status = 'active'
         for update
       `;
-      const boss = bosses[0];
-      if (boss) {
-        const max = numberFrom(boss.max_hp, 0);
-        const nextDamage = Math.min(max, numberFrom(boss.damage, 0) + bossDamageDealt);
-        const nextStatus = nextDamage >= max && max > 0 ? "staggered" : String(boss.status);
-        await tx`
-          update bosses set
-            damage = ${nextDamage},
-            last_work_day = ${day},
-            status = ${nextStatus}
-          where id = ${bossId} and user_id = ${userId}
+      const raid = raids[0];
+      if (raid) {
+        raidDamageDealt = hit;
+        const personal = await tx`
+          select damage from raid_damage
+          where raid_id = ${raidId} and user_id = ${userId}
+          for update
         `;
-      } else {
-        bossDamageDealt = 0;
+        const personalNext = numberFrom(personal[0]?.damage, 0) + raidDamageDealt;
+        await tx`
+          insert into raid_damage (raid_id, user_id, damage)
+          values (${raidId}, ${userId}, ${personalNext})
+          on conflict (raid_id, user_id) do update set damage = ${personalNext}
+        `;
+        const max = numberFrom(raid.max_hp, 0);
+        const raidNext = Math.min(max, numberFrom(raid.damage, 0) + raidDamageDealt);
+        await tx`
+          update raids set damage = ${raidNext}
+          where id = ${raidId}
+        `;
+        await tx`
+          insert into raid_events (raid_id, user_id, display_name, amount)
+          values (${raidId}, ${userId}, ${String(member.display_name)}, ${raidDamageDealt})
+        `;
+        const fair = metFairShare(personalNext, max, numberFrom(raid.participants, 1));
+        await tx`
+          update raid_members set met_fair_share = ${fair}
+          where raid_id = ${raidId} and user_id = ${userId}
+        `;
       }
     }
   }
@@ -249,6 +299,7 @@ export async function endDraft(
     level: nextLevel,
     rewards,
     ...(bossDamageDealt > 0 ? { bossDamage: bossDamageDealt } : {}),
+    ...(raidDamageDealt > 0 ? { raidDamage: raidDamageDealt } : {}),
   };
   const stat = String(task.stat ?? "intellect");
   const week = weekId(now, leaderboardTz);
@@ -304,6 +355,7 @@ export async function endDraft(
     on conflict (week_id, user_id) do update set
       raw_xp = weekly_scores.raw_xp + excluded.raw_xp, updated_at = now()
   `;
+  await applyGuildQuestProgress(userId, xp.raw, week, tx, config);
   const spentPotion = session.potion === true && earns && state.comeback_armed !== true;
   await tx`
     update player_state set

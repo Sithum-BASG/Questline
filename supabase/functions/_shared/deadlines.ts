@@ -3,6 +3,7 @@ import { z } from "zod";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { applyEscapePenalty } from "./game/combat.ts";
+import { resolveRaidsDraft } from "./raid_resolve.ts";
 
 const inputSchema = z.object({
   now: z.string().datetime({ offset: true }).optional(),
@@ -19,9 +20,9 @@ function numberFrom(value: unknown, fallback: number): number {
 export async function runDeadlinesDraft(
   body: unknown,
   tx: Tx,
-  _config: GameConfig,
+  config: GameConfig,
   now = new Date(),
-): Promise<{ escaped: number; sessionsClosed: number }> {
+): Promise<{ escaped: number; sessionsClosed: number; raidsResolved: number }> {
   inputSchema.parse(body ?? {});
 
   const overdue = await tx`
@@ -102,13 +103,14 @@ export async function runDeadlinesDraft(
     sessionsClosed += 1;
   }
 
-  return { escaped, sessionsClosed };
+  const raidsResolved = await resolveRaidsDraft(tx, config, now);
+  return { escaped, sessionsClosed, raidsResolved };
 }
 
 export async function runDeadlines(
   body: unknown = {},
   sql: Sql = getSql(),
-): Promise<{ escaped: number; sessionsClosed: number }> {
+): Promise<{ escaped: number; sessionsClosed: number; raidsResolved: number }> {
   const config = await loadConfig();
   const parsed = inputSchema.parse(body ?? {});
   const now = parsed.now ? new Date(parsed.now) : new Date();

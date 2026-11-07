@@ -43,12 +43,30 @@ class BossesScreen extends ConsumerWidget {
                     AppSpacing.screen,
                     AppSpacing.s8,
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: Text('Bosses', style: AppText.h1)),
-                      QButton(
-                        label: 'New boss',
-                        onPressed: atLimit ? null : () => context.go('/bosses/new'),
+                      Text('Bosses', style: AppText.h1),
+                      const SizedBox(height: AppSpacing.s8),
+                      Wrap(
+                        spacing: AppSpacing.s8,
+                        runSpacing: AppSpacing.s8,
+                        children: [
+                          QButton(
+                            label: 'New boss',
+                            onPressed: atLimit ? null : () => context.go('/bosses/new'),
+                          ),
+                          QButton(
+                            label: 'Start raid',
+                            variant: QButtonVariant.secondary,
+                            onPressed: atLimit ? null : () => context.go('/raids/new'),
+                          ),
+                          QButton(
+                            label: 'Join raid',
+                            variant: QButtonVariant.secondary,
+                            onPressed: () => context.go('/raids/join'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

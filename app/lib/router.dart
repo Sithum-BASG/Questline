@@ -39,9 +39,16 @@ import 'features/quests/add_task_screen.dart';
 import 'features/quests/challenge_screen.dart';
 import 'features/quests/quests_screen.dart';
 import 'features/quests/task_screen.dart';
+import 'features/raids/create_raid_screen.dart';
+import 'features/raids/join_raid_screen.dart';
+import 'features/raids/raid_detail_screen.dart';
+import 'features/raids/raid_invite_screen.dart';
+import 'features/raids/raid_results_screen.dart';
 import 'features/social/feed_screen.dart';
 import 'features/social/friend_profile_screen.dart';
 import 'features/social/friends_screen.dart';
+import 'features/social/guild_home_screen.dart';
+import 'features/social/guild_new_screen.dart';
 import 'features/social/scan_friend_screen.dart';
 import 'features/social/social_screen.dart';
 
@@ -143,9 +150,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ],
                 ),
-                _screen('guild', 'Guild', routes: [
-                  _screen('new', 'Create or join guild'),
-                ]),
+                GoRoute(
+                  path: 'guild',
+                  builder: (context, state) => const GuildHomeScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'new',
+                      builder: (context, state) => const GuildNewScreen(),
+                    ),
+                  ],
+                ),
               ],
             ),
           ]),
@@ -204,12 +218,36 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      _screen('/raids/new', 'Start raid'),
-      _screen('/raids/join', 'Join raid'),
-      _screen('/raids/:raidId', 'Raid', routes: [
-        _screen('invite', 'Invite'),
-        _screen('results', 'Raid results'),
-      ]),
+      GoRoute(
+        path: '/raids/new',
+        builder: (context, state) => const CreateRaidScreen(),
+      ),
+      GoRoute(
+        path: '/raids/join',
+        builder: (context, state) => JoinRaidScreen(
+          initialCode: state.uri.queryParameters['code'],
+        ),
+      ),
+      GoRoute(
+        path: '/raids/:raidId',
+        builder: (context, state) => RaidDetailScreen(
+          raidId: state.pathParameters['raidId']!,
+        ),
+        routes: [
+          GoRoute(
+            path: 'invite',
+            builder: (context, state) => RaidInviteScreen(
+              raidId: state.pathParameters['raidId']!,
+            ),
+          ),
+          GoRoute(
+            path: 'results',
+            builder: (context, state) => RaidResultsScreen(
+              raidId: state.pathParameters['raidId']!,
+            ),
+          ),
+        ],
+      ),
       GoRoute(
         path: '/chests',
         builder: (context, state) => const ChestsScreen(),

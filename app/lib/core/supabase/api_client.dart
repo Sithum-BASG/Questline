@@ -232,6 +232,75 @@ class ApiClient {
   Future<void> removeFriend(String friendUid) {
     return invoke('social', 'removeFriend', {'friendUid': friendUid});
   }
+
+  Future<Map<String, dynamic>> createGuild({required String name, required String emblem}) {
+    return invoke('social', 'createGuild', {'name': name, 'emblem': emblem});
+  }
+
+  Future<Map<String, dynamic>> joinGuild(String code) {
+    return invoke('social', 'joinGuild', {'code': code});
+  }
+
+  Future<void> leaveGuild() {
+    return invoke('social', 'leaveGuild', {});
+  }
+
+  Future<Map<String, dynamic>> createRaidPreview({
+    required String source,
+    String? guildId,
+    required String title,
+    String? description,
+    required String type,
+    required DateTime deadline,
+    required int participants,
+  }) {
+    return invoke('raids', 'createRaid', {
+      'source': source,
+      'guildId': ?guildId,
+      'title': title,
+      'description': ?description,
+      'type': type,
+      'deadline': deadline.toUtc().toIso8601String(),
+      'participants': participants,
+      'dryRun': true,
+    });
+  }
+
+  Future<Map<String, dynamic>> createRaid({
+    required String source,
+    String? guildId,
+    required String title,
+    String? description,
+    required String type,
+    required DateTime deadline,
+    required int participants,
+    required double perPersonHours,
+    required String name,
+  }) {
+    return invoke('raids', 'createRaid', {
+      'source': source,
+      'guildId': ?guildId,
+      'title': title,
+      'description': ?description,
+      'type': type,
+      'deadline': deadline.toUtc().toIso8601String(),
+      'participants': participants,
+      'perPersonHours': perPersonHours,
+      'name': name,
+      'dryRun': false,
+    });
+  }
+
+  Future<Map<String, dynamic>> joinRaid({String? code, String? raidId}) {
+    return invoke('raids', 'joinRaid', {
+      'code': ?code,
+      'raidId': ?raidId,
+    });
+  }
+
+  Future<void> leaveRaid(String raidId) {
+    return invoke('raids', 'leaveRaid', {'raidId': raidId});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

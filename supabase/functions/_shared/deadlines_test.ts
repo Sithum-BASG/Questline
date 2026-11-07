@@ -29,6 +29,9 @@ Deno.test("overdue bosses escape with a 100 coin penalty and inbox entry", async
     if (text.includes("from sessions")) {
       return Promise.resolve([]);
     }
+    if (text.includes("from raids") && text.includes("status = 'active'")) {
+      return Promise.resolve([]);
+    }
     return Promise.resolve([]);
   };
 
@@ -52,6 +55,9 @@ Deno.test("sessions older than 3x estimate are closed as broken", async () => {
         started_at: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(),
         est_minutes: 60,
       }]);
+    }
+    if (text.includes("from raids") && text.includes("status = 'active'")) {
+      return Promise.resolve([]);
     }
     return Promise.resolve([]);
   };
