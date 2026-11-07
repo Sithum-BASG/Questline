@@ -4,6 +4,7 @@ import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { notFound } from "./errors.ts";
 import { metFairShare, sessionDamage } from "./game/combat.ts";
+import { applyGuildQuestProgress } from "./guild_quest.ts";
 import { sessionXp, type XpRates } from "./game/xp.ts";
 import { levelFromXp, rewardsForLevels, type LevelCurve } from "./game/rewards.ts";
 import { dayKey, weekId } from "./game/time.ts";
@@ -354,6 +355,7 @@ export async function endDraft(
     on conflict (week_id, user_id) do update set
       raw_xp = weekly_scores.raw_xp + excluded.raw_xp, updated_at = now()
   `;
+  await applyGuildQuestProgress(userId, xp.raw, week, tx, config);
   const spentPotion = session.potion === true && earns && state.comeback_armed !== true;
   await tx`
     update player_state set
