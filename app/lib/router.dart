@@ -39,6 +39,7 @@ import 'features/quests/add_task_screen.dart';
 import 'features/quests/challenge_screen.dart';
 import 'features/quests/quests_screen.dart';
 import 'features/quests/task_screen.dart';
+import 'features/social/friend_profile_screen.dart';
 import 'features/social/friends_screen.dart';
 import 'features/social/scan_friend_screen.dart';
 import 'features/social/social_screen.dart';
@@ -130,7 +131,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                       path: 'scan',
                       builder: (context, state) => const ScanFriendScreen(),
                     ),
-                    _screen(':uid', 'Friend'),
+                    GoRoute(
+                      path: ':uid',
+                      builder: (context, state) => FriendProfileScreen(
+                        userId: state.pathParameters['uid']!,
+                      ),
+                    ),
                   ],
                 ),
                 _screen('guild', 'Guild', routes: [
