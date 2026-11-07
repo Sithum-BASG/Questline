@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion/app_motion.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
@@ -29,6 +30,10 @@ class ProgressBar extends StatelessWidget {
       ProgressKind.streak => AppColors.ember,
     };
     final clamped = value.clamp(0.0, 1.0);
+    final duration = kind == ProgressKind.bossHp
+        ? AppMotion.bossDamage(context)
+        : AppMotion.xpFill(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -51,10 +56,17 @@ class ProgressBar extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 const ColoredBox(color: AppColors.line),
-                FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: clamped,
-                  child: ColoredBox(color: fill),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: clamped),
+                  duration: duration,
+                  curve: Curves.easeOut,
+                  builder: (context, widthFactor, _) {
+                    return FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: widthFactor,
+                      child: ColoredBox(color: fill),
+                    );
+                  },
                 ),
               ],
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion/app_motion.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
@@ -33,13 +34,12 @@ class _QButtonState extends State<QButton> {
 
   @override
   Widget build(BuildContext context) {
-    final reduce = MediaQuery.disableAnimationsOf(context);
     final enabled = widget._enabled;
     final pressed = _down && enabled;
     final (background, foreground, shadows) = _look(pressed);
 
     final child = AnimatedContainer(
-      duration: reduce ? const Duration(milliseconds: 150) : const Duration(milliseconds: 80),
+      duration: AppMotion.button(context),
       transform: Matrix4.translationValues(0, pressed ? 2 : 0, 0),
       constraints: const BoxConstraints(minHeight: AppSpacing.minTap, minWidth: AppSpacing.minTap),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s20, vertical: AppSpacing.s12),

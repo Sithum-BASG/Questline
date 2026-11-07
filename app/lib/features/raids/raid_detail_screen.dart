@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/assets/game_assets.dart';
+import '../../core/motion/app_motion.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
@@ -187,21 +188,36 @@ class RaidDetailScreen extends ConsumerWidget {
                 for (final event in ticker)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                    child: QCard(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${event.displayName} hit',
-                              style: AppText.body,
-                              overflow: TextOverflow.ellipsis,
+                    child: TweenAnimationBuilder<double>(
+                      key: ValueKey(event.id),
+                      tween: Tween(begin: 0, end: 1),
+                      duration: AppMotion.raidTicker(context),
+                      curve: Curves.easeOut,
+                      builder: (context, t, child) {
+                        return Opacity(
+                          opacity: t,
+                          child: Transform.translate(
+                            offset: Offset(0, (1 - t) * 12),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: QCard(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${event.displayName} hit',
+                                style: AppText.body,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '−${event.amount}',
-                            style: AppText.numbers.copyWith(color: AppColors.bossHp),
-                          ),
-                        ],
+                            Text(
+                              '−${event.amount}',
+                              style: AppText.numbers.copyWith(color: AppColors.bossHp),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

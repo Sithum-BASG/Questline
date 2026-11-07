@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
+import '../motion/app_haptics.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
@@ -302,7 +303,13 @@ class _RewardOverlayState extends State<RewardOverlay> with TickerProviderStateM
                   Text(moment.subtitle, style: AppText.body, textAlign: TextAlign.center),
                   const Spacer(),
                   if (_settled)
-                    QButton(label: 'Claim', onPressed: widget.onClaim)
+                    QButton(
+                      label: 'Claim',
+                      onPressed: () async {
+                        await AppHaptics.claim();
+                        widget.onClaim();
+                      },
+                    )
                   else
                     const SizedBox(height: AppSpacing.minTap),
                 ],
