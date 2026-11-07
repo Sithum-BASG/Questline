@@ -214,6 +214,24 @@ class ApiClient {
   Future<void> ackBossResult(String bossId) {
     return invoke('bosses', 'ackBossResult', {'bossId': bossId});
   }
+
+  Future<void> sendFriendRequest({String? username, String? friendCode}) {
+    return invoke('social', 'sendFriendRequest', {
+      'username': ?username,
+      'friendCode': ?friendCode,
+    });
+  }
+
+  Future<void> respondFriendRequest({required String fromUid, required bool accept}) {
+    return invoke('social', 'respondFriendRequest', {
+      'fromUid': fromUid,
+      'accept': accept,
+    });
+  }
+
+  Future<void> removeFriend(String friendUid) {
+    return invoke('social', 'removeFriend', {'friendUid': friendUid});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

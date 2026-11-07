@@ -15,6 +15,8 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
+import '../social/providers/friends_providers.dart';
+import '../social/providers/presence_providers.dart';
 import 'home_snapshot.dart';
 import 'providers/home_providers.dart';
 
@@ -149,6 +151,7 @@ class _HomeBody extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s24),
+          const _FocusingNowStrip(),
           _BossSection(boss: snapshot.closestBoss, now: now),
           if (snapshot.showAddFriends) ...[
             const SizedBox(height: AppSpacing.s16),
@@ -226,6 +229,39 @@ class _HomeStat extends StatelessWidget {
         Text(value, style: AppText.numbers),
         Text(label, style: AppText.caption),
       ],
+    );
+  }
+}
+
+class _FocusingNowStrip extends ConsumerWidget {
+  const _FocusingNowStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
+    if (focusing.isEmpty) return const SizedBox.shrink();
+    final friends = ref.watch(friendRowsProvider).asData?.value.accepted ?? const [];
+    final names = [
+      for (final row in friends)
+        if (focusing.containsKey(row.profile.id)) row.profile.displayName,
+    ];
+    if (names.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+      child: QCard(
+        child: Row(
+          children: [
+            const DecoratedBox(
+              decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+              child: SizedBox(width: 12, height: 12),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Text('Focusing now: ${names.join(', ')}', style: AppText.body),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
