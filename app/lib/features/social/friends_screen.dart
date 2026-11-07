@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/assets/game_assets.dart';
 import '../../core/supabase/api_client.dart';
@@ -12,7 +14,9 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/member_card.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import 'friend_links.dart';
 import 'providers/friends_providers.dart';
+import 'providers/pending_friend_code.dart';
 
 /// Friends list, incoming requests, and add by username or friend code.
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -29,9 +33,65 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   String? _info;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingCode());
+  }
+
+  @override
   void dispose() {
     _query.dispose();
     super.dispose();
+  }
+
+  Future<void> _consumePendingCode() async {
+    final code = ref.read(pendingFriendCodeProvider);
+    if (code == null || code.isEmpty) return;
+    ref.read(pendingFriendCodeProvider.notifier).clear();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add friend?', style: AppText.h2),
+        content: Text('Send a request to code $code?', style: AppText.body),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Send')),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    setState(() {
+      _query.text = code;
+    });
+    await _send();
+  }
+
+  Future<void> _showMyQr(String code) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Your QR', style: AppText.h2),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            QrImageView(
+              data: friendInviteUri(code),
+              size: 200,
+              backgroundColor: AppColors.white,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            Text(code, style: AppText.body),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _share(String code) async {
+    await SharePlus.instance.share(ShareParams(text: friendInviteShareText(code)));
   }
 
   Future<void> _send() async {
@@ -143,6 +203,16 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                         },
                         icon: const Icon(Icons.copy_outlined),
                       ),
+                      IconButton(
+                        tooltip: 'Show QR',
+                        onPressed: () => _showMyQr(myCode),
+                        icon: const Icon(Icons.qr_code_2_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Share',
+                        onPressed: () => _share(myCode),
+                        icon: const Icon(Icons.ios_share_outlined),
+                      ),
                     ],
                   ),
                 ),
@@ -160,9 +230,23 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 onSubmitted: (_) => _busy ? null : _send(),
               ),
               const SizedBox(height: AppSpacing.s12),
-              QButton(
-                label: _busy ? 'Sending…' : 'Send request',
-                onPressed: _busy ? null : _send,
+              Row(
+                children: [
+                  Expanded(
+                    child: QButton(
+                      label: _busy ? 'Sending…' : 'Send request',
+                      onPressed: _busy ? null : _send,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: QButton(
+                      label: 'Scan QR',
+                      variant: QButtonVariant.secondary,
+                      onPressed: _busy ? null : () => context.go('/social/friends/scan'),
+                    ),
+                  ),
+                ],
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s8),
