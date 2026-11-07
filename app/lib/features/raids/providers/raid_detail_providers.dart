@@ -96,8 +96,12 @@ final raidDetailProvider = StreamProvider.autoDispose.family<RaidDetailSnapshot?
   final controller = StreamController<RaidDetailSnapshot?>();
   ref.onDispose(controller.close);
 
+  var loadSeq = 0;
   void push() async {
-    if (!controller.isClosed) controller.add(await load());
+    final seq = ++loadSeq;
+    final snap = await load();
+    if (seq != loadSeq || controller.isClosed) return;
+    controller.add(snap);
   }
 
   final channel = client

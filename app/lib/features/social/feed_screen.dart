@@ -44,8 +44,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       for (final page in pages)
         ...?(page.asData?.value.items),
     ];
-    final lastHasMore = pages.last.asData?.value.hasMore ?? false;
-    final loadingMore = pages.last.isLoading && pages.last.hasValue == false && _pages > 1;
+    final lastPage = pages.last;
+    final lastHasMore = lastPage.asData?.value.hasMore ?? false;
+    final lastPageError = lastPage.hasError && _pages > 1;
+    final loadingMore = lastPage.isLoading && lastPage.hasValue == false && _pages > 1;
 
     return Scaffold(
       appBar: AppBar(
@@ -83,6 +85,18 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       itemCount: items.length + 1,
                       itemBuilder: (context, index) {
                         if (index == items.length) {
+                          if (lastPageError) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+                              child: Center(
+                                child: QButton(
+                                  label: 'Retry',
+                                  variant: QButtonVariant.secondary,
+                                  onPressed: () => ref.invalidate(feedPageProvider(_pages - 1)),
+                                ),
+                              ),
+                            );
+                          }
                           if (!lastHasMore) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),

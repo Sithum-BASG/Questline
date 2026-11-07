@@ -34,10 +34,16 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   String? _error;
   String? _info;
 
+  var _handlingPending = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingCode());
+    // Consume a code that arrived before this screen mounted (cold deep link).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final code = ref.read(pendingFriendCodeProvider);
+      if (code != null) _consumePendingCode(code);
+    });
   }
 
   @override
@@ -46,26 +52,30 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     super.dispose();
   }
 
-  Future<void> _consumePendingCode() async {
-    final code = ref.read(pendingFriendCodeProvider);
-    if (code == null || code.isEmpty) return;
+  Future<void> _consumePendingCode(String code) async {
+    if (_handlingPending || code.isEmpty) return;
+    _handlingPending = true;
     ref.read(pendingFriendCodeProvider.notifier).clear();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add friend?', style: AppText.h2),
-        content: Text('Send a request to code $code?', style: AppText.body),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Send')),
-        ],
-      ),
-    );
-    if (confirm != true || !mounted) return;
-    setState(() {
-      _query.text = code;
-    });
-    await _send();
+    try {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Add friend?', style: AppText.h2),
+          content: Text('Send a request to code $code?', style: AppText.body),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Send')),
+          ],
+        ),
+      );
+      if (confirm != true || !mounted) return;
+      setState(() {
+        _query.text = code;
+      });
+      await _send();
+    } finally {
+      _handlingPending = false;
+    }
   }
 
   Future<void> _showMyQr(String code) async {
@@ -161,6 +171,14 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Nested /friends/scan → go('/social/friends') keeps this State alive; listen for new codes.
+    ref.listen<String?>(pendingFriendCodeProvider, (prev, next) {
+      if (next == null || next.isEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _consumePendingCode(next);
+      });
+    });
+
     final async = ref.watch(friendRowsProvider);
     final myCode = ref.watch(myFriendCodeProvider).asData?.value;
     final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
