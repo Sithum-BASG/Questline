@@ -47,6 +47,9 @@ function scripted(options: {
     if (text.includes("from profiles")) {
       return Promise.resolve([{ show_boss_names: true }]);
     }
+    if (text.includes("from achievements")) {
+      return Promise.resolve([]);
+    }
     return Promise.resolve([]);
   };
   return { tx, queries };

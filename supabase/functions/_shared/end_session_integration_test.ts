@@ -52,7 +52,14 @@ Deno.test("a 60 minute difficulty 4 session pays 86 XP once", async () => {
         onboarding_step: "done",
       }]);
     }
-    if (text.includes("from inventory") || text.includes("from user_settings") || text.includes("from demo_allowlist")) {
+    if (
+      text.includes("from inventory") ||
+      text.includes("from user_settings") ||
+      text.includes("from demo_allowlist") ||
+      text.includes("from achievements") ||
+      text.includes("select counters") ||
+      text.includes("from guild_members")
+    ) {
       return Promise.resolve([]);
     }
     if (text.includes("from level_rewards")) {

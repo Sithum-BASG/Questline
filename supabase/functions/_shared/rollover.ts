@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { applyAchievementProgress } from "./apply_achievements.ts";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { healBoss } from "./game/combat.ts";
@@ -201,6 +202,10 @@ export async function rolloverPlayer(
       next_rollover_at = ${nextAt.toISOString()}
     where user_id = ${userId}
   `;
+  await applyAchievementProgress(userId, {
+    badge: "unbroken",
+    progress: closed.state.best,
+  }, tx);
 
   const profile = await tx`select hide_radar from profiles where id = ${userId}`;
   await refreshRadar(tx, userId, profile[0]?.hide_radar === true);

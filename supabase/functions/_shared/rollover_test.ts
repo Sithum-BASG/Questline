@@ -52,6 +52,9 @@ function scripted(options: {
     if (text.includes("from profiles")) {
       return Promise.resolve([{ hide_radar: false }]);
     }
+    if (text.includes("from achievements")) {
+      return Promise.resolve([]);
+    }
     return Promise.resolve([]);
   };
   return { tx, queries, state };
