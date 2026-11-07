@@ -18,18 +18,34 @@ import '../bosses/boss_time.dart';
 import 'providers/raid_detail_providers.dart';
 
 /// Live raid HP, members with focusing dots, and damage ticker.
-class RaidDetailScreen extends ConsumerWidget {
+class RaidDetailScreen extends ConsumerStatefulWidget {
   const RaidDetailScreen({super.key, required this.raidId});
 
   final String raidId;
+
+  @override
+  ConsumerState<RaidDetailScreen> createState() => _RaidDetailScreenState();
+}
+
+class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
+  var _redirected = false;
 
   static String _label(String value) {
     if (value.isEmpty) return value;
     return value[0].toUpperCase() + value.substring(1);
   }
 
+  void _goResultsOnce() {
+    if (_redirected) return;
+    _redirected = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.go('/raids/${widget.raidId}/results');
+    });
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final raidId = widget.raidId;
     final async = ref.watch(raidDetailProvider(raidId));
 
     return Scaffold(
@@ -54,9 +70,8 @@ class RaidDetailScreen extends ConsumerWidget {
           }
           final raid = snap.raid;
           if (raid.status != 'active') {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) context.go('/raids/$raidId/results');
-            });
+            _goResultsOnce();
+            return const LoadingSkeleton();
           }
           final remaining = (raid.maxHp - raid.damage).clamp(0, raid.maxHp);
           final hp = raid.maxHp <= 0 ? 0.0 : remaining / raid.maxHp;

@@ -18,8 +18,15 @@ import 'providers/guild_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
 
 /// Guild home: members, focusing dots, weekly quest and trophies.
-class GuildHomeScreen extends ConsumerWidget {
+class GuildHomeScreen extends ConsumerStatefulWidget {
   const GuildHomeScreen({super.key});
+
+  @override
+  ConsumerState<GuildHomeScreen> createState() => _GuildHomeScreenState();
+}
+
+class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
+  var _leaving = false;
 
   String _crestShort(String emblem) {
     return emblem.startsWith('crest_') ? emblem.substring(6) : emblem;
@@ -34,8 +41,41 @@ class GuildHomeScreen extends ConsumerWidget {
     return 'Won $y-$m-$d';
   }
 
+  Future<void> _leaveGuild({required bool isLeader}) async {
+    if (_leaving) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Leave guild?', style: AppText.h2),
+        content: Text(
+          isLeader
+              ? 'Leadership passes to the next member, or the guild is deleted if you are alone.'
+              : 'You can join another guild later with an invite code.',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Leave')),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    setState(() => _leaving = true);
+    try {
+      await ref.read(apiClientProvider).leaveGuild();
+      ref.invalidate(myGuildIdProvider);
+      ref.invalidate(guildHomeProvider);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _leaving = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final async = ref.watch(guildHomeProvider);
     return Scaffold(
       appBar: AppBar(
@@ -215,34 +255,8 @@ class GuildHomeScreen extends ConsumerWidget {
               QButton(
                 label: 'Leave guild',
                 variant: QButtonVariant.destructive,
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Leave guild?', style: AppText.h2),
-                      content: Text(
-                        snap.isLeader
-                            ? 'Leadership passes to the next member, or the guild is deleted if you are alone.'
-                            : 'You can join another guild later with an invite code.',
-                        style: AppText.body,
-                      ),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Leave')),
-                      ],
-                    ),
-                  );
-                  if (confirm != true || !context.mounted) return;
-                  try {
-                    await ref.read(apiClientProvider).leaveGuild();
-                    ref.invalidate(myGuildIdProvider);
-                    ref.invalidate(guildHomeProvider);
-                  } on ApiException catch (error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
-                    }
-                  }
-                },
+                loading: _leaving,
+                onPressed: _leaving ? null : () => _leaveGuild(isLeader: snap.isLeader),
               ),
             ],
           );

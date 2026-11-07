@@ -63,7 +63,10 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     });
     try {
       // Ask once after the first completed session (overview §18 / plan 13.1).
-      await ref.read(localNotificationsProvider).requestPermissionAfterFirstSession();
+      // Never block Continue if the plugin/channel is unavailable (tests, cold hosts).
+      try {
+        await ref.read(localNotificationsProvider).requestPermissionAfterFirstSession();
+      } catch (_) {}
       try {
         await replanLocalNotifications(ref);
       } catch (_) {}

@@ -6,8 +6,13 @@ import 'package:questline/core/supabase/auth_providers.dart';
 import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/core/widgets/reward_overlay.dart';
 import 'package:questline/features/focus/session_complete_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('the summary shows 86 XP and queues the rewards', (tester) async {
     final queue = RewardQueue();
     final router = GoRouter(routes: [
@@ -55,6 +60,10 @@ void main() {
           'rewards': <Map<String, dynamic>>[],
         }),
       ),
+      GoRoute(
+        path: '/onboarding/chest',
+        builder: (context, state) => const Scaffold(body: Text('Free chest')),
+      ),
       GoRoute(path: '/home', builder: (context, state) => const Scaffold(body: Text('Home'))),
     ]);
     await tester.pumpWidget(
@@ -75,6 +84,6 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     expect(completed, 'first_session');
-    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Free chest'), findsOneWidget);
   });
 }

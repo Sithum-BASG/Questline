@@ -61,12 +61,15 @@ class SupabaseFocusPresence implements FocusPresence {
 
   final SupabaseClient _client;
   PresenceSession? _session;
+  var _closed = false;
 
   @override
   void begin({required String stat, required DateTime startedAt}) {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
+    _closed = false;
     _client.from('user_settings').select('appear_offline').eq('user_id', userId).maybeSingle().then((row) {
+      if (_closed) return;
       final hidden = row?['appear_offline'] == true;
       _session = PresenceSession(
         appearOffline: hidden,
@@ -74,6 +77,10 @@ class SupabaseFocusPresence implements FocusPresence {
           _client.from('presence').update(values).eq('user_id', userId);
         },
       );
+      if (_closed) {
+        _session = null;
+        return;
+      }
       _session!.begin(stat: stat, startedAt: startedAt);
     });
   }
@@ -82,7 +89,12 @@ class SupabaseFocusPresence implements FocusPresence {
   void heartbeat(DateTime now) => _session?.heartbeat(now);
 
   @override
-  void finish(DateTime now) => _session?.finish(now);
+  void finish(DateTime now) {
+    _closed = true;
+    final session = _session;
+    _session = null;
+    session?.finish(now);
+  }
 }
 
 final focusPresenceProvider = Provider<FocusPresence>((ref) {

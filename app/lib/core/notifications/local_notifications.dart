@@ -79,15 +79,19 @@ class LocalNotifications {
     }
     await prefs.setBool(_permissionAskedKey, true);
 
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) {
-      final granted = await android.requestNotificationsPermission();
-      return granted ?? false;
-    }
-    final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-    if (ios != null) {
-      final granted = await ios.requestPermissions(alert: true, badge: true, sound: true);
-      return granted ?? false;
+    try {
+      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (android != null) {
+        final granted = await android.requestNotificationsPermission();
+        return granted ?? false;
+      }
+      final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      if (ios != null) {
+        final granted = await ios.requestPermissions(alert: true, badge: true, sound: true);
+        return granted ?? false;
+      }
+    } catch (_) {
+      // Platform interface unset in widget tests / unsupported hosts.
     }
     return false;
   }

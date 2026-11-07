@@ -90,7 +90,7 @@ class _LevelUpEntranceState extends State<LevelUpEntrance> with SingleTickerProv
                   opacity: t,
                   child: Icon(Icons.auto_awesome, size: 72, color: AppColors.awakeningTeal),
                 ),
-              if (child != null) child,
+              ?child,
             ],
           );
         },

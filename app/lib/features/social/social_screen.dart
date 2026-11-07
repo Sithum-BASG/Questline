@@ -31,11 +31,47 @@ class SocialScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const LoadingSkeleton(),
+          loading: () => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  AppSpacing.s16,
+                  AppSpacing.screen,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Leaderboard', style: AppText.h1),
+                    const SizedBox(height: AppSpacing.s12),
+                    _SocialNav(
+                      onFeed: () => context.go('/social/feed'),
+                      onFriends: () => context.go('/social/friends'),
+                      onGuild: () => context.go('/social/guild'),
+                    ),
+                  ],
+                ),
+              ),
+              const Expanded(child: LoadingSkeleton()),
+            ],
+          ),
           error: (error, _) => ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.s16,
+              AppSpacing.screen,
+              AppSpacing.aboveTabBar,
+            ),
             children: [
               Text('Leaderboard', style: AppText.h1),
+              const SizedBox(height: AppSpacing.s12),
+              _SocialNav(
+                onFeed: () => context.go('/social/feed'),
+                onFriends: () => context.go('/social/friends'),
+                onGuild: () => context.go('/social/guild'),
+              ),
               const SizedBox(height: AppSpacing.s16),
               QCard(
                 child: Column(

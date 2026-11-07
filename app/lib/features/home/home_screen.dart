@@ -16,6 +16,7 @@ import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_tile.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
+import '../bosses/providers/boss_providers.dart';
 import '../inbox/providers/inbox_providers.dart';
 import '../social/providers/friends_providers.dart';
 import '../social/providers/presence_providers.dart';
@@ -258,14 +259,18 @@ class _FocusingNowStrip extends ConsumerWidget {
   }
 }
 
-class _BossSection extends StatelessWidget {
+class _BossSection extends ConsumerWidget {
   const _BossSection({required this.boss, required this.now});
 
   final Boss? boss;
   final DateTime now;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeCount = ref.watch(activeFightCountProvider).asData?.value ?? 0;
+    final maxFights = ref.watch(maxActiveFightsProvider).asData?.value ?? 15;
+    final atLimit = activeCount >= maxFights;
+
     if (boss == null) {
       return QCard(
         child: Column(
@@ -273,12 +278,17 @@ class _BossSection extends StatelessWidget {
           children: [
             Text('Got a deadline coming up?', style: AppText.h2),
             const SizedBox(height: AppSpacing.s8),
-            Text('Turn it into a boss.', style: AppText.bodySmall),
+            Text(
+              atLimit
+                  ? 'You already have $maxFights active fights.'
+                  : 'Turn it into a boss.',
+              style: AppText.bodySmall,
+            ),
             const SizedBox(height: AppSpacing.s12),
             QButton(
               label: 'Create boss',
               variant: QButtonVariant.secondary,
-              onPressed: () => context.go('/bosses/new'),
+              onPressed: atLimit ? null : () => context.go('/bosses/new'),
             ),
           ],
         ),

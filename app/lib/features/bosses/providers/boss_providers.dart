@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/game_config_reader.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../../data/models/boss.dart';
 
@@ -15,7 +16,17 @@ final bossesProvider = FutureProvider.autoDispose<List<Boss>>((ref) async {
       .toList();
 });
 
-final activeFightCountProvider = Provider.autoDispose<int>((ref) {
-  final bosses = ref.watch(bossesProvider).asData?.value ?? const <Boss>[];
-  return bosses.where((boss) => boss.status == 'active' || boss.status == 'staggered').length;
+/// Solo bosses + raids that still count toward the 15-fight cap.
+final activeFightCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final client = ref.watch(supabaseClientProvider);
+  final bosses = await client
+      .from('bosses')
+      .select('id')
+      .inFilter('status', ['active', 'staggered']);
+  final raids = await client.from('raids').select('id').eq('status', 'active');
+  return (bosses as List).length + (raids as List).length;
+});
+
+final maxActiveFightsProvider = FutureProvider.autoDispose<int>((ref) {
+  return ref.watch(gameConfigReaderProvider).maxActiveFights();
 });

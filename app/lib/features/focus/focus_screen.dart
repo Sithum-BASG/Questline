@@ -49,26 +49,27 @@ class FocusScreen extends ConsumerStatefulWidget {
 class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingObserver {
   late final FocusClock _clock;
   late final SessionAlerts _alerts;
+  late final FocusPresence _presence;
   Timer? _tick;
   String? _error;
   bool _ending = false;
+  bool _confirmOpen = false;
 
   @override
   void initState() {
     super.initState();
     _clock = FocusClock(startedAt: widget.startedAt, grace: widget.grace);
     _alerts = ref.read(sessionAlertsProvider);
-    ref.read(focusPresenceProvider).begin(stat: widget.stat, startedAt: widget.startedAt);
+    _presence = ref.read(focusPresenceProvider);
+    _presence.begin(stat: widget.stat, startedAt: widget.startedAt);
     WidgetsBinding.instance.addObserver(this);
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {});
-      if (widget.mode == 'activity') {
-        _alerts.showOngoing(
-          TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())),
-          sessionId: widget.sessionId,
-        );
-      }
+      _alerts.showOngoing(
+        TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())),
+        sessionId: widget.sessionId,
+      );
     });
   }
 
@@ -76,6 +77,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
   void dispose() {
     _tick?.cancel();
     _alerts.clearOngoing();
+    _presence.finish(DateTime.now());
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -102,6 +104,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
   }
 
   Future<void> _confirmEnd() async {
+    if (_ending || _confirmOpen) return;
+    _confirmOpen = true;
     final end = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -115,6 +119,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
         );
       },
     );
+    _confirmOpen = false;
     if (end == true) await _finish(broken: false);
   }
 
@@ -129,7 +134,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
-      ref.read(focusPresenceProvider).finish(DateTime.now());
+      _presence.finish(DateTime.now());
       if (!mounted) return;
       context.go('/focus/${widget.sessionId}/complete', extra: {
         ...summary,
