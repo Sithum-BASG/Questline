@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:questline/core/supabase/auth_providers.dart';
 import 'package:questline/core/theme/app_theme.dart';
+import 'package:questline/core/widgets/reward_overlay.dart';
 import 'package:questline/features/focus/session_complete_screen.dart';
 
 void main() {
@@ -22,11 +23,12 @@ void main() {
           ],
         }),
       ),
+      GoRoute(path: '/reward', builder: (context, state) => const Scaffold(body: Text('Reward'))),
       GoRoute(path: '/quests', builder: (context, state) => const Scaffold(body: Text('Quests'))),
     ]);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [rewardQueueProvider.overrideWithValue(queue)],
+        overrides: [rewardQueueProvider.overrideWith((ref) => queue)],
         child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
       ),
     );
@@ -34,9 +36,8 @@ void main() {
     expect(find.text('frame_margin_notes'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(queue.pending, [
-      {'type': 'item', 'id': 'frame_margin_notes'},
-    ]);
+    expect(find.text('Reward'), findsOneWidget);
+    expect(queue.current?.title, 'frame_margin_notes');
   });
 
   testWidgets('the first session claims starter XP for level 2', (tester) async {
@@ -59,7 +60,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          rewardQueueProvider.overrideWithValue(queue),
+          rewardQueueProvider.overrideWith((ref) => queue),
           completeOnboardingProvider.overrideWith((ref) {
             return (step, {data}) async {
               completed = step;

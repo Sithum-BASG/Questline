@@ -16,9 +16,19 @@ import 'features/auth/welcome_screen.dart';
 import 'features/focus/focus_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
+import 'features/chests/chest_open_screen.dart';
+import 'features/chests/chests_screen.dart';
+import 'features/hero/gear_screen.dart';
+import 'features/hero/inventory_screen.dart';
+import 'features/hero/level_road_screen.dart';
+import 'features/hero/profile_screen.dart';
+import 'features/hero/wardrobe_screen.dart';
+import 'features/home/home_screen.dart';
+import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_session_screen.dart';
 import 'features/onboarding/first_task_screen.dart';
+import 'features/onboarding/onboarding_chest_screen.dart';
 import 'features/onboarding/story_screen.dart';
 import 'features/onboarding/study_screen.dart';
 import 'features/quests/add_task_screen.dart';
@@ -50,7 +60,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AppShell(navigationShell: navigationShell);
         },
         branches: [
-          StatefulShellBranch(routes: [_screen('/home', 'Home')]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+          ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/quests',
@@ -90,13 +102,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             ]),
           ]),
           StatefulShellBranch(routes: [
-            _screen('/hero', 'Hero', routes: [
-              _screen('gear', 'Gear'),
-              _screen('wardrobe', 'Wardrobe'),
-              _screen('achievements', 'Achievements'),
-              _screen('inventory', 'Inventory'),
-              _screen('level-road', 'Level road'),
-            ]),
+            GoRoute(
+              path: '/hero',
+              builder: (context, state) => const ProfileScreen(),
+              routes: [
+                GoRoute(path: 'gear', builder: (context, state) => const GearScreen()),
+                GoRoute(path: 'wardrobe', builder: (context, state) => const WardrobeScreen()),
+                _screen('achievements', 'Achievements'),
+                GoRoute(path: 'inventory', builder: (context, state) => const InventoryScreen()),
+                GoRoute(path: 'level-road', builder: (context, state) => const LevelRoadScreen()),
+              ],
+            ),
           ]),
         ],
       ),
@@ -106,6 +122,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
       GoRoute(path: '/onboarding/first-task', builder: (context, state) => const FirstTaskScreen()),
       GoRoute(path: '/onboarding/first-session', builder: (context, state) => const FirstSessionScreen()),
+      GoRoute(path: '/onboarding/chest', builder: (context, state) => const OnboardingChestScreen()),
       GoRoute(
         path: '/focus/start',
         builder: (context, state) => StartFocusScreen(taskId: state.uri.queryParameters['taskId'] ?? ''),
@@ -145,10 +162,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         _screen('invite', 'Invite'),
         _screen('results', 'Raid results'),
       ]),
-      _screen('/chests', 'Chests', routes: [
-        _screen('open', 'Chest opening'),
-      ]),
-      _screen('/reward', 'Reward'),
+      GoRoute(
+        path: '/chests',
+        builder: (context, state) => const ChestsScreen(),
+        routes: [
+          GoRoute(
+            path: 'open',
+            builder: (context, state) {
+              final extra = state.extra;
+              final result = extra is Map<String, dynamic> ? extra : <String, dynamic>{};
+              return ChestOpenScreen(result: result);
+            },
+          ),
+        ],
+      ),
+      GoRoute(path: '/reward', builder: (context, state) => const RewardScreen()),
       _screen('/recap/:weekId', 'Weekly recap'),
       _screen('/inbox', 'Inbox'),
       GoRoute(

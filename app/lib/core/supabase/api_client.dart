@@ -145,6 +145,16 @@ class ApiClient {
       'data': ?data,
     });
   }
+
+  Future<Map<String, dynamic>> openChest({
+    required String requestId,
+    bool useFreeChest = false,
+  }) {
+    return invoke('loot', 'openChest', {
+      'requestId': requestId,
+      'useFreeChest': useFreeChest,
+    });
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

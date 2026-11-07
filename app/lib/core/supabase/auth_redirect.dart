@@ -15,7 +15,7 @@ String routeForOnboardingStep(String? step) {
     case 'first_task':
       return '/onboarding/first-task';
     case 'first_session':
-      return '/onboarding/first-session';
+      return '/onboarding/chest';
     default:
       return '/home';
   }
@@ -34,6 +34,12 @@ String? authRedirect({
   if (!signedIn) return location == '/welcome' ? null : '/welcome';
   final target = routeForOnboardingStep(onboardingStep);
   if (target == '/home') return location == '/welcome' ? '/home' : null;
-  if (onboardingStep == 'first_session' && location.startsWith('/focus')) return null;
+  if (onboardingStep == 'first_session' &&
+      (location.startsWith('/focus') ||
+          location.startsWith('/reward') ||
+          location.startsWith('/chests') ||
+          location == '/onboarding/chest')) {
+    return null;
+  }
   return location == target ? null : target;
 }

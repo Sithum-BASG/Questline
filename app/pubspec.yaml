@@ -41,6 +41,9 @@ dependencies:
   json_annotation: ^4.12.0
   google_sign_in: ^7.2.0
   flutter_local_notifications: ^22.3.2
+  fl_chart: ^1.2.0
+  shared_preferences: ^2.5.3
+  lottie: ^3.6.1
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +81,7 @@ flutter:
     - assets/images/badges/
     - assets/images/story/
     - assets/images/brand/
+    - assets/animations/level_up.json
 
   fonts:
     - family: Nunito
