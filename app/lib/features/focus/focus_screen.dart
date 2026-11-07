@@ -11,6 +11,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/timer_display.dart';
 import 'focus_clock.dart';
+import 'focus_leave_store.dart';
 import 'presence_session.dart';
 import 'session_alerts.dart';
 
@@ -50,10 +51,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
   late final FocusClock _clock;
   late final SessionAlerts _alerts;
   late final FocusPresence _presence;
+  final _leaveStore = const FocusLeaveStore();
   Timer? _tick;
   String? _error;
   bool _ending = false;
   bool _confirmOpen = false;
+  bool _ongoingInFlight = false;
+  String? _lastOngoingLabel;
 
   @override
   void initState() {
@@ -63,14 +67,38 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     _presence = ref.read(focusPresenceProvider);
     _presence.begin(stat: widget.stat, startedAt: widget.startedAt);
     WidgetsBinding.instance.addObserver(this);
+    _restoreLeave();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {});
-      _alerts.showOngoing(
-        TimerDisplay.format(_clock.elapsedSeconds(DateTime.now())),
-        sessionId: widget.sessionId,
-      );
+      _refreshOngoing();
     });
+  }
+
+  Future<void> _restoreLeave() async {
+    final left = await _leaveStore.loadLeftAt(widget.sessionId);
+    if (!mounted || left == null) return;
+    _clock.restoreLeave(left);
+    _clock.returned(DateTime.now());
+    await _leaveStore.clear();
+    if (!mounted) return;
+    if (_clock.broken) {
+      await _finish(broken: true);
+    } else {
+      setState(() {});
+    }
+  }
+
+  Future<void> _refreshOngoing() async {
+    final label = TimerDisplay.format(_clock.elapsedSeconds(DateTime.now()));
+    if (_ongoingInFlight || label == _lastOngoingLabel) return;
+    _ongoingInFlight = true;
+    _lastOngoingLabel = label;
+    try {
+      await _alerts.showOngoing(label, sessionId: widget.sessionId);
+    } finally {
+      _ongoingInFlight = false;
+    }
   }
 
   @override
@@ -90,10 +118,12 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     final now = DateTime.now();
     if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       if (_clock.leave(now)) {
+        _leaveStore.save(sessionId: widget.sessionId, leftAt: now);
         _alerts.showReturnPrompt(sessionId: widget.sessionId);
       }
     } else if (state == AppLifecycleState.resumed) {
       _clock.returned(now);
+      _leaveStore.clear();
       _alerts.clearReturnPrompt();
       if (_clock.broken) {
         _finish(broken: true);
@@ -134,6 +164,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
+      await _leaveStore.clear();
       _presence.finish(DateTime.now());
       if (!mounted) return;
       context.go('/focus/${widget.sessionId}/complete', extra: {

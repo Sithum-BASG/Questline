@@ -99,6 +99,7 @@ final _resumeProvider = FutureProvider.autoDispose.family<_LoadedFocus?, String>
   final client = ref.watch(supabaseClientProvider);
   final session = await client.from('sessions').select().eq('id', sessionId).maybeSingle();
   if (session == null) return null;
+  if (session['status'] != 'active') return null;
   final startedRaw = session['started_at'];
   final startedAt = startedRaw is String ? DateTime.parse(startedRaw) : DateTime.now();
   final mode = session['mode'] as String? ?? 'focus';
