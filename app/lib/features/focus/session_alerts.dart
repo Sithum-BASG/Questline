@@ -1,6 +1,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/notifications/local_notifications.dart';
+import '../../core/notifications/notification_channels.dart';
+
 /// Shows the "come back" prompt when a focus session is backgrounded.
 abstract class SessionAlerts {
   Future<void> showReturnPrompt();
@@ -13,30 +16,24 @@ abstract class SessionAlerts {
 }
 
 class LocalSessionAlerts implements SessionAlerts {
-  LocalSessionAlerts({FlutterLocalNotificationsPlugin? plugin}) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  LocalSessionAlerts(this._notifications);
 
-  final FlutterLocalNotificationsPlugin _plugin;
-  var _ready = false;
+  final LocalNotifications _notifications;
 
   static const _id = 30;
   static const _ongoingId = 31;
 
+  FlutterLocalNotificationsPlugin get _plugin => _notifications.plugin;
+
   Future<void> _ensure() async {
-    if (_ready) return;
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const ios = DarwinInitializationSettings();
-    await _plugin.initialize(settings: const InitializationSettings(android: android, iOS: ios));
-    await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-    _ready = true;
+    await _notifications.init();
   }
 
   @override
   Future<void> showReturnPrompt() async {
     await _ensure();
     const android = AndroidNotificationDetails(
-      'focus_return',
+      NotificationChannels.focus,
       'Focus',
       channelDescription: 'Asks you to return before a focus session breaks',
       importance: Importance.max,
@@ -59,8 +56,8 @@ class LocalSessionAlerts implements SessionAlerts {
   Future<void> showOngoing(String elapsed) async {
     await _ensure();
     const android = AndroidNotificationDetails(
-      'focus_ongoing',
-      'Session',
+      NotificationChannels.focus,
+      'Focus',
       channelDescription: 'Shows the session timer while you are away',
       importance: Importance.low,
       priority: Priority.low,
@@ -82,4 +79,6 @@ class LocalSessionAlerts implements SessionAlerts {
   }
 }
 
-final sessionAlertsProvider = Provider<SessionAlerts>((ref) => LocalSessionAlerts());
+final sessionAlertsProvider = Provider<SessionAlerts>((ref) {
+  return LocalSessionAlerts(ref.watch(localNotificationsProvider));
+});
