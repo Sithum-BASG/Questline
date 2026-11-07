@@ -166,6 +166,10 @@ class ApiClient {
       'until': ?until?.toUtc().toIso8601String(),
     });
   }
+
+  Future<void> deleteAccount() {
+    return invoke('account', 'deleteAccount', {});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

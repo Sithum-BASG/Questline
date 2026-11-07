@@ -1,4 +1,5 @@
 import { completeOnboardingStep } from "../_shared/complete_onboarding.ts";
+import { deleteAccount } from "../_shared/delete_account.ts";
 import { dispatch } from "../_shared/router.ts";
 import { setPause } from "../_shared/set_pause.ts";
 import { setRestDay } from "../_shared/set_rest_day.ts";
@@ -12,6 +13,7 @@ export const handle = dispatch({
   completeOnboardingStep: (body, user) => completeOnboardingStep(user.id, body),
   setRestDay: (body, user) => setRestDay(user.id, body),
   setPause: (body, user) => setPause(user.id, body),
+  deleteAccount: (_body, user) => deleteAccount(user.id),
 });
 
 if (import.meta.main) Deno.serve(handle);
