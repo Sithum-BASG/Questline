@@ -45,7 +45,10 @@ class JudgementCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               QChip(
                 label: _titleCase(stat),
@@ -53,13 +56,8 @@ class JudgementCard extends StatelessWidget {
                 color: AppColors.stat(stat),
                 onTap: onStatTap,
               ),
-              const Spacer(),
-              if (provisional)
-                const QChip(label: 'Provisional'),
-              if (challenged) ...[
-                if (provisional) const SizedBox(width: AppSpacing.s8),
-                const QChip(label: 'Challenged', selected: true),
-              ],
+              if (provisional) const QChip(label: 'Provisional'),
+              if (challenged) const QChip(label: 'Challenged', selected: true),
             ],
           ),
           const SizedBox(height: AppSpacing.s16),

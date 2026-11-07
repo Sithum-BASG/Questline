@@ -206,7 +206,7 @@ class _BadgeTile extends StatelessWidget {
               if (pinned)
                 Text(
                   'Pinned',
-                  style: AppText.caption.copyWith(color: AppColors.awakeningTeal),
+                  style: AppText.caption.copyWith(color: AppColors.tealDeep),
                 ),
             ],
           ),

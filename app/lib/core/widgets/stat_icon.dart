@@ -11,9 +11,28 @@ class StatIcon extends StatelessWidget {
 
   static const sizes = [16.0, 20.0, 24.0];
 
+  String get _label {
+    switch (stat) {
+      case 'intellect':
+        return 'Intellect';
+      case 'vitality':
+        return 'Vitality';
+      case 'craft':
+        return 'Craft';
+      case 'charisma':
+        return 'Charisma';
+      default:
+        return 'Stat';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Icon(_icon, size: size, color: AppColors.stat(stat));
+    return Semantics(
+      label: _label,
+      image: true,
+      child: Icon(_icon, size: size, color: AppColors.stat(stat)),
+    );
   }
 
   IconData get _icon {

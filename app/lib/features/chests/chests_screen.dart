@@ -96,7 +96,7 @@ class _ChestsScreenState extends ConsumerState<ChestsScreen> {
                       const SizedBox(height: AppSpacing.s8),
                       Text(
                         '${data.freeChests} free chest${data.freeChests == 1 ? '' : 's'} ready',
-                        style: AppText.bodySmall.copyWith(color: AppColors.awakeningTeal),
+                        style: AppText.bodySmall.copyWith(color: AppColors.tealDeep),
                       ),
                     ],
                     const SizedBox(height: AppSpacing.s8),

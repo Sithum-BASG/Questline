@@ -29,25 +29,36 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tint = AppColors.rarity(rarity);
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: tint, width: equipped ? 2 : 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(art, height: 72, fit: BoxFit.contain),
-          const SizedBox(height: AppSpacing.s8),
-          Text(name, style: AppText.title, textAlign: TextAlign.center),
-          if (attunedStat != null) StatIcon(stat: attunedStat!, size: 16),
-          if (isNew) Text('New', style: AppText.caption.copyWith(color: tint)),
-          if (!owned) Text('Locked', style: AppText.caption),
-          if (equipped) Text('Equipped', style: AppText.caption.copyWith(color: AppColors.tealDeep)),
-        ],
+    final rarityLabel = rarity.isEmpty ? rarity : rarity[0].toUpperCase() + rarity.substring(1);
+    return Semantics(
+      label: [
+        name,
+        rarityLabel,
+        if (isNew) 'New',
+        if (!owned) 'Locked',
+        if (equipped) 'Equipped',
+      ].join(', '),
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: tint, width: equipped ? 2 : 1),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(art, height: 72, fit: BoxFit.contain),
+            const SizedBox(height: AppSpacing.s8),
+            Text(name, style: AppText.title, textAlign: TextAlign.center, softWrap: true),
+            Text(rarityLabel, style: AppText.caption.copyWith(color: tint)),
+            if (attunedStat != null) StatIcon(stat: attunedStat!, size: 16),
+            if (isNew) Text('New', style: AppText.caption.copyWith(color: tint)),
+            if (!owned) Text('Locked', style: AppText.caption),
+            if (equipped) Text('Equipped', style: AppText.caption.copyWith(color: AppColors.tealDeep)),
+          ],
+        ),
       ),
     );
   }

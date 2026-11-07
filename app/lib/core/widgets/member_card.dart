@@ -34,43 +34,50 @@ class MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return QCard(
-      child: Row(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              PortraitFrame(
-                skinId: skinId,
-                backgroundId: backgroundId,
-                frameId: frameId,
-                body: body,
-                size: PortraitFrameSize.compact,
-              ),
-              if (focusing)
-                const Positioned(
-                  right: -2,
-                  top: -2,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-                    child: SizedBox(width: 12, height: 12),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final focusLabel = focusing ? ', focusing now' : '';
+    final weightLabel = pulledWeight ? ', pulled their weight' : '';
+    final damageLabel = damage != null ? ', $damage damage' : '';
+    return Semantics(
+      label: '$name, $title$focusLabel$weightLabel$damageLabel',
+      child: QCard(
+        child: Row(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
               children: [
-                Text(name, style: AppText.title),
-                Text(title, style: AppText.caption),
+                PortraitFrame(
+                  skinId: skinId,
+                  backgroundId: backgroundId,
+                  frameId: frameId,
+                  body: body,
+                  size: PortraitFrameSize.compact,
+                ),
+                if (focusing)
+                  const Positioned(
+                    right: -2,
+                    top: -2,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                      child: SizedBox(width: 12, height: 12),
+                    ),
+                  ),
               ],
             ),
-          ),
-          if (pulledWeight) const Icon(Icons.check_circle, color: AppColors.success),
-          if (damage != null) Text('$damage', style: AppText.numbers),
-        ],
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: AppText.title, softWrap: true),
+                  Text(title, style: AppText.caption, softWrap: true),
+                ],
+              ),
+            ),
+            if (pulledWeight)
+              const Icon(Icons.check_circle, color: AppColors.success, semanticLabel: 'Pulled their weight'),
+            if (damage != null) Text('$damage', style: AppText.numbers),
+          ],
+        ),
       ),
     );
   }

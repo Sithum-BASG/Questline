@@ -29,26 +29,47 @@ class TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return QCard(
-      child: Row(
-        children: [
-          StatIcon(stat: stat),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppText.title),
-                Text(dueLabel, style: AppText.bodySmall.copyWith(color: late ? AppColors.error : AppColors.inkMuted)),
-              ],
+    return Semantics(
+      label: '$title, $dueLabel${provisional ? ', provisional' : ''}',
+      child: QCard(
+        child: Row(
+          children: [
+            StatIcon(stat: stat),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppText.title, softWrap: true),
+                  Text(
+                    dueLabel,
+                    style: AppText.bodySmall.copyWith(color: late ? AppColors.error : AppColors.inkMuted),
+                    softWrap: true,
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (provisional) const Icon(Icons.hourglass_empty, color: AppColors.inkFaint),
-          if (onTick != null)
-            IconButton(onPressed: onTick, icon: const Icon(Icons.check), tooltip: 'Tick task'),
-          if (onPlay != null)
-            IconButton(onPressed: onPlay, icon: const Icon(Icons.play_arrow), tooltip: 'Start focus'),
-        ],
+            if (provisional)
+              const Tooltip(
+                message: 'Provisional judgement',
+                child: Icon(Icons.hourglass_empty, color: AppColors.inkFaint),
+              ),
+            if (onTick != null)
+              IconButton(
+                onPressed: onTick,
+                icon: const Icon(Icons.check),
+                tooltip: 'Tick task',
+                constraints: const BoxConstraints(minWidth: AppSpacing.minTap, minHeight: AppSpacing.minTap),
+              ),
+            if (onPlay != null)
+              IconButton(
+                onPressed: onPlay,
+                icon: const Icon(Icons.play_arrow),
+                tooltip: 'Start focus',
+                constraints: const BoxConstraints(minWidth: AppSpacing.minTap, minHeight: AppSpacing.minTap),
+              ),
+          ],
+        ),
       ),
     );
   }

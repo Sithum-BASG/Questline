@@ -69,20 +69,19 @@ class LeaderboardRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpacing.s8,
                   children: [
-                    Flexible(child: Text(name, style: AppText.title, overflow: TextOverflow.ellipsis)),
-                    if (isYou) ...[
-                      const SizedBox(width: AppSpacing.s8),
-                      const QChip(label: 'You', selected: true),
-                    ],
+                    Text(name, style: AppText.title, softWrap: true),
+                    if (isYou) const QChip(label: 'You', selected: true),
                   ],
                 ),
-                Text(title, style: AppText.caption),
+                Text(title, style: AppText.caption, softWrap: true),
               ],
             ),
           ),
-          Text('$xp XP', style: AppText.numbers),
+          Text('$xp XP', style: AppText.numbers, softWrap: true),
         ],
       ),
     );

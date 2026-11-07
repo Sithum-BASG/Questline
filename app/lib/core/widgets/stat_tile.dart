@@ -36,8 +36,8 @@ class StatTile extends StatelessWidget {
           else
             Icon(icon, size: 24, color: tint),
           const SizedBox(height: AppSpacing.s4),
-          Text(value, style: AppText.numbers),
-          Text(label, style: AppText.caption),
+          Text(value, style: AppText.numbers, textAlign: TextAlign.center, softWrap: true),
+          Text(label, style: AppText.caption, textAlign: TextAlign.center, softWrap: true),
         ],
       ),
     );
