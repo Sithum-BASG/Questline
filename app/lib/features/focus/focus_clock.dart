@@ -33,12 +33,19 @@ class FocusClock {
   void returned(DateTime now) {
     final left = leftAt;
     if (left == null || broken) return;
-    leftAt = null;
     if (now.difference(left) > grace) {
+      // Keep leftAt so endSession still subtracts the open AFK window (D1).
       broken = true;
       return;
     }
+    leftAt = null;
     interruptions.add(FocusInterruption(leftAt: left, returnedAt: now));
+  }
+
+  /// Restore a leave that survived process death (same session id).
+  void restoreLeave(DateTime left) {
+    if (broken || leftAt != null) return;
+    leftAt = left;
   }
 }
 

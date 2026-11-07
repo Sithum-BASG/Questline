@@ -11,6 +11,7 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/portrait_frame.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
+import '../home/providers/home_providers.dart';
 import 'providers/profile_providers.dart';
 
 class WardrobeItem {
@@ -75,23 +76,36 @@ class WardrobeScreen extends ConsumerStatefulWidget {
 
 class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
   String? _error;
+  var _busy = false;
 
   Future<void> _equip(WardrobeItem item) async {
-    setState(() => _error = null);
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     final column = switch (item.type) {
       'skin' => 'equipped_skin_id',
       'background' => 'equipped_background_id',
       'frame' => 'equipped_frame_id',
       _ => null,
     };
-    if (column == null) return;
+    if (column == null) {
+      setState(() => _busy = false);
+      return;
+    }
     try {
       final client = ref.read(supabaseClientProvider);
       await client.from('profiles').update({column: item.id});
       ref.invalidate(wardrobeProvider);
       ref.invalidate(profileViewProvider);
+      ref.invalidate(homeSnapshotProvider);
     } catch (_) {
-      if (mounted) setState(() => _error = 'You need to own that item first.');
+      if (mounted) {
+        setState(() => _error = 'Could not equip that look. Check your connection and try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 

@@ -16,6 +16,7 @@ import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_tile.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
+import '../../core/supabase/supabase_providers.dart';
 import '../bosses/providers/boss_providers.dart';
 import '../inbox/providers/inbox_providers.dart';
 import '../social/providers/friends_providers.dart';
@@ -23,6 +24,20 @@ import '../social/providers/presence_providers.dart';
 import 'home_snapshot.dart';
 import 'providers/home_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+
+/// Cold-start reclaim: kill → open app lands on Home with an orphaned active session.
+final activeFocusSessionIdProvider = FutureProvider.autoDispose<String?>((ref) async {
+  final client = ref.watch(supabaseClientProvider);
+  final uid = ref.watch(authStateProvider).asData?.value.session?.user.id;
+  if (uid == null) return null;
+  final row = await client
+      .from('sessions')
+      .select('id')
+      .eq('user_id', uid)
+      .eq('status', 'active')
+      .maybeSingle();
+  return row?['id'] as String?;
+});
 
 String _catalogShort(String id, String prefix) =>
     id.startsWith(prefix) ? id.substring(prefix.length) : id;
@@ -41,6 +56,11 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(activeFocusSessionIdProvider, (prev, next) {
+      final id = next.asData?.value;
+      if (id != null && context.mounted) context.go('/focus/$id');
+    });
+
     final async = ref.watch(homeSnapshotProvider);
     return Scaffold(
       body: SafeArea(
