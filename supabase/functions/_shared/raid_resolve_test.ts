@@ -40,7 +40,13 @@ Deno.test("resolveRaidsDraft marks victory, fair share, MVP and clears events", 
       ]);
     }
     if (text.includes("from player_state")) {
-      return Promise.resolve([{ coins: 200, boss_coins_this_week: 0 }]);
+      return Promise.resolve([{ coins: 200, boss_coins_this_week: 0, counters: {} }]);
+    }
+    if (text.includes("select counters from player_state")) {
+      return Promise.resolve([{ counters: {} }]);
+    }
+    if (text.includes("from achievements")) {
+      return Promise.resolve([]);
     }
     return Promise.resolve([]);
   };

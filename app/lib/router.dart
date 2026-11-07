@@ -22,12 +22,14 @@ import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
 import 'features/chests/chest_open_screen.dart';
 import 'features/chests/chests_screen.dart';
+import 'features/hero/achievements_screen.dart';
 import 'features/hero/gear_screen.dart';
 import 'features/hero/inventory_screen.dart';
 import 'features/hero/level_road_screen.dart';
 import 'features/hero/profile_screen.dart';
 import 'features/hero/wardrobe_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/recap/recap_screen.dart';
 import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
 import 'features/onboarding/first_session_screen.dart';
@@ -170,7 +172,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: [
                 GoRoute(path: 'gear', builder: (context, state) => const GearScreen()),
                 GoRoute(path: 'wardrobe', builder: (context, state) => const WardrobeScreen()),
-                _screen('achievements', 'Achievements'),
+                GoRoute(path: 'achievements', builder: (context, state) => const AchievementsScreen()),
                 GoRoute(path: 'inventory', builder: (context, state) => const InventoryScreen()),
                 GoRoute(path: 'level-road', builder: (context, state) => const LevelRoadScreen()),
               ],
@@ -263,7 +265,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/reward', builder: (context, state) => const RewardScreen()),
-      _screen('/recap/:weekId', 'Weekly recap'),
+      GoRoute(
+        path: '/recap/:weekId',
+        builder: (context, state) => RecapScreen(weekId: state.pathParameters['weekId'] ?? ''),
+      ),
       _screen('/inbox', 'Inbox'),
       GoRoute(
         path: '/settings',

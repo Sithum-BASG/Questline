@@ -31,6 +31,7 @@ export async function deleteAccountDraft(userId: string, tx: Tx): Promise<void> 
   }
 
   await tx`delete from guild_members where user_id = ${userId}`;
+  await tx`update profiles set guild_id = null where id = ${userId}`;
 
   await tx`
     update activity_events

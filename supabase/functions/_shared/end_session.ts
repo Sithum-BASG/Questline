@@ -3,7 +3,9 @@ import { z } from "zod";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { notFound } from "./errors.ts";
+import { applyAchievementProgress, bumpCounters } from "./apply_achievements.ts";
 import { metFairShare, sessionDamage } from "./game/combat.ts";
+import { isEarlyBird } from "./game/achievements.ts";
 import { applyGuildQuestProgress } from "./guild_quest.ts";
 import { sessionXp, type XpRates } from "./game/xp.ts";
 import { levelFromXp, rewardsForLevels, type LevelCurve } from "./game/rewards.ts";
@@ -379,6 +381,31 @@ export async function endDraft(
     update friend_summaries set weekly_raw_xp = ${weeklyRaw}, updated_at = now()
     where user_id = ${userId}
   `;
+
+  if (earns && xp.countedMinutes > 0) {
+    const counterDeltas: Record<string, number> = { focus_minutes: xp.countedMinutes };
+    const startedAt = new Date(String(session.started_at));
+    if (isEarlyBird(startedAt, zone)) counterDeltas.early_bird_sessions = 1;
+    if (!broken && dueDay != null && day <= dueDay) counterDeltas.punctual_tasks = 1;
+    const counters = await bumpCounters(userId, counterDeltas, tx);
+    await applyAchievementProgress(userId, {
+      badge: "deep_worker",
+      progress: Math.floor(numberFrom(counters.focus_minutes, 0) / 60),
+    }, tx);
+    if (counterDeltas.early_bird_sessions) {
+      await applyAchievementProgress(userId, {
+        badge: "early_bird",
+        progress: numberFrom(counters.early_bird_sessions, 0),
+      }, tx);
+    }
+    if (counterDeltas.punctual_tasks) {
+      await applyAchievementProgress(userId, {
+        badge: "punctual",
+        progress: numberFrom(counters.punctual_tasks, 0),
+      }, tx);
+    }
+  }
+
   const status = broken ? "broken" : "completed";
   await tx`
     update sessions set status = ${status}, ended_at = ${now.toISOString()}, verified_minutes = ${verifiedMinutes},

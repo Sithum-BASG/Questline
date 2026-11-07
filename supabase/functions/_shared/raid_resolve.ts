@@ -1,3 +1,4 @@
+import { applyAchievementProgress, bumpCounters, grantTitleIfMissing } from "./apply_achievements.ts";
 import type { GameConfig } from "./config.ts";
 import {
   applyEscapePenalty,
@@ -155,6 +156,16 @@ export async function resolveRaidsDraft(
             )
           )
         `;
+        const counterDeltas: Record<string, number> = { raids_won: 1 };
+        if (mvpId === userId) counterDeltas.raid_mvps = 1;
+        const counters = await bumpCounters(userId, counterDeltas, tx);
+        await applyAchievementProgress(userId, {
+          badge: "team_player",
+          progress: numberFrom(counters.raids_won, 0),
+        }, tx);
+        if (numberFrom(counters.raid_mvps, 0) >= 10) {
+          await grantTitleIfMissing(userId, "title_raid_champion", tx);
+        }
       }
     }
 

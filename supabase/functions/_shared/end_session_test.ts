@@ -104,6 +104,12 @@ function scripted(options: {
     if (text.includes("from level_rewards")) {
       return Promise.resolve([{ level: 2, rewards: [{ type: "item", id: "frame_margin_notes" }] }]);
     }
+    if (text.includes("select counters from player_state")) {
+      return Promise.resolve([{ counters: {} }]);
+    }
+    if (text.includes("from achievements")) {
+      return Promise.resolve([]);
+    }
     return Promise.resolve([]);
   };
   return { tx, queries };

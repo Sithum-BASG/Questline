@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { applyAchievementProgress } from "./apply_achievements.ts";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { invalidArgument, notFound } from "./errors.ts";
@@ -102,6 +103,7 @@ export async function submitBossDraft(
       counters = ${JSON.stringify(nextCounters)}::jsonb
     where user_id = ${userId}
   `;
+  await applyAchievementProgress(userId, { badge: "boss_hunter", progress: defeated }, tx);
 
   const profiles = await tx`select show_boss_names from profiles where id = ${userId}`;
   const showName = profiles[0]?.show_boss_names === true;
