@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/assets/game_assets.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
@@ -10,6 +11,8 @@ import '../../core/widgets/member_card.dart';
 import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import '../../core/widgets/q_chip.dart';
+import '../bosses/boss_time.dart';
 import 'providers/raid_detail_providers.dart';
 
 /// Live raid HP, members with focusing dots, and damage ticker.
@@ -17,6 +20,11 @@ class RaidDetailScreen extends ConsumerWidget {
   const RaidDetailScreen({super.key, required this.raidId});
 
   final String raidId;
+
+  static String _label(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,9 +56,13 @@ class RaidDetailScreen extends ConsumerWidget {
               if (context.mounted) context.go('/raids/$raidId/results');
             });
           }
-          final hp = raid.maxHp <= 0 ? 0.0 : (1 - raid.damage / raid.maxHp).clamp(0.0, 1.0);
+          final remaining = (raid.maxHp - raid.damage).clamp(0, raid.maxHp);
+          final hp = raid.maxHp <= 0 ? 0.0 : remaining / raid.maxHp;
           final activeMembers = snap.members.where((m) => !m.leftRaid).toList();
           final alone = activeMembers.length <= 1 && snap.isCreator;
+          final focusingCount = snap.focusingIds.length;
+          final now = DateTime.now();
+          final ticker = snap.events.take(5).toList();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(
@@ -60,19 +72,53 @@ class RaidDetailScreen extends ConsumerWidget {
               AppSpacing.aboveTabBar,
             ),
             children: [
-              Text(raid.name, style: AppText.h1),
-              Text(raid.title, style: AppText.bodySmall),
-              const SizedBox(height: AppSpacing.s16),
-              ProgressBar(
-                value: hp,
-                kind: ProgressKind.bossHp,
-                leading: 'HP',
-                trailing: '${raid.maxHp - raid.damage} / ${raid.maxHp}',
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                'Due ${raid.deadline.toLocal()}'.split('.').first,
-                style: AppText.caption,
+              // Boss art sits on a light card so indigo ink stays readable (UI brief §5.4).
+              QCard(
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                      child: Image.asset(
+                        GameAssets.boss(raid.tier),
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    Text(raid.name, style: AppText.h1, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(raid.title, style: AppText.bodySmall, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.s12),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      children: [
+                        QChip(label: _label(raid.source), selected: true),
+                        QChip(label: bossStatusLabel(raid.status)),
+                        QChip(label: _label(raid.tier)),
+                        QChip(label: _label(raid.type)),
+                        QChip(label: bossTimeLeft(raid.deadline, now)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    ProgressBar(
+                      value: hp.clamp(0.0, 1.0),
+                      kind: ProgressKind.bossHp,
+                      leading: 'HP',
+                      trailing: '$remaining / ${raid.maxHp} HP',
+                    ),
+                    if (!raid.coinsEligible) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        'No coins on victory (created under 48 hours).',
+                        style: AppText.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
               ),
               if (alone) ...[
                 const SizedBox(height: AppSpacing.s16),
@@ -93,7 +139,16 @@ class RaidDetailScreen extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: AppSpacing.s24),
-              Text('Members', style: AppText.h2),
+              Row(
+                children: [
+                  Expanded(child: Text('Members', style: AppText.h2)),
+                  if (focusingCount > 0)
+                    QChip(
+                      label: focusingCount == 1 ? '1 focusing' : '$focusingCount focusing',
+                      selected: true,
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.s8),
               for (final member in snap.members) ...[
                 MemberCard(
@@ -105,6 +160,7 @@ class RaidDetailScreen extends ConsumerWidget {
                           : 'Fighting',
                   skinId: (member.skinId ?? 'skin_starter').replaceFirst('skin_', ''),
                   backgroundId: 'starter',
+                  frameId: (member.frameId ?? 'frame_apprentice').replaceFirst('frame_', ''),
                   body: member.bodyType == 'b' ? BodyType.b : BodyType.a,
                   focusing: snap.focusingIds.contains(member.userId),
                   pulledWeight: member.metFairShare,
@@ -114,16 +170,27 @@ class RaidDetailScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s16),
               Text('Damage ticker', style: AppText.h2),
               const SizedBox(height: AppSpacing.s8),
-              if (snap.events.isEmpty)
+              if (ticker.isEmpty)
                 Text('No hits yet. Start a focus session on a raid task.', style: AppText.bodySmall)
               else
-                for (final event in snap.events)
+                for (final event in ticker)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.s8),
                     child: QCard(
-                      child: Text(
-                        '${event.displayName} hit for ${event.amount}',
-                        style: AppText.body,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${event.displayName} hit',
+                              style: AppText.body,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '−${event.amount}',
+                            style: AppText.numbers.copyWith(color: AppColors.bossHp),
+                          ),
+                        ],
                       ),
                     ),
                   ),

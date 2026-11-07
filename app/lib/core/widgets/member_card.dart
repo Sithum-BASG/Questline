@@ -4,8 +4,8 @@ import '../assets/game_assets.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
+import 'portrait_frame.dart';
 import 'q_card.dart';
-import 'stage_card.dart';
 
 /// Party or guild member. Shows a focusing dot, and either damage or a check.
 class MemberCard extends StatelessWidget {
@@ -16,6 +16,7 @@ class MemberCard extends StatelessWidget {
     required this.skinId,
     required this.backgroundId,
     required this.body,
+    this.frameId = 'apprentice',
     this.focusing = false,
     this.damage,
     this.pulledWeight = false,
@@ -25,6 +26,7 @@ class MemberCard extends StatelessWidget {
   final String title;
   final String skinId;
   final String backgroundId;
+  final String frameId;
   final BodyType body;
   final bool focusing;
   final int? damage;
@@ -38,7 +40,13 @@ class MemberCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              StageCard(skinId: skinId, backgroundId: backgroundId, body: body, size: StageCardSize.row),
+              PortraitFrame(
+                skinId: skinId,
+                backgroundId: backgroundId,
+                frameId: frameId,
+                body: body,
+                size: PortraitFrameSize.compact,
+              ),
               if (focusing)
                 const Positioned(
                   right: -2,

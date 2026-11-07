@@ -115,6 +115,7 @@ class GalleryScreen extends StatelessWidget {
             title: 'Freshly awakened',
             skinId: 'starter',
             backgroundId: 'starter',
+            frameId: 'apprentice',
             body: BodyType.b,
             focusing: true,
           ),
