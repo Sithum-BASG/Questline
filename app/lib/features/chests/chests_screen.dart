@@ -13,6 +13,8 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
+import '../hero/inventory_screen.dart';
+import '../hero/wardrobe_screen.dart';
 import 'providers/chest_providers.dart';
 
 /// Rates, pity counter and open actions for chests.
@@ -41,6 +43,8 @@ class _ChestsScreenState extends ConsumerState<ChestsScreen> {
           );
       if (!mounted) return;
       ref.invalidate(chestScreenProvider);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(inventoryCountsProvider);
       context.push('/chests/open', extra: result);
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);

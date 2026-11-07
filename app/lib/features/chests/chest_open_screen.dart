@@ -17,9 +17,9 @@ class ChestOpenScreen extends StatelessWidget {
     var subtitle = rarity[0].toUpperCase() + rarity.substring(1);
     if (drop is Map) {
       final kind = drop['kind'] as String? ?? 'item';
-      if (kind == 'pouch') {
+      if (kind == 'pouch' || kind == 'coins') {
         title = '+${drop['coins'] ?? 0} coins';
-        subtitle = 'Coin pouch · $subtitle';
+        subtitle = kind == 'coins' ? 'Duplicate refund · $subtitle' : 'Coin pouch · $subtitle';
       } else if (kind == 'consumable') {
         title = (drop['id'] as String?)?.replaceAll('_', ' ') ?? 'Consumable';
         subtitle = 'Consumable · $subtitle';

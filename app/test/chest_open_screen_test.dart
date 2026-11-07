@@ -25,6 +25,16 @@ void main() {
     expect(moment.subtitle, 'Duplicate · +200 coins');
   });
 
+  test('coins drop kind shows the refund amount as the title', () {
+    final moment = ChestOpenScreen.momentFromResult({
+      'rarity': 'mythic',
+      'drop': {'kind': 'coins', 'coins': 500},
+      'refund': 500,
+    });
+    expect(moment.title, '+500 coins');
+    expect(moment.subtitle, 'Duplicate · +500 coins');
+  });
+
   testWidgets('chest open shows Claim after reduced-motion fade', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
