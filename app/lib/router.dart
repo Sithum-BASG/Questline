@@ -39,6 +39,8 @@ import 'features/quests/add_task_screen.dart';
 import 'features/quests/challenge_screen.dart';
 import 'features/quests/quests_screen.dart';
 import 'features/quests/task_screen.dart';
+import 'features/social/friends_screen.dart';
+import 'features/social/social_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _AuthRefresh(ref);
@@ -114,15 +116,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           StatefulShellBranch(routes: [
-            _screen('/social', 'Social', routes: [
-              _screen('feed', 'Feed'),
-              _screen('friends', 'Friends', routes: [
-                _screen(':uid', 'Friend'),
-              ]),
-              _screen('guild', 'Guild', routes: [
-                _screen('new', 'Create or join guild'),
-              ]),
-            ]),
+            GoRoute(
+              path: '/social',
+              builder: (context, state) => const SocialScreen(),
+              routes: [
+                _screen('feed', 'Feed'),
+                GoRoute(
+                  path: 'friends',
+                  builder: (context, state) => const FriendsScreen(),
+                  routes: [
+                    _screen(':uid', 'Friend'),
+                  ],
+                ),
+                _screen('guild', 'Guild', routes: [
+                  _screen('new', 'Create or join guild'),
+                ]),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
