@@ -44,4 +44,5 @@ Deno.test("deleteAccountDraft deletes an empty guild when leader is alone", asyn
   assertEquals(queries.some((text) => text.includes("delete from guilds")), true);
   assertEquals(queries.some((text) => text.includes("update raid_members")), true);
   assertEquals(queries.some((text) => text.includes("array_remove")), true);
+  assertEquals(queries.some((text) => text.includes("update profiles set guild_id = null")), true);
 });
