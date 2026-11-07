@@ -102,8 +102,9 @@ class _BossTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hp = boss.maxHp <= 0 ? 0.0 : 1 - (boss.damage / boss.maxHp);
+    final openResult = (boss.status == 'defeated' || boss.status == 'escaped') && !boss.resultSeen;
     return GestureDetector(
-      onTap: () => context.go('/bosses/${boss.id}'),
+      onTap: () => context.go(openResult ? '/bosses/${boss.id}/result' : '/bosses/${boss.id}'),
       child: BossCard(
         name: boss.name,
         tier: boss.tier,

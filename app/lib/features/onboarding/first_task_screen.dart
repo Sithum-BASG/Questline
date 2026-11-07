@@ -6,7 +6,7 @@ import '../quests/add_task_screen.dart';
 import '../quests/providers/task_providers.dart';
 import '../quests/task_screen.dart';
 
-/// Onboarding step 4. The boss toggle stays hidden until bosses exist.
+/// Onboarding step 4. Optional boss toggle links the first quest to a deadline boss.
 class FirstTaskScreen extends ConsumerWidget {
   const FirstTaskScreen({super.key});
 

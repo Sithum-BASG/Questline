@@ -15,6 +15,8 @@ const inputSchema = z.object({
   hours: z.number().min(2).max(40).optional(),
   /// From the dryRun preview; clamped to 2–4 words on write.
   name: z.string().trim().min(1).max(80).optional(),
+  /// Optional owned task to attach after create (onboarding boss toggle).
+  taskId: z.string().uuid().optional(),
   dryRun: z.boolean(),
 }).superRefine((value, ctx) => {
   if (!value.dryRun && value.hours == null) {
@@ -193,9 +195,24 @@ export async function createBossDraft(
   `;
   const row = rows[0];
   if (!row) throw new AppError("internal", "Failed to create boss", 500);
+  const bossId = String(row.id);
+
+  if (input.taskId) {
+    const tasks = await tx`
+      select id from tasks
+      where id = ${input.taskId} and user_id = ${userId} and status in ('draft', 'open')
+      for update
+    `;
+    if (!tasks[0]) throw invalidArgument("Task not found for this boss");
+    await tx`
+      update tasks set boss_id = ${bossId}
+      where id = ${input.taskId} and user_id = ${userId}
+    `;
+  }
+
   return {
     boss: {
-      id: String(row.id),
+      id: bossId,
       name: String(row.name),
       title: String(row.title),
       type: String(row.type),

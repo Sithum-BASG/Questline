@@ -13,6 +13,8 @@ import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
+import 'features/bosses/boss_detail_screen.dart';
+import 'features/bosses/boss_result_screen.dart';
 import 'features/bosses/bosses_screen.dart';
 import 'features/bosses/create_boss_screen.dart';
 import 'features/focus/focus_screen.dart';
@@ -90,9 +92,24 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (context, state) => const BossesScreen(),
               routes: [
                 GoRoute(path: 'new', builder: (context, state) => const CreateBossScreen()),
-                _screen(':bossId', 'Boss', routes: [
-                  _screen('result', 'Boss result'),
-                ]),
+                GoRoute(
+                  path: ':bossId',
+                  builder: (context, state) => BossDetailScreen(
+                    bossId: state.pathParameters['bossId']!,
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'result',
+                      builder: (context, state) {
+                        final extra = state.extra;
+                        return BossResultScreen(
+                          bossId: state.pathParameters['bossId']!,
+                          submitResult: extra is Map<String, dynamic> ? extra : null,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ]),

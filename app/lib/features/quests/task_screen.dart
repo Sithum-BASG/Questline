@@ -95,7 +95,7 @@ class TaskScreen extends ConsumerStatefulWidget {
 
   final String taskId;
 
-  /// The first quest. Save also stores the first_task onboarding step. No boss toggle.
+  /// The first quest. Save also stores the first_task onboarding step.
   final bool onboarding;
 
   @override
@@ -107,6 +107,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   var _busy = false;
   String? _error;
   var _asked = false;
+  var _linkBoss = false;
 
   Future<void> _judge() async {
     setState(() {
@@ -174,8 +175,20 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                   QButton(label: 'Try again', onPressed: _judge),
                 ],
                 const SizedBox(height: AppSpacing.s20),
+                if (widget.onboarding && row.status == 'draft' && judged != null) ...[
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Part of an assignment or exam with a deadline?',
+                      style: AppText.body,
+                    ),
+                    value: _linkBoss,
+                    onChanged: _busy ? null : (value) => setState(() => _linkBoss = value),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                ],
                 if (row.status == 'draft' && judged != null)
-                  QButton(label: 'Save', onPressed: _busy ? null : () => _save(row.id)),
+                  QButton(label: 'Save', onPressed: _busy ? null : () => _save(row)),
                 if (row.status == 'open' && !widget.onboarding) ...[
                   const SizedBox(height: AppSpacing.s8),
                   QButton(
@@ -238,10 +251,45 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     }
   }
 
-  Future<void> _save(String id) async {
+  Future<void> _save(Task row) async {
     setState(() => _busy = true);
     try {
-      await ref.read(saveTaskProvider)(id);
+      if (widget.onboarding && _linkBoss) {
+        var deadline = row.dueAt;
+        if (deadline == null || !deadline.isAfter(DateTime.now())) {
+          final picked = await showDatePicker(
+            context: context,
+            firstDate: DateTime.now().add(const Duration(days: 2)),
+            lastDate: DateTime.now().add(const Duration(days: 365)),
+            initialDate: DateTime.now().add(const Duration(days: 3)),
+          );
+          if (picked == null || !mounted) {
+            setState(() => _busy = false);
+            return;
+          }
+          deadline = DateTime(picked.year, picked.month, picked.day, 17);
+        }
+        final previewJson = await ref.read(apiClientProvider).createBossPreview(
+              title: row.title,
+              description: row.notes,
+              type: 'assignment',
+              deadline: deadline,
+            );
+        final preview = previewJson['preview'];
+        if (preview is! Map) {
+          throw const ApiException(code: 'internal', message: 'Could not estimate a boss for this quest.');
+        }
+        await ref.read(apiClientProvider).createBoss(
+              title: row.title,
+              description: row.notes,
+              type: 'assignment',
+              deadline: deadline,
+              hours: (preview['hours'] as num?)?.toDouble() ?? 6,
+              name: preview['name'] as String? ?? 'The Deadline Shade',
+              taskId: row.id,
+            );
+      }
+      await ref.read(saveTaskProvider)(row.id);
       if (widget.onboarding) {
         await ref.read(completeOnboardingProvider)('first_task');
         ref.invalidate(onboardingStepProvider);
