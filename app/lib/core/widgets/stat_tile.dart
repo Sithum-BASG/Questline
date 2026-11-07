@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 import 'stat_icon.dart';
@@ -8,25 +9,37 @@ import 'stat_icon.dart';
 class StatTile extends StatelessWidget {
   const StatTile({
     super.key,
-    required this.stat,
+    this.stat,
+    this.icon,
+    this.color,
     required this.value,
     required this.label,
-  });
+  }) : assert(stat != null || icon != null);
 
-  final String stat;
+  /// One of the four game stats — uses [StatIcon] when set.
+  final String? stat;
+  final IconData? icon;
+  final Color? color;
   final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        StatIcon(stat: stat, size: 24),
-        const SizedBox(height: AppSpacing.s4),
-        Text(value, style: AppText.numbers),
-        Text(label, style: AppText.caption),
-      ],
+    final tint = color ?? (stat != null ? AppColors.stat(stat!) : AppColors.inkMuted);
+    return Semantics(
+      label: '$label $value',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (stat != null)
+            StatIcon(stat: stat!, size: 24)
+          else
+            Icon(icon, size: 24, color: tint),
+          const SizedBox(height: AppSpacing.s4),
+          Text(value, style: AppText.numbers),
+          Text(label, style: AppText.caption),
+        ],
+      ),
     );
   }
 }

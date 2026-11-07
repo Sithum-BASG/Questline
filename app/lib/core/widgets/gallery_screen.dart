@@ -96,6 +96,7 @@ class GalleryScreen extends StatelessWidget {
             minutes: 90,
             xpPreview: 86,
             reason: 'A long writing task.',
+            tooBig: true,
           ),
           const _Label('People'),
           const LeaderboardRow(

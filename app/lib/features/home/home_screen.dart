@@ -13,6 +13,7 @@ import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/stage_card.dart';
+import '../../core/widgets/stat_tile.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
 import '../inbox/providers/inbox_providers.dart';
@@ -116,44 +117,54 @@ class _HomeBody extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s24),
           Center(
             child: StageCard(
               skinId: _catalogShort(profile.equippedSkinId, 'skin_'),
               backgroundId: _catalogShort(profile.equippedBackgroundId, 'bg_'),
               body: body,
+              size: StageCardSize.home,
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
-          GestureDetector(
-            onTap: () => context.go('/hero/level-road'),
-            child: ProgressBar(
-              value: xpProgress,
-              leading: 'Level ${profile.level}',
-              trailing: snapshot.nextRewardLabel ?? 'Level road',
+          const SizedBox(height: AppSpacing.s20),
+          Semantics(
+            button: true,
+            label: 'Level road',
+            child: GestureDetector(
+              onTap: () => context.go('/hero/level-road'),
+              child: ProgressBar(
+                value: xpProgress,
+                leading: 'Level ${profile.level}',
+                trailing: snapshot.nextRewardLabel ?? 'Next reward',
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _HomeStat(
-                icon: Icons.local_fire_department_outlined,
-                color: AppColors.streakEmber,
-                value: '${player.streakCount}',
-                label: 'Streak',
+              Expanded(
+                child: StatTile(
+                  icon: Icons.local_fire_department_outlined,
+                  color: AppColors.streakEmber,
+                  value: '${player.streakCount}',
+                  label: 'Streak',
+                ),
               ),
-              _HomeStat(
-                icon: Icons.bolt_outlined,
-                color: AppColors.awakeningTeal,
-                value: '${player.weeklyRawXp}',
-                label: 'This week',
+              Expanded(
+                child: StatTile(
+                  icon: Icons.bolt_outlined,
+                  color: AppColors.awakeningTeal,
+                  value: '${player.weeklyRawXp} XP',
+                  label: 'This week',
+                ),
               ),
-              _HomeStat(
-                icon: Icons.emoji_events_outlined,
-                color: AppColors.tealDeep,
-                value: snapshot.weeklyRank == null ? '—' : '#${snapshot.weeklyRank}',
-                label: 'This week',
+              Expanded(
+                child: StatTile(
+                  icon: Icons.emoji_events_outlined,
+                  color: AppColors.success,
+                  value: snapshot.weeklyRank == null ? '—' : '#${snapshot.weeklyRank}',
+                  label: 'Rank',
+                ),
               ),
             ],
           ),
@@ -184,7 +195,7 @@ class _HomeBody extends ConsumerWidget {
           ],
           const SizedBox(height: AppSpacing.s24),
           Text("Today's quests", style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: AppSpacing.s12),
           if (snapshot.tasks.isEmpty)
             EmptyState(
               title: 'Add your first quest',
@@ -202,40 +213,13 @@ class _HomeBody extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
             ],
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s24),
           QButton(
             label: 'Start focus',
             onPressed: () => context.push('/focus/start'),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HomeStat extends StatelessWidget {
-  const _HomeStat({
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.label,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 24, color: color),
-        const SizedBox(height: AppSpacing.s4),
-        Text(value, style: AppText.numbers),
-        Text(label, style: AppText.caption),
-      ],
     );
   }
 }

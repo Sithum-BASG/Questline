@@ -167,6 +167,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                     tooBig: judged.tooBig,
                     onStatTap: () => _cycleStat(judged),
                     onSplit: () => context.go('/quests/new'),
+                    onMakeBoss: () => context.go('/bosses/new'),
                   ),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.s12),
