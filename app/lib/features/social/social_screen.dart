@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import 'providers/friends_providers.dart';
+import 'providers/presence_providers.dart';
 
 /// Social hub. Leaderboard / feed / guild fill in later phase tasks.
-class SocialScreen extends StatelessWidget {
+class SocialScreen extends ConsumerWidget {
   const SocialScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
+    final friends = ref.watch(friendRowsProvider).asData?.value.accepted ?? const [];
+    final focusingNames = [
+      for (final row in friends)
+        if (focusing.containsKey(row.profile.id)) row.profile.displayName,
+    ];
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -19,6 +29,26 @@ class SocialScreen extends StatelessWidget {
           children: [
             Text('Social', style: AppText.h1),
             const SizedBox(height: AppSpacing.s16),
+            if (focusingNames.isNotEmpty) ...[
+              QCard(
+                child: Row(
+                  children: [
+                    const DecoratedBox(
+                      decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                      child: SizedBox(width: 12, height: 12),
+                    ),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: Text(
+                        'Focusing now: ${focusingNames.join(', ')}',
+                        style: AppText.body,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             QCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

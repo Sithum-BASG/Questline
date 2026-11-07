@@ -17,6 +17,7 @@ import '../../core/widgets/q_card.dart';
 import 'friend_links.dart';
 import 'providers/friends_providers.dart';
 import 'providers/pending_friend_code.dart';
+import 'providers/presence_providers.dart';
 
 /// Friends list, incoming requests, and add by username or friend code.
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -161,6 +162,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(friendRowsProvider);
     final myCode = ref.watch(myFriendCodeProvider).asData?.value;
+    final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
 
     return Scaffold(
       appBar: AppBar(title: Text('Friends', style: AppText.h2)),
@@ -308,9 +310,10 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                     child: MemberCard(
                       name: row.profile.displayName,
                       title: 'Level ${row.profile.level}',
-                      skinId: row.profile.equippedSkinId,
-                      backgroundId: row.profile.equippedBackgroundId,
+                      skinId: row.profile.equippedSkinId.replaceFirst('skin_', ''),
+                      backgroundId: row.profile.equippedBackgroundId.replaceFirst('bg_', ''),
                       body: row.profile.bodyType == 'b' ? BodyType.b : BodyType.a,
+                      focusing: focusing.containsKey(row.profile.id),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s8),
