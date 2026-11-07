@@ -29,6 +29,7 @@ import 'features/hero/level_road_screen.dart';
 import 'features/hero/profile_screen.dart';
 import 'features/hero/wardrobe_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/inbox/inbox_screen.dart';
 import 'features/recap/recap_screen.dart';
 import 'features/rewards/reward_screen.dart';
 import 'features/onboarding/character_screen.dart';
@@ -269,7 +270,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/recap/:weekId',
         builder: (context, state) => RecapScreen(weekId: state.pathParameters['weekId'] ?? ''),
       ),
-      _screen('/inbox', 'Inbox'),
+      GoRoute(path: '/inbox', builder: (context, state) => const InboxScreen()),
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),

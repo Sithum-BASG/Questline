@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/notifications/notification_replan.dart';
 import '../../core/supabase/api_client.dart';
 import '../../core/supabase/auth_providers.dart';
 import '../../core/supabase/supabase_providers.dart';
@@ -125,6 +126,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           .from('user_settings')
           .update(patch)
           .eq('user_id', userId);
+      try {
+        await replanLocalNotifications(ref);
+      } catch (_) {}
     } catch (_) {
       if (mounted) setState(() => _error = 'Could not save settings.');
       await _load();

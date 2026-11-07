@@ -15,6 +15,7 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
+import '../inbox/providers/inbox_providers.dart';
 import '../social/providers/friends_providers.dart';
 import '../social/providers/presence_providers.dart';
 import 'home_snapshot.dart';
@@ -98,14 +99,20 @@ class _HomeBody extends ConsumerWidget {
                   ),
                   child: Text('Offline', style: AppText.caption.copyWith(color: AppColors.inkMuted)),
                 ),
-              IconButton(
-                tooltip: 'Inbox',
-                onPressed: () => context.push('/inbox'),
-                icon: Badge(
-                  isLabelVisible: snapshot.unreadInbox > 0,
-                  label: Text('${snapshot.unreadInbox}'),
-                  child: const Icon(Icons.notifications_none_outlined),
-                ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final live = ref.watch(unreadInboxCountProvider).asData?.value;
+                  final unread = live ?? snapshot.unreadInbox;
+                  return IconButton(
+                    tooltip: 'Inbox',
+                    onPressed: () => context.push('/inbox'),
+                    icon: Badge(
+                      isLabelVisible: unread > 0,
+                      label: Text('$unread'),
+                      child: const Icon(Icons.notifications_none_outlined),
+                    ),
+                  );
+                },
               ),
             ],
           ),

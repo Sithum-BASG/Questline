@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/notifications/notification_replan.dart';
 import '../../core/supabase/api_client.dart';
 import '../../core/supabase/supabase_providers.dart';
 import '../../core/theme/app_spacing.dart';
@@ -85,6 +86,9 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
       if (id == null) {
         throw const ApiException(code: 'internal', message: 'Could not join this raid.');
       }
+      try {
+        await replanLocalNotifications(ref);
+      } catch (_) {}
       if (mounted) context.go('/raids/$id');
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);

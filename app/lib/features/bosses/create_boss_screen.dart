@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/assets/game_assets.dart';
+import '../../core/notifications/notification_replan.dart';
 import '../../core/supabase/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
@@ -107,6 +108,9 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
         throw const ApiException(code: 'internal', message: 'Could not create this boss.');
       }
       ref.invalidate(bossesProvider);
+      try {
+        await replanLocalNotifications(ref);
+      } catch (_) {}
       if (!mounted) return;
       context.go('/bosses/${boss['id']}');
     } on ApiException catch (error) {
