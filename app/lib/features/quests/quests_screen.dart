@@ -111,12 +111,18 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen> {
                     ),
                     children: [
                       for (final task in visible) ...[
-                        TaskTile(
-                          title: task.title,
-                          stat: task.stat ?? 'intellect',
-                          dueLabel: dueLabel(task, now),
-                          late: taskIsLate(task, now),
-                          provisional: task.provisional,
+                        GestureDetector(
+                          onTap: () => context.push('/quests/${task.id}'),
+                          child: TaskTile(
+                            title: task.title,
+                            stat: task.stat ?? 'intellect',
+                            dueLabel: dueLabel(task, now),
+                            late: taskIsLate(task, now),
+                            provisional: task.provisional,
+                            onPlay: task.status == 'open'
+                                ? () => context.push('/focus/start?taskId=${task.id}')
+                                : null,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.s8),
                       ],

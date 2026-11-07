@@ -164,10 +164,12 @@ class _GearScreenState extends ConsumerState<GearScreen> {
                   attunedStat: item.attunedStat,
                 ),
                 const SizedBox(height: AppSpacing.s8),
-                Row(
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     QChip(label: item.slot, kind: QChipKind.filter),
-                    const Spacer(),
                     if (item.equippedSlot == null)
                       QButton(
                         label: 'Equip',
@@ -175,8 +177,7 @@ class _GearScreenState extends ConsumerState<GearScreen> {
                         onPressed: _busy ? null : () => _equip(item),
                       )
                     else
-                      Text('Equipped', style: AppText.caption.copyWith(color: AppColors.tealDeep)),
-                    const SizedBox(width: AppSpacing.s8),
+                      const QChip(label: 'Equipped', selected: true),
                     QButton(
                       label: item.attunedStat == null ? 'Attune' : 'Re-attune',
                       variant: QButtonVariant.text,

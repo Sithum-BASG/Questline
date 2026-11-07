@@ -94,9 +94,13 @@ class InboxScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(inboxTitle(message.type), style: AppText.title),
+                          Text(inboxTitle(message.type), style: AppText.title, softWrap: true),
                           const SizedBox(height: AppSpacing.s4),
-                          Text(inboxBody(message.type, message.payload), style: AppText.bodySmall),
+                          Text(
+                            inboxBody(message.type, message.payload),
+                            style: AppText.bodySmall,
+                            softWrap: true,
+                          ),
                           const SizedBox(height: AppSpacing.s4),
                           Text(_when(message.createdAt), style: AppText.caption.copyWith(color: AppColors.inkMuted)),
                         ],

@@ -106,9 +106,11 @@ class LevelRoadScreen extends ConsumerWidget {
                         style: AppText.body.copyWith(
                           color: row.reached ? AppColors.ink : AppColors.inkMuted,
                         ),
+                        softWrap: true,
                       ),
                     ),
-                    if (row.reached) Icon(Icons.check, color: AppColors.success, size: 20),
+                    if (row.reached)
+                      const Icon(Icons.check, color: AppColors.success, size: 20, semanticLabel: 'Reached'),
                   ],
                 ),
               );

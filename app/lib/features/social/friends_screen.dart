@@ -205,16 +205,28 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           if (mounted) setState(() => _info = 'Code copied.');
                         },
                         icon: const Icon(Icons.copy_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Show QR',
                         onPressed: () => _showMyQr(myCode),
                         icon: const Icon(Icons.qr_code_2_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Share',
                         onPressed: () => _share(myCode),
                         icon: const Icon(Icons.ios_share_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                     ],
                   ),
