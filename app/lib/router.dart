@@ -42,6 +42,8 @@ import 'features/quests/task_screen.dart';
 import 'features/social/feed_screen.dart';
 import 'features/social/friend_profile_screen.dart';
 import 'features/social/friends_screen.dart';
+import 'features/social/guild_home_screen.dart';
+import 'features/social/guild_new_screen.dart';
 import 'features/social/scan_friend_screen.dart';
 import 'features/social/social_screen.dart';
 
@@ -143,9 +145,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ],
                 ),
-                _screen('guild', 'Guild', routes: [
-                  _screen('new', 'Create or join guild'),
-                ]),
+                GoRoute(
+                  path: 'guild',
+                  builder: (context, state) => const GuildHomeScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'new',
+                      builder: (context, state) => const GuildNewScreen(),
+                    ),
+                  ],
+                ),
               ],
             ),
           ]),

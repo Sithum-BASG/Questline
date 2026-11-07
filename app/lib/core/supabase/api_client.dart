@@ -232,6 +232,18 @@ class ApiClient {
   Future<void> removeFriend(String friendUid) {
     return invoke('social', 'removeFriend', {'friendUid': friendUid});
   }
+
+  Future<Map<String, dynamic>> createGuild({required String name, required String emblem}) {
+    return invoke('social', 'createGuild', {'name': name, 'emblem': emblem});
+  }
+
+  Future<Map<String, dynamic>> joinGuild(String code) {
+    return invoke('social', 'joinGuild', {'code': code});
+  }
+
+  Future<void> leaveGuild() {
+    return invoke('social', 'leaveGuild', {});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {
