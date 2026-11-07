@@ -7,11 +7,12 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/badge_medallion.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
+import '../../core/widgets/q_chip.dart';
 import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_radar.dart';
 import 'providers/profile_providers.dart';
-import '../../core/widgets/loading_skeleton.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
@@ -43,12 +44,34 @@ class ProfileScreen extends ConsumerWidget {
                 AppSpacing.aboveTabBar,
               ),
               children: [
-                Text(profile.displayName, style: AppText.h1),
-                if (data.titleName != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(data.titleName!, style: AppText.bodySmall),
-                ],
-                Text('Level ${profile.level}', style: AppText.caption),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(profile.displayName, style: AppText.h1, softWrap: true),
+                          if (data.titleName != null) ...[
+                            const SizedBox(height: AppSpacing.s4),
+                            Text(data.titleName!, style: AppText.bodySmall, softWrap: true),
+                          ],
+                          const SizedBox(height: AppSpacing.s8),
+                          QChip(label: 'Level ${profile.level}', selected: true),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Settings',
+                      onPressed: () => context.push('/settings'),
+                      icon: const Icon(Icons.settings_outlined),
+                      constraints: const BoxConstraints(
+                        minWidth: AppSpacing.minTap,
+                        minHeight: AppSpacing.minTap,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.s16),
                 Center(
                   child: StageCard(
@@ -66,6 +89,7 @@ class ProfileScreen extends ConsumerWidget {
                 else
                   Wrap(
                     spacing: AppSpacing.s12,
+                    runSpacing: AppSpacing.s12,
                     children: [
                       for (final id in profile.pinnedBadges)
                         BadgeMedallion(

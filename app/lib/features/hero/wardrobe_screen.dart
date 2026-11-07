@@ -7,10 +7,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/portrait_frame.dart';
 import '../../core/widgets/q_card.dart';
+import '../../core/widgets/q_chip.dart';
 import 'providers/profile_providers.dart';
-import '../../core/widgets/loading_skeleton.dart';
 
 class WardrobeItem {
   const WardrobeItem({required this.id, required this.name, required this.type});
@@ -116,13 +117,15 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
               AppSpacing.aboveTabBar,
             ),
             children: [
-              Center(
-                child: PortraitFrame(
-                  skinId: _short(data.skinId, 'skin_'),
-                  backgroundId: _short(data.backgroundId, 'bg_'),
-                  frameId: _short(data.frameId, 'frame_'),
-                  body: data.body,
-                  size: PortraitFrameSize.profile,
+              QCard(
+                child: Center(
+                  child: PortraitFrame(
+                    skinId: _short(data.skinId, 'skin_'),
+                    backgroundId: _short(data.backgroundId, 'bg_'),
+                    frameId: _short(data.frameId, 'frame_'),
+                    body: data.body,
+                    size: PortraitFrameSize.profile,
+                  ),
                 ),
               ),
               if (_error != null) ...[
@@ -133,24 +136,34 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
               for (final type in const ['skin', 'background', 'frame']) ...[
                 Text(type[0].toUpperCase() + type.substring(1), style: AppText.h2),
                 const SizedBox(height: AppSpacing.s8),
-                ...data.owned.where((item) => item.type == type).map((item) {
-                  final equipped = item.id == data.skinId || item.id == data.backgroundId || item.id == data.frameId;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                    child: QCard(
-                      onTap: equipped ? null : () => _equip(item),
-                      child: Row(
-                        children: [
-                          Expanded(child: Text(item.name, style: AppText.body)),
-                          if (equipped)
-                            Text('Equipped', style: AppText.caption.copyWith(color: AppColors.tealDeep))
-                          else
-                            Text('Equip', style: AppText.caption.copyWith(color: AppColors.inkMuted)),
-                        ],
-                      ),
+                if (data.owned.where((item) => item.type == type).isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+                    child: Text(
+                      'Find more in chests.',
+                      style: AppText.bodySmall,
                     ),
-                  );
-                }),
+                  )
+                else
+                  ...data.owned.where((item) => item.type == type).map((item) {
+                    final equipped =
+                        item.id == data.skinId || item.id == data.backgroundId || item.id == data.frameId;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+                      child: QCard(
+                        onTap: equipped ? null : () => _equip(item),
+                        child: Row(
+                          children: [
+                            Expanded(child: Text(item.name, style: AppText.body, softWrap: true)),
+                            if (equipped)
+                              const QChip(label: 'Equipped', selected: true)
+                            else
+                              Text('Equip', style: AppText.caption.copyWith(color: AppColors.inkMuted)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 const SizedBox(height: AppSpacing.s16),
               ],
             ],

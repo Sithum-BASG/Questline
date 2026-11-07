@@ -87,8 +87,7 @@ class _HomeBody extends ConsumerWidget {
                 child: Text(
                   'Hi, ${profile.displayName}',
                   style: AppText.h1,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                 ),
               ),
               if (snapshot.offline)
@@ -210,6 +209,7 @@ class _HomeBody extends ConsumerWidget {
                 title: task.title,
                 stat: task.stat ?? 'intellect',
                 dueLabel: task.dueAt == null ? 'No due date' : _timeLeft(task.dueAt!, now),
+                provisional: task.provisional,
                 onPlay: () => context.push('/focus/start?taskId=${task.id}'),
               ),
               const SizedBox(height: AppSpacing.s8),

@@ -9,10 +9,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import '../../core/widgets/q_chip.dart';
 import 'providers/chest_providers.dart';
-import '../../core/widgets/loading_skeleton.dart';
 
 /// Rates, pity counter and open actions for chests.
 class ChestsScreen extends ConsumerStatefulWidget {
@@ -86,23 +87,24 @@ class _ChestsScreenState extends ConsumerState<ChestsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${data.coins} coins', style: AppText.h2),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(
-                      'Chest costs ${data.chestCost} coins',
-                      style: AppText.bodySmall,
-                    ),
-                    if (data.freeChests > 0) ...[
-                      const SizedBox(height: AppSpacing.s8),
-                      Text(
-                        '${data.freeChests} free chest${data.freeChests == 1 ? '' : 's'} ready',
-                        style: AppText.bodySmall.copyWith(color: AppColors.tealDeep),
-                      ),
-                    ],
+                    Text('${data.coins} coins', style: AppText.h2, softWrap: true),
                     const SizedBox(height: AppSpacing.s8),
-                    Text(
-                      'Legendary guaranteed in ${data.untilLegendary} chest${data.untilLegendary == 1 ? '' : 's'}',
-                      style: AppText.caption.copyWith(color: AppColors.legendary),
+                    Wrap(
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      children: [
+                        QChip(label: '${data.chestCost} coins each'),
+                        if (data.freeChests > 0)
+                          QChip(
+                            label: '${data.freeChests} free',
+                            selected: true,
+                          ),
+                        QChip(
+                          label: 'Legendary in ${data.untilLegendary}',
+                          kind: QChipKind.rarity,
+                          color: AppColors.legendary,
+                        ),
+                      ],
                     ),
                   ],
                 ),
