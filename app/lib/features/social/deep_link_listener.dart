@@ -5,10 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../raids/raid_links.dart';
 import 'friend_links.dart';
 import 'providers/pending_friend_code.dart';
 
-/// Listens for `questline://friend/{code}` and stores the code for Friends.
+/// Listens for friend and raid deep links.
 class DeepLinkListener extends ConsumerStatefulWidget {
   const DeepLinkListener({super.key, required this.child});
 
@@ -37,14 +38,20 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
 
   void _handle(Uri? uri) {
     if (uri == null) return;
+    final raidCode = raidCodeFromUri(uri);
+    if (raidCode != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        GoRouter.maybeOf(context)?.go('/raids/join?code=$raidCode');
+      });
+      return;
+    }
     final code = friendCodeFromUri(uri);
     if (code == null) return;
     ref.read(pendingFriendCodeProvider.notifier).setCode(code);
-    // Prefer Friends once the router is ready; ignore if not mounted yet.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final router = GoRouter.maybeOf(context);
-      router?.go('/social/friends');
+      GoRouter.maybeOf(context)?.go('/social/friends');
     });
   }
 
