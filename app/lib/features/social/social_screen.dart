@@ -154,8 +154,12 @@ class SocialScreen extends ConsumerWidget {
                     xp: entry.rawXp,
                     skinId: entry.skinId,
                     backgroundId: entry.backgroundId,
+                    frameId: entry.frameId,
                     body: entry.body,
                     isYou: entry.isYou,
+                    onTap: entry.isYou
+                        ? null
+                        : () => context.go('/social/friends/${entry.userId}'),
                   ),
                   const SizedBox(height: AppSpacing.s8),
                 ],

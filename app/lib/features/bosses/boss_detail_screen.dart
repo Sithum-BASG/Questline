@@ -11,6 +11,8 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
+import '../../core/widgets/q_card.dart';
+import '../../core/widgets/q_chip.dart';
 import '../../core/widgets/task_tile.dart';
 import '../../data/models/boss.dart';
 import '../../data/models/task.dart';
@@ -117,40 +119,58 @@ class _BossDetailScreenState extends ConsumerState<BossDetailScreen> {
               120,
             ),
             children: [
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  child: Image.asset(
-                    GameAssets.boss(boss.tier),
-                    width: 160,
-                    height: 160,
-                    fit: BoxFit.cover,
-                  ),
+              // Boss art sits on a light card so indigo ink stays readable (UI brief §5.4).
+              QCard(
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                      child: Image.asset(
+                        GameAssets.boss(boss.tier),
+                        width: 180,
+                        height: 180,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    Text(boss.name, style: AppText.h1, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.s8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      children: [
+                        QChip(label: bossStatusLabel(boss.status), selected: boss.status == 'staggered'),
+                        QChip(label: boss.tier[0].toUpperCase() + boss.tier.substring(1)),
+                        QChip(label: bossTimeLeft(boss.deadline, now)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s16),
+                    ProgressBar(
+                      value: hp.clamp(0.0, 1.0),
+                      kind: ProgressKind.bossHp,
+                      leading: 'HP',
+                      trailing: '$remaining / ${boss.maxHp} HP',
+                    ),
+                    if (boss.status == 'staggered') ...[
+                      const SizedBox(height: AppSpacing.s12),
+                      Text(
+                        'Staggered — submit to finish it.',
+                        style: AppText.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    if (!boss.coinsEligible) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        'No coins on defeat (created under 48 hours).',
+                        style: AppText.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
-              Text(boss.name, style: AppText.h1, textAlign: TextAlign.center),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                '${bossStatusLabel(boss.status)} · ${bossTimeLeft(boss.deadline, now)}',
-                style: AppText.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              ProgressBar(
-                value: hp.clamp(0.0, 1.0),
-                kind: ProgressKind.bossHp,
-                leading: 'HP',
-                trailing: '$remaining / ${boss.maxHp}',
-              ),
-              if (boss.status == 'staggered') ...[
-                const SizedBox(height: AppSpacing.s8),
-                Text('Staggered — submit to finish it.', style: AppText.bodySmall),
-              ],
-              if (!boss.coinsEligible) ...[
-                const SizedBox(height: AppSpacing.s8),
-                Text('No coins on defeat (created under 48 hours).', style: AppText.bodySmall),
-              ],
               const SizedBox(height: AppSpacing.s24),
               Row(
                 children: [
