@@ -8,7 +8,19 @@ const sessionId = "33333333-3333-3333-3333-333333333333";
 const taskId = "22222222-2222-2222-2222-222222222222";
 const now = new Date("2026-10-19T04:00:00.000Z");
 
-function scripted(options: { processed?: boolean; summary?: unknown; startedAt?: string; demo?: boolean } = {}) {
+const bossId = "44444444-4444-4444-4444-444444444444";
+
+function scripted(options: {
+  processed?: boolean;
+  summary?: unknown;
+  startedAt?: string;
+  demo?: boolean;
+  bossId?: string | null;
+  bossDamage?: number;
+  bossMaxHp?: number;
+  bossStatus?: string;
+  slayer?: boolean;
+} = {}) {
   const queries: { text: string; values: unknown[] }[] = [];
   const started = options.startedAt ?? new Date(now.getTime() - 60 * 60 * 1000).toISOString();
   const tx = (strings: TemplateStringsArray, ...values: unknown[]) => {
@@ -35,6 +47,7 @@ function scripted(options: { processed?: boolean; summary?: unknown; startedAt?:
         rescheduled: false,
         scroll_used: false,
         status: "open",
+        boss_id: options.bossId === undefined ? null : options.bossId,
       }]);
     }
     if (text.includes("from player_state")) {
@@ -49,7 +62,21 @@ function scripted(options: { processed?: boolean; summary?: unknown; startedAt?:
         onboarding_step: "done",
       }]);
     }
-    if (text.includes("from inventory")) return Promise.resolve([]);
+    if (text.includes("from inventory")) {
+      return Promise.resolve(
+        options.slayer
+          ? [{ attuned_stat: "intellect", rarity: "legendary", passive: "boss_slayer" }]
+          : [],
+      );
+    }
+    if (text.includes("from bosses")) {
+      return Promise.resolve([{
+        id: bossId,
+        status: options.bossStatus ?? "active",
+        damage: options.bossDamage ?? 0,
+        max_hp: options.bossMaxHp ?? 120,
+      }]);
+    }
     if (text.includes("from user_settings")) return Promise.resolve([{ demo_mode: options.demo === true }]);
     if (text.includes("from demo_allowlist")) return Promise.resolve(options.demo ? [{ user_id: userId }] : []);
     if (text.includes("from level_rewards")) {
@@ -111,4 +138,18 @@ Deno.test("under 5 verified minutes earns nothing and leaves the task open", asy
   assertEquals(summary.rawXp, 0);
   assertEquals(summary.verifiedMinutes, 2);
   assertEquals(queries.some((query) => query.text.includes("status = 'done'")), false);
+});
+
+Deno.test("a focus session on a boss task deals counted minutes as damage", async () => {
+  const { tx, queries } = scripted({ bossId, bossDamage: 70, bossMaxHp: 120 });
+  const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
+  assertEquals(summary.bossDamage, 60);
+  assertEquals(queries.some((query) => query.text.includes("update bosses set")), true);
+  assertEquals(queries.some((query) => query.values.includes("staggered")), true);
+});
+
+Deno.test("boss slayer adds 20 percent damage on focus", async () => {
+  const { tx } = scripted({ bossId, bossDamage: 0, bossMaxHp: 500, slayer: true });
+  const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
+  assertEquals(summary.bossDamage, 72);
 });

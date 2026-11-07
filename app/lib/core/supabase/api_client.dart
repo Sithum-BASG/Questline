@@ -170,6 +170,50 @@ class ApiClient {
   Future<void> deleteAccount() {
     return invoke('account', 'deleteAccount', {});
   }
+
+  Future<Map<String, dynamic>> createBossPreview({
+    required String title,
+    String? description,
+    required String type,
+    required DateTime deadline,
+  }) {
+    return invoke('bosses', 'createBoss', {
+      'title': title,
+      'description': ?description,
+      'type': type,
+      'deadline': deadline.toUtc().toIso8601String(),
+      'dryRun': true,
+    });
+  }
+
+  Future<Map<String, dynamic>> createBoss({
+    required String title,
+    String? description,
+    required String type,
+    required DateTime deadline,
+    required double hours,
+    required String name,
+    String? taskId,
+  }) {
+    return invoke('bosses', 'createBoss', {
+      'title': title,
+      'description': ?description,
+      'type': type,
+      'deadline': deadline.toUtc().toIso8601String(),
+      'hours': hours,
+      'name': name,
+      'taskId': ?taskId,
+      'dryRun': false,
+    });
+  }
+
+  Future<Map<String, dynamic>> submitBoss(String bossId) {
+    return invoke('bosses', 'submitBoss', {'bossId': bossId});
+  }
+
+  Future<void> ackBossResult(String bossId) {
+    return invoke('bosses', 'ackBossResult', {'bossId': bossId});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {

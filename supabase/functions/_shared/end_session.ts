@@ -3,6 +3,7 @@ import { z } from "zod";
 import { loadConfig, type GameConfig } from "./config.ts";
 import { getSql, type Sql } from "./db.ts";
 import { notFound } from "./errors.ts";
+import { sessionDamage } from "./game/combat.ts";
 import { sessionXp, type XpRates } from "./game/xp.ts";
 import { levelFromXp, rewardsForLevels, type LevelCurve } from "./game/rewards.ts";
 import { dayKey, weekId } from "./game/time.ts";
@@ -27,6 +28,7 @@ export interface SessionSummary {
   xpTotal: number;
   level: number;
   rewards: unknown[];
+  bossDamage?: number;
 }
 
 function curveFrom(value: unknown): LevelCurve {
@@ -102,7 +104,7 @@ export async function endDraft(
   if (session.processed && session.summary) return session.summary as SessionSummary;
 
   const tasks = await tx`
-    select difficulty, est_minutes, stat, due_at, rescheduled, scroll_used, status
+    select difficulty, est_minutes, stat, due_at, rescheduled, scroll_used, status, boss_id
     from tasks where id = ${session.task_id} and user_id = ${userId} for update
   `;
   const task = tasks[0];
@@ -137,10 +139,11 @@ export async function endDraft(
   const dueDay = dueAt ? dayKey(dueAt, zone) : null;
   const onTime = dueDay != null && day <= dueDay;
   const gear = await tx`
-    select inventory.attuned_stat, catalog_items.rarity
+    select inventory.attuned_stat, catalog_items.rarity, catalog_items.passive
     from inventory join catalog_items on catalog_items.id = inventory.catalog_id
     where inventory.user_id = ${userId} and inventory.equipped_slot is not null
   `;
+  const bossSlayer = gear.some((row) => row.passive === "boss_slayer");
   const rates = ratesFrom(config);
   const xp = earns
     ? sessionXp({
@@ -206,6 +209,36 @@ export async function endDraft(
     `;
   }
 
+  let bossDamageDealt = 0;
+  const bossId = typeof task.boss_id === "string" ? task.boss_id : null;
+  if (bossId && xp.countedMinutes > 0) {
+    const mode = session.mode === "activity" ? "activity" : "focus";
+    bossDamageDealt = sessionDamage(xp.countedMinutes, mode, bossSlayer);
+    if (bossDamageDealt > 0) {
+      const bosses = await tx`
+        select id, status, damage, max_hp
+        from bosses
+        where id = ${bossId} and user_id = ${userId} and status in ('active', 'staggered')
+        for update
+      `;
+      const boss = bosses[0];
+      if (boss) {
+        const max = numberFrom(boss.max_hp, 0);
+        const nextDamage = Math.min(max, numberFrom(boss.damage, 0) + bossDamageDealt);
+        const nextStatus = nextDamage >= max && max > 0 ? "staggered" : String(boss.status);
+        await tx`
+          update bosses set
+            damage = ${nextDamage},
+            last_work_day = ${day},
+            status = ${nextStatus}
+          where id = ${bossId} and user_id = ${userId}
+        `;
+      } else {
+        bossDamageDealt = 0;
+      }
+    }
+  }
+
   const summary: SessionSummary = {
     rawXp: xp.raw,
     finalXp: xp.final,
@@ -215,6 +248,7 @@ export async function endDraft(
     xpTotal,
     level: nextLevel,
     rewards,
+    ...(bossDamageDealt > 0 ? { bossDamage: bossDamageDealt } : {}),
   };
   const stat = String(task.stat ?? "intellect");
   const week = weekId(now, leaderboardTz);
