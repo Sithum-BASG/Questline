@@ -155,6 +155,21 @@ class ApiClient {
       'useFreeChest': useFreeChest,
     });
   }
+
+  Future<void> setRestDay(int weekday) {
+    return invoke('account', 'setRestDay', {'weekday': weekday});
+  }
+
+  Future<void> setPause({required bool active, DateTime? until}) {
+    return invoke('account', 'setPause', {
+      'active': active,
+      'until': ?until?.toUtc().toIso8601String(),
+    });
+  }
+
+  Future<void> deleteAccount() {
+    return invoke('account', 'deleteAccount', {});
+  }
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {
