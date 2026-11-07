@@ -13,6 +13,8 @@ import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
+import 'features/bosses/bosses_screen.dart';
+import 'features/bosses/create_boss_screen.dart';
 import 'features/focus/focus_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
@@ -83,12 +85,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           StatefulShellBranch(routes: [
-            _screen('/bosses', 'Bosses', routes: [
-              _screen('new', 'Create boss'),
-              _screen(':bossId', 'Boss', routes: [
-                _screen('result', 'Boss result'),
-              ]),
-            ]),
+            GoRoute(
+              path: '/bosses',
+              builder: (context, state) => const BossesScreen(),
+              routes: [
+                GoRoute(path: 'new', builder: (context, state) => const CreateBossScreen()),
+                _screen(':bossId', 'Boss', routes: [
+                  _screen('result', 'Boss result'),
+                ]),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
             _screen('/social', 'Social', routes: [
