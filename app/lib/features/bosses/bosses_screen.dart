@@ -19,8 +19,9 @@ class BossesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(bossesProvider);
-    final activeCount = ref.watch(activeFightCountProvider);
-    final atLimit = activeCount >= 15;
+    final activeCount = ref.watch(activeFightCountProvider).asData?.value ?? 0;
+    final maxFights = ref.watch(maxActiveFightsProvider).asData?.value ?? 15;
+    final atLimit = activeCount >= maxFights;
     final now = DateTime.now();
 
     return Scaffold(
@@ -76,7 +77,7 @@ class BossesScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
                     child: Text(
-                      'You have 15 active fights. Finish or wait for one to end before summoning another.',
+                      'You have $maxFights active fights. Finish or wait for one to end before summoning another.',
                       style: AppText.bodySmall,
                     ),
                   ),

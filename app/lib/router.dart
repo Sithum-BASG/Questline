@@ -17,7 +17,7 @@ import 'features/bosses/boss_detail_screen.dart';
 import 'features/bosses/boss_result_screen.dart';
 import 'features/bosses/bosses_screen.dart';
 import 'features/bosses/create_boss_screen.dart';
-import 'features/focus/focus_screen.dart';
+import 'features/focus/focus_resume_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
 import 'features/chests/chest_open_screen.dart';
@@ -87,7 +87,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: '/quests',
               builder: (context, state) => const QuestsScreen(),
               routes: [
-                GoRoute(path: 'new', builder: (context, state) => const AddTaskScreen()),
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => AddTaskScreen(
+                    bossId: state.uri.queryParameters['bossId'],
+                  ),
+                ),
                 GoRoute(
                   path: ':taskId',
                   builder: (context, state) => TaskScreen(taskId: state.pathParameters['taskId']!),
@@ -196,18 +201,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/focus/:sessionId',
         builder: (context, state) {
           final extra = state.extra;
-          final startedAt = extra is Map ? extra['startedAt'] as DateTime? : null;
-          final estimate = extra is Map ? extra['estimateMinutes'] as int? : null;
-          final mode = extra is Map ? extra['mode'] as String? : null;
-          final stat = extra is Map ? extra['stat'] as String? : null;
-          final onboarding = extra is Map && extra['onboarding'] == true;
-          return FocusScreen(
+          FocusResumeArgs? args;
+          if (extra is Map && extra['startedAt'] is DateTime) {
+            args = FocusResumeArgs(
+              startedAt: extra['startedAt'] as DateTime,
+              estimateMinutes: (extra['estimateMinutes'] as int?) ?? 25,
+              mode: (extra['mode'] as String?) ?? 'focus',
+              stat: (extra['stat'] as String?) ?? 'intellect',
+              onboarding: extra['onboarding'] == true,
+            );
+          }
+          return FocusResumeScreen(
             sessionId: state.pathParameters['sessionId']!,
-            startedAt: startedAt ?? DateTime.now(),
-            estimateMinutes: estimate ?? 25,
-            mode: mode ?? 'focus',
-            stat: stat ?? 'intellect',
-            onboarding: onboarding,
+            args: args,
           );
         },
         routes: [

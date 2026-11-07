@@ -13,6 +13,7 @@ class GameConfigReader {
   static const defaults = <String, dynamic>{
     'chest_cost': 500,
     'chest_legendary_pity': 30,
+    'max_active_fights': 15,
     'chest_rarity_rates': {
       'common': 0.55,
       'rare': 0.30,
@@ -47,6 +48,11 @@ class GameConfigReader {
   Future<int> legendaryPity() async {
     final value = (await load())['chest_legendary_pity'];
     return value is num ? value.round() : 30;
+  }
+
+  Future<int> maxActiveFights() async {
+    final value = (await load())['max_active_fights'];
+    return value is num ? value.round() : 15;
   }
 
   Future<Map<String, double>> rarityRates() async {

@@ -11,10 +11,13 @@ import 'providers/task_providers.dart';
 
 /// Title, optional notes and due date. Judge inserts a draft row.
 class AddTaskScreen extends ConsumerStatefulWidget {
-  const AddTaskScreen({super.key, this.onboarding = false});
+  const AddTaskScreen({super.key, this.onboarding = false, this.bossId});
 
   /// Onboarding saves the draft and lets the first-task screen show the judgement.
   final bool onboarding;
+
+  /// When set, the draft is created under this boss.
+  final String? bossId;
 
   @override
   ConsumerState<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -54,6 +57,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         title: title,
         notes: notes.isEmpty ? null : notes,
         dueAt: _due,
+        bossId: widget.bossId,
       );
       ref.invalidate(tasksProvider);
       if (!mounted) return;
