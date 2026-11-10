@@ -20,7 +20,8 @@
 
 | Route | Screen | KEY | Notes |
 |---|---|---|---|
-| `/welcome` | Welcome and sign-in | | Google or email |
+| `/welcome` | Welcome and sign-in / sign-up | | Google or email; forgot password sends a reset email |
+| `/auth/reset-password` | Set a new password | | Opened from `questline://auth-callback` recovery |
 | `/onboarding/character` | Body type A/B + name | | |
 | `/onboarding/story` | 7-card story | | Skip on every card; "Begin" on card 7 |
 | `/onboarding/study` | Study context (optional) | | Skip allowed |
@@ -62,7 +63,7 @@
 | `/settings` | Settings | | From Hero (gear icon) |
 | `/settings/demo` | Hidden demo mode | | Tap app version 7 times; allow-listed only |
 
-**Deep links** (`app_links`): `questline://join/{code}` → `/raids/join?code={code}`; `questline://friend/{friendCode}` → add-friend confirm; `questline://auth-callback` for email auth. Shared invite text always includes the plain code too, so it works even where custom-scheme links aren't clickable. If signed out, store the link and apply it after onboarding. (An https link would need web hosting; GitHub Pages could do it later for free.)
+**Deep links** (`app_links`): `questline://join/{code}` → `/raids/join?code={code}`; `questline://friend/{friendCode}` → add-friend confirm; `questline://auth-callback` for email auth / password reset (supabase_flutter exchanges the session, then `/auth/reset-password` on `PASSWORD_RECOVERY`). Shared invite text always includes the plain code too, so it works even where custom-scheme links aren't clickable. If signed out, store the link and apply it after onboarding. (An https link would need web hosting; GitHub Pages could do it later for free.)
 
 ---
 
@@ -93,6 +94,7 @@ Permissions: **notifications** asked after the first session ("Want a reminder b
 **Redirects**
 - After sign-in → resume onboarding or `/home`.
 - After sign-out → `/welcome`.
+- During password recovery → stay on `/auth/reset-password` until the new password is saved.
 - After `deleteAccount` → `/welcome` with a confirmation snackbar.
 - After saving a task → back to where the user started (Home or Quests), task highlighted.
 - After `endSession` → `/focus/:id/complete` → reward queue → back to the screen that started the session.

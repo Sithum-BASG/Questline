@@ -5,11 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../auth/auth_links.dart';
 import '../raids/raid_links.dart';
 import 'friend_links.dart';
 import 'providers/pending_friend_code.dart';
 
 /// Listens for friend and raid deep links.
+/// Auth callbacks (`questline://auth-callback`) are left to supabase_flutter.
 class DeepLinkListener extends ConsumerStatefulWidget {
   const DeepLinkListener({super.key, required this.child});
 
@@ -38,6 +40,8 @@ class _DeepLinkListenerState extends ConsumerState<DeepLinkListener> {
 
   void _handle(Uri? uri) {
     if (uri == null) return;
+    // Password reset / email auth: supabase_flutter exchanges the session.
+    if (isAuthCallbackUri(uri)) return;
     final raidCode = raidCodeFromUri(uri);
     if (raidCode != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

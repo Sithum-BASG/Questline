@@ -29,9 +29,16 @@ String? authRedirect({
   required String location,
   String? onboardingStep,
   bool stepLoading = false,
+  bool passwordRecovery = false,
 }) {
   if (loading || (signedIn && stepLoading)) return null;
-  if (!signedIn) return location == '/welcome' ? null : '/welcome';
+  if (passwordRecovery) {
+    return location == '/auth/reset-password' ? null : '/auth/reset-password';
+  }
+  if (!signedIn) {
+    if (location == '/welcome' || location == '/auth/reset-password') return null;
+    return '/welcome';
+  }
   final target = routeForOnboardingStep(onboardingStep);
   if (target == '/home') return location == '/welcome' ? '/home' : null;
   if (onboardingStep == 'first_session' &&

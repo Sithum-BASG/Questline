@@ -11,6 +11,8 @@ import 'core/theme/app_spacing.dart';
 import 'core/widgets/floating_tab_bar.dart';
 import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
+import 'features/auth/providers/password_recovery_provider.dart';
+import 'features/auth/reset_password_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/bosses/boss_detail_screen.dart';
@@ -71,6 +73,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         location: state.uri.path,
         onboardingStep: step.asData?.value,
         stepLoading: signedIn && step.isLoading,
+        passwordRecovery: ref.read(passwordRecoveryProvider),
       );
     },
     routes: [
@@ -187,6 +190,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(
+        path: '/auth/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
       GoRoute(path: '/onboarding/character', builder: (context, state) => const CharacterScreen()),
       GoRoute(path: '/onboarding/story', builder: (context, state) => const StoryScreen()),
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
@@ -311,15 +318,20 @@ class _AuthRefresh extends ChangeNotifier {
     _step = ref.listen<AsyncValue<String?>>(onboardingStepProvider, (_, _) {
       notifyListeners();
     });
+    _recovery = ref.listen<bool>(passwordRecoveryProvider, (_, _) {
+      notifyListeners();
+    });
   }
 
   late final ProviderSubscription<AsyncValue<AuthState>> _sub;
   late final ProviderSubscription<AsyncValue<String?>> _step;
+  late final ProviderSubscription<bool> _recovery;
 
   @override
   void dispose() {
     _sub.close();
     _step.close();
+    _recovery.close();
     super.dispose();
   }
 }
