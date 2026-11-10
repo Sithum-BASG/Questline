@@ -37,6 +37,34 @@ class AppColors {
   /// Bottom edge of a selected clay chip.
   static const Color chipEdge = Color(0xFFD9D6CF);
 
+  /// Auth screens page background (soft cool grey).
+  static const Color authPage = Color(0xFFF2F4F8);
+
+  /// Inset well fill for auth text fields.
+  static const Color insetWell = Color(0xFFECEFF4);
+
+  /// Leading icons inside auth fields.
+  static const Color fieldIcon = Color(0xFF7A8299);
+
+  /// Soft clay shadow ink (rgba 16,25,53).
+  static const Color clayShadow = Color(0xFF101935);
+
+  /// Auth error pill background and text / field outline.
+  static const Color authErrorPill = Color(0xFFFDEEE6);
+  static const Color authErrorText = Color(0xFFB4380C);
+  static const Color authErrorOutline = Color(0xFFE8590C);
+
+  /// Soft teal primary button gradient (145°).
+  static const Color tealButtonStart = Color(0xFF128A7D);
+  static const Color tealButtonEnd = Color(0xFF0D6B63);
+
+  /// Password strength meter.
+  static const Color strengthFilled = Color(0xFF14B8A6);
+  static const Color strengthEmpty = Color(0xFFDDE2EA);
+
+  /// Auth "or" divider line.
+  static const Color authDivider = Color(0xFFDCE1E9);
+
   static Color stat(String stat) {
     switch (stat) {
       case 'intellect':
