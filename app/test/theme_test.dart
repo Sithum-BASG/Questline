@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:questline/core/theme/app_colors.dart';
 import 'package:questline/core/theme/app_spacing.dart';
 import 'package:questline/core/theme/app_text.dart';
 import 'package:questline/core/theme/app_theme.dart';
+import 'package:questline/core/theme/shadows.dart';
 
 void main() {
   test('theme uses the brief tokens', () {
@@ -17,5 +19,13 @@ void main() {
     expect(AppRadius.card, 20);
     expect(AppColors.rarity('legendary'), AppColors.legendary);
     expect(AppColors.stat('vitality'), AppColors.vitality);
+  });
+
+  test('auth tokens keep Sora/Roboto and soft clay shadows', () {
+    expect(AppText.authTitle.fontFamily, AppText.sora);
+    expect(AppText.authSubtitle.fontFamily, AppText.roboto);
+    expect(AppColors.authPage, const Color(0xFFF2F4F8));
+    expect(AppShadows.claySoft, hasLength(2));
+    expect(AppShadows.tealButton, hasLength(2));
   });
 }
