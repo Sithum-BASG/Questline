@@ -6,6 +6,8 @@ abstract class AuthApi {
   Future<void> signUp({required String email, required String password});
   Future<void> signIn({required String email, required String password});
   Future<void> signInWithGoogle({required String serverClientId});
+  Future<void> resetPasswordForEmail(String email);
+  Future<void> updatePassword(String password);
   Future<void> signOut();
 }
 
@@ -48,6 +50,19 @@ class AuthRepository implements AuthApi {
       if (error.code == GoogleSignInExceptionCode.canceled) return;
       throw AuthException(error.description ?? 'Google sign-in failed.');
     }
+  }
+
+  @override
+  Future<void> resetPasswordForEmail(String email) {
+    return _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'questline://auth-callback',
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String password) {
+    return _client.auth.updateUser(UserAttributes(password: password));
   }
 
   @override
