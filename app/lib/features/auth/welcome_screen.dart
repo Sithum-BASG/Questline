@@ -131,7 +131,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.authPage,
+      // AuthArch measures from the screen top and handles the status bar itself.
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.screen,
@@ -175,6 +177,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 label: 'Email',
                 controller: _email,
                 icon: Icons.mail_outline,
+                hint: 'you@example.com',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
@@ -186,6 +189,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 label: 'Password',
                 controller: _password,
                 icon: Icons.lock_outline,
+                hint: 'Your password',
                 obscureText: _obscure,
                 textInputAction: TextInputAction.done,
                 autofillHints: signIn
@@ -198,27 +202,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
-              const SizedBox(height: 14),
               if (signIn)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Semantics(
-                    button: true,
-                    label: 'Forgot password?',
-                    child: TextButton(
-                      onPressed: anyBusy ? null : _forgotPassword,
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(AppSpacing.minTap, AppSpacing.minTap),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        foregroundColor: AppColors.tealDeep,
-                      ),
-                      child: const Text('Forgot password?', style: AppText.authLink),
-                    ),
-                  ),
-                )
-              else
+                _ForgotPasswordRow(onTap: anyBusy ? null : _forgotPassword)
+              else ...[
+                const SizedBox(height: 14),
                 PasswordStrengthMeter(password: _password.text),
-              const SizedBox(height: 22),
+                const SizedBox(height: 22),
+              ],
               AuthTealButton(
                 label: signIn ? 'Sign in' : 'Create account',
                 loadingLabel: signIn ? 'Signing in' : 'Creating account',
@@ -263,6 +253,39 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-aligned "Forgot password?" link. The row fills the whole 14 + 18 + 22
+/// gap between the password field and the button so the tap target stays
+/// ≥48 dp while the text sits 14 px below the field.
+class _ForgotPasswordRow extends StatelessWidget {
+  const _ForgotPasswordRow({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Semantics(
+          button: true,
+          enabled: onTap != null,
+          label: 'Forgot password?',
+          excludeSemantics: true,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppSpacing.s8),
+            child: const Padding(
+              padding: EdgeInsets.fromLTRB(8, 14, 4, 22),
+              child: Text('Forgot password?', style: AppText.authLink),
+            ),
           ),
         ),
       ),

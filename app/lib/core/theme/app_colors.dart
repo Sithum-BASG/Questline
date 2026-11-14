@@ -46,6 +46,13 @@ class AppColors {
   /// Leading icons inside auth fields.
   static const Color fieldIcon = Color(0xFF7A8299);
 
+  /// Placeholder text inside auth fields.
+  static const Color fieldHint = Color(0xFFA3AAB9);
+
+  /// Inset-well inner shadows (dark top-left, light bottom-right).
+  static const Color insetShadowDark = Color(0x1A101935);
+  static const Color insetShadowLight = Color(0xE6FFFFFF);
+
   /// Soft clay shadow ink (rgba 16,25,53).
   static const Color clayShadow = Color(0xFF101935);
 
