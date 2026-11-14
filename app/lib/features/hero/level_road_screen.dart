@@ -9,6 +9,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/profile_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 class LevelRoadRow {
   const LevelRoadRow({required this.level, required this.label, required this.reached});
@@ -57,7 +58,7 @@ class LevelRoadScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(levelRoadProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Level road', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Level road'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(

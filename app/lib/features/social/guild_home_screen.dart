@@ -16,6 +16,7 @@ import '../../core/widgets/q_chip.dart';
 import 'guild_emblems.dart';
 import 'providers/guild_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 /// Guild home: members, focusing dots, weekly quest and trophies.
 class GuildHomeScreen extends ConsumerStatefulWidget {
@@ -78,13 +79,7 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(guildHomeProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Guild', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/social'),
-        ),
-      ),
+      appBar: ClayHeader(title: 'Guild', onBack: () => context.go('/social')),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(

@@ -19,6 +19,7 @@ import 'providers/friends_providers.dart';
 import 'providers/pending_friend_code.dart';
 import 'providers/presence_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 /// Friends list, incoming requests, and add by username or friend code.
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -184,7 +185,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
 
     return Scaffold(
-      appBar: AppBar(title: Text('Friends', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Friends'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
@@ -283,7 +284,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s8),
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
               ],
               if (_info != null) ...[
                 const SizedBox(height: AppSpacing.s8),

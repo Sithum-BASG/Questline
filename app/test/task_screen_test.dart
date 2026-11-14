@@ -62,7 +62,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Careful writing.'), findsOneWidget);
-    expect(find.text('129 XP'), findsOneWidget);
+    expect(find.text('129'), findsOneWidget);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(saved, 'task-1');

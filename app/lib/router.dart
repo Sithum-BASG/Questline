@@ -351,7 +351,7 @@ class AppShell extends StatelessWidget {
           Positioned(
             left: AppSpacing.s16,
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16,
+            bottom: AppSpacing.s16 + MediaQuery.viewPaddingOf(context).bottom * 0.5,
             child: FloatingTabBar(
               index: navigationShell.currentIndex,
               onSelected: (index) {

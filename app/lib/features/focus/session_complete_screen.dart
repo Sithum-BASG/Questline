@@ -11,6 +11,8 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/reward_overlay.dart';
 import '../onboarding/onboarding_flags.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/clay.dart';
 
 class SessionCompleteScreen extends ConsumerStatefulWidget {
   const SessionCompleteScreen({super.key, required this.summary});
@@ -97,42 +99,190 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
   Widget build(BuildContext context) {
     final rewards = widget.summary['rewards'];
     final lines = rewards is List ? rewards.whereType<Map>().toList() : const <Map>[];
+    final broken = widget.summary['broken'] == true;
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.screen),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.summary['broken'] == true ? 'Session ended' : 'Session complete', style: AppText.h1),
-              const SizedBox(height: AppSpacing.s16),
-              Text('${_number('verifiedMinutes')} minutes verified', style: AppText.body),
-              const SizedBox(height: AppSpacing.s8),
-              Text('${_number('rawXp')} XP', style: AppText.display),
-              const SizedBox(height: AppSpacing.s8),
-              Text('Final ${_number('finalXp')} XP · level ${_number('level')}', style: AppText.body),
-              if (widget.summary['onboarding'] == true) ...[
-                const SizedBox(height: AppSpacing.s12),
-                const Text('Starter XP unlocks level 2 and a free chest.', style: AppText.body),
-              ],
-              if (lines.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s20),
-                Text('Rewards', style: AppText.h2),
-                for (final reward in lines)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.s8),
-                    child: Text('${reward['id'] ?? reward['type'] ?? 'Reward'}', style: AppText.body),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 40, AppSpacing.screen, AppSpacing.s24),
+          children: [
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    broken ? Icons.timer_off_rounded : Icons.check_circle_rounded,
+                    size: 14,
+                    color: broken ? AppColors.errorText : AppColors.tealDeep,
                   ),
-              ],
-              if (_error != null) ...[
-                const SizedBox(height: AppSpacing.s12),
-                Text(_error!, style: AppText.bodySmall),
-              ],
-              const Spacer(),
-              QButton(label: 'Continue', loading: _busy, onPressed: _busy ? null : _continue),
+                  const SizedBox(width: 6),
+                  Semantics(
+                    header: true,
+                    label: broken ? 'Session ended' : 'Session complete',
+                    excludeSemantics: true,
+                    child: Text(
+                      broken ? 'SESSION ENDED' : 'SESSION COMPLETE',
+                      style: AppText.label.copyWith(
+                        fontSize: 11,
+                        letterSpacing: 1.1,
+                        color: broken ? AppColors.errorText : AppColors.tealDeep,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            Center(
+              child: SizedBox(
+                width: 182,
+                height: 182,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Clay(circle: true, width: 182, height: 182),
+                    Well(
+                      circle: true,
+                      width: 160,
+                      height: 160,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: CircularProgressIndicator(
+                          value: broken ? 0.6 : 1,
+                          strokeWidth: 8,
+                          strokeCap: StrokeCap.round,
+                          color: broken ? AppColors.inkFaint : AppColors.awakeningTeal,
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                    Clay(
+                      circle: true,
+                      width: 124,
+                      height: 124,
+                      child: Icon(
+                        broken ? Icons.hourglass_bottom_rounded : Icons.auto_awesome_rounded,
+                        size: 44,
+                        color: broken ? AppColors.inkMuted : AppColors.tealDeep,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text('+${_number('rawXp')}', style: AppText.display.copyWith(fontSize: 52, height: 56 / 52, letterSpacing: -2)),
+                  const SizedBox(width: 6),
+                  Text('XP', style: AppText.h2.copyWith(fontSize: 20, color: AppColors.tealDeep)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Clay(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+              child: Column(
+                children: [
+                  _Row(label: '${_number('verifiedMinutes')} minutes verified', value: '${_number('verifiedMinutes')}'),
+                  _Row(label: 'Level', value: '${_number('level')}'),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1, thickness: 1, color: AppColors.hairline),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(child: Text('Total', style: AppText.title.copyWith(fontSize: 15, fontWeight: FontWeight.w700))),
+                      Text(
+                        '${_number('finalXp')} XP',
+                        style: AppText.numbers.copyWith(fontSize: 17, color: AppColors.tealDeep),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (widget.summary['onboarding'] == true) ...[
+              const SizedBox(height: AppSpacing.s16),
+              Well(
+                radius: 20,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.card_giftcard_rounded, color: AppColors.tealDeep, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Starter XP unlocks level 2 and a free chest.', style: AppText.bodySmall.copyWith(color: AppColors.ink)),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
+            if (lines.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s24),
+              const SectionLabel(label: 'Rewards'),
+              const SizedBox(height: AppSpacing.s12),
+              ClayList(
+                dividerIndent: 58,
+                children: [
+                  for (final reward in lines)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          ClayDot(
+                            size: 32,
+                            gradient: dotGradient(AppColors.legendary.withValues(alpha: 0.6), AppColors.legendary),
+                            icon: Icons.star_rounded,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text('${reward['id'] ?? reward['type'] ?? 'Reward'}', style: AppText.item),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: AppSpacing.s12),
+              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
+            ],
+          ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s16),
+              child: QButton(label: 'Continue', loading: _busy, onPressed: _busy ? null : _continue),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: AppText.bodySmall.copyWith(fontSize: 14, color: AppColors.inkMuted))),
+          Text(value, style: AppText.numbers.copyWith(fontSize: 15)),
+        ],
       ),
     );
   }

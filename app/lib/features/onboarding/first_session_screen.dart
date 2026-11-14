@@ -11,6 +11,8 @@ import '../../core/widgets/q_button.dart';
 import '../focus/start_focus_screen.dart';
 import '../quests/providers/task_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/stat_icon.dart';
 
 /// Onboarding step 5–6. A short first session unlocks the starter XP for level 2.
 class FirstSessionScreen extends ConsumerStatefulWidget {
@@ -52,6 +54,7 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: AppSpacing.s16),
                   const Text('First focus', style: AppText.h1),
                   const SizedBox(height: AppSpacing.s12),
                   Text(
@@ -60,9 +63,31 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Text('About $minutes minutes', style: AppText.caption),
+                  const Spacer(),
+                  Center(
+                    child: SizedBox(
+                      width: 220,
+                      height: 220,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Clay(circle: true, width: 220, height: 220),
+                          const Well(circle: true, width: 186, height: 186),
+                          Clay(
+                            circle: true,
+                            width: 150,
+                            height: 150,
+                            child: Center(
+                              child: StatDot(stat: task.stat ?? 'intellect', size: 72),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   if (_error != null) ...[
                     const SizedBox(height: AppSpacing.s12),
-                    Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                    Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                   ],
                   const Spacer(),
                   QButton(

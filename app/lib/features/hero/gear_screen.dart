@@ -11,6 +11,7 @@ import '../../core/widgets/item_card.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_chip.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 class GearRow {
   const GearRow({
@@ -126,7 +127,7 @@ class _GearScreenState extends ConsumerState<GearScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(gearListProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Gear', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Gear'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
@@ -151,7 +152,7 @@ class _GearScreenState extends ConsumerState<GearScreen> {
             ),
             children: [
               if (_error != null) ...[
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                 const SizedBox(height: AppSpacing.s8),
               ],
               for (final item in items) ...[

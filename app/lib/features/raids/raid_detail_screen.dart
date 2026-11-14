@@ -15,6 +15,8 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import '../bosses/boss_time.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/boss_card.dart';
 import 'providers/raid_detail_providers.dart';
 
 /// Live raid HP, members with focusing dots, and damage ticker.
@@ -49,12 +51,9 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
     final async = ref.watch(raidDetailProvider(raidId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Raid', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/bosses'),
-        ),
+      appBar: ClayHeader(
+        title: 'Raid',
+        onBack: () => context.go('/bosses'),
       ),
       body: async.when(
         loading: () => const LoadingSkeleton(),
@@ -90,30 +89,43 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
             ),
             children: [
               if (snap.reconnecting) ...[
-                QCard(
+                Well(
+                  radius: AppRadius.pill,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Text(
                     'Reconnecting…',
-                    style: AppText.bodySmall.copyWith(color: AppColors.inkMuted),
+                    style: AppText.bodySmall.copyWith(color: AppColors.inkMuted, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s12),
               ],
-              // Boss art sits on a light card so indigo ink stays readable (UI brief §5.4).
+              const SizedBox(height: 56),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
               QCard(
+                radius: AppRadius.stage,
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.button),
-                      child: Image.asset(
-                        GameAssets.boss(raid.tier),
-                        width: 180,
-                        height: 180,
-                        fit: BoxFit.cover,
+                    Container(
+                      height: 160,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26),
+                        gradient: const RadialGradient(
+                          center: Alignment(0, 0.4),
+                          radius: 0.9,
+                          colors: [Color(0xFFF4F3FF), Color(0xFFD9DBF7), Color(0xFF9EA3DA)],
+                          stops: [0, 0.42, 1],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.s16),
-                    Text(raid.name, style: AppText.h1, textAlign: TextAlign.center),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 16, 10, 8),
+                      child: Column(
+                        children: [
+                    Text(raid.name, style: AppText.h1.copyWith(fontSize: 24, height: 30 / 24), textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.s4),
                     Text(raid.title, style: AppText.bodySmall, textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.s12),
@@ -133,6 +145,8 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                     ProgressBar(
                       value: hp.clamp(0.0, 1.0),
                       kind: ProgressKind.bossHp,
+                      height: 18,
+                      trailingColor: AppColors.ink,
                       leading: 'HP',
                       trailing: '$remaining / ${raid.maxHp} HP',
                     ),
@@ -144,12 +158,24 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
+              ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: -56,
+                    child: IgnorePointer(child: Center(child: BossArt(tier: raid.tier, size: 210))),
+                  ),
+                ],
               ),
               if (alone) ...[
                 const SizedBox(height: AppSpacing.s16),
                 QCard(
+                  padding: const EdgeInsets.all(AppSpacing.s20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -158,6 +184,8 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                       Text('Share the invite so others can join.', style: AppText.bodySmall),
                       const SizedBox(height: AppSpacing.s12),
                       QButton(
+                        height: 52,
+                        icon: Icons.person_add_alt_1_rounded,
                         label: 'Open invite',
                         onPressed: () => context.go('/raids/$raidId/invite'),
                       ),
@@ -165,10 +193,10 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: AppSpacing.s24),
+              const SizedBox(height: 32),
               Row(
                 children: [
-                  Expanded(child: Text('Members', style: AppText.h2)),
+                  Expanded(child: Semantics(header: true, child: Text('Members', style: AppText.h2))),
                   if (focusingCount > 0)
                     QChip(
                       label: focusingCount == 1 ? '1 focusing' : '$focusingCount focusing',
@@ -176,7 +204,7 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s8),
+              const SizedBox(height: AppSpacing.s12),
               for (final member in snap.members) ...[
                 MemberCard(
                   name: member.displayName,
@@ -192,13 +220,21 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                   focusing: snap.focusingIds.contains(member.userId),
                   pulledWeight: member.metFairShare,
                 ),
-                const SizedBox(height: AppSpacing.s8),
+                const SizedBox(height: AppSpacing.s12),
               ],
-              const SizedBox(height: AppSpacing.s16),
-              Text('Damage ticker', style: AppText.h2),
-              const SizedBox(height: AppSpacing.s8),
+              const SizedBox(height: AppSpacing.s20),
+              Semantics(header: true, child: Text('Damage ticker', style: AppText.h2)),
+              const SizedBox(height: AppSpacing.s12),
               if (ticker.isEmpty)
-                Text('No hits yet. Start a focus session on a raid task.', style: AppText.bodySmall)
+                Well(
+                  radius: 24,
+                  padding: const EdgeInsets.all(18),
+                  child: Text(
+                    'No hits yet. Start a focus session on a raid task.',
+                    style: AppText.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                )
               else
                 for (final event in ticker)
                   Padding(
@@ -217,19 +253,24 @@ class _RaidDetailScreenState extends ConsumerState<RaidDetailScreen> {
                           ),
                         );
                       },
-                      child: QCard(
+                      child: Clay(
+                        kind: ClayKind.control,
+                        radius: 20,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
+                            const Icon(Icons.bolt_rounded, size: 18, color: AppColors.bossHp),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 '${event.displayName} hit',
-                                style: AppText.body,
+                                style: AppText.item,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             Text(
                               '−${event.amount}',
-                              style: AppText.numbers.copyWith(color: AppColors.bossHp),
+                              style: AppText.numbers.copyWith(color: AppColors.bossHpText),
                             ),
                           ],
                         ),

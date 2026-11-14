@@ -15,6 +15,9 @@ import '../../data/models/raid.dart';
 import '../../data/models/raid_member.dart';
 import '../social/providers/friends_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/boss_card.dart';
+import '../../core/theme/app_colors.dart';
 
 class RaidResultsSnapshot {
   const RaidResultsSnapshot({
@@ -121,12 +124,10 @@ class _RaidResultsScreenState extends ConsumerState<RaidResultsScreen> {
     final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Raid results', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.go('/bosses'),
-        ),
+      appBar: ClayHeader(
+        title: 'Raid results',
+        closeIcon: true,
+        onBack: () => context.go('/bosses'),
       ),
       body: async.when(
         loading: () => const LoadingSkeleton(),
@@ -150,26 +151,79 @@ class _RaidResultsScreenState extends ConsumerState<RaidResultsScreen> {
           }
           final mvp = snap.members.where((m) => m.isMvp).toList();
           return ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
             children: [
-              Text(_resultLabel(snap.raid.status), style: AppText.h1),
-              Text(snap.raid.name, style: AppText.body),
-              const SizedBox(height: AppSpacing.s16),
+              Center(
+                child: SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Clay(
+                        circle: true,
+                        width: 200,
+                        height: 200,
+                        gradient: RadialGradient(
+                          colors: snap.raid.status == 'defeated'
+                              ? const [AppColors.white, AppColors.legendarySoft]
+                              : const [AppColors.white, AppColors.well],
+                        ),
+                      ),
+                      BossArt(tier: snap.raid.tier, size: 170, greyed: snap.raid.status != 'defeated'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s20),
+              Text(_resultLabel(snap.raid.status), style: AppText.display, textAlign: TextAlign.center),
+              Text(snap.raid.name, style: AppText.h2.copyWith(color: AppColors.inkMuted), textAlign: TextAlign.center),
+              const SizedBox(height: AppSpacing.s20),
               QCard(
-                child: Text(
-                  'Damage ${snap.raid.damage} / ${snap.raid.maxHp}',
-                  style: AppText.body,
+                padding: const EdgeInsets.all(AppSpacing.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Damage ${snap.raid.damage} / ${snap.raid.maxHp}',
+                      style: AppText.title,
+                    ),
+                    const SizedBox(height: 10),
+                    ClayBar(
+                      value: snap.raid.maxHp <= 0 ? 0 : snap.raid.damage / snap.raid.maxHp,
+                      gradient: hpFillGradient,
+                    ),
+                  ],
                 ),
               ),
               if (mvp.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.s16),
-                Text('MVP', style: AppText.h2),
-                const SizedBox(height: AppSpacing.s8),
-                Text(mvp.first.displayName, style: AppText.title),
+                QCard(
+                  padding: const EdgeInsets.all(AppSpacing.s16),
+                  child: Row(
+                    children: [
+                      ClayDot(
+                        size: 44,
+                        gradient: dotGradient(AppColors.legendary.withValues(alpha: 0.55), AppColors.legendary),
+                        icon: Icons.workspace_premium_rounded,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('MVP', style: AppText.label.copyWith(color: AppColors.legendaryText)),
+                            Text(mvp.first.displayName, style: AppText.title),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
               const SizedBox(height: AppSpacing.s24),
-              Text('Contributions', style: AppText.h2),
-              const SizedBox(height: AppSpacing.s8),
+              Semantics(header: true, child: Text('Contributions', style: AppText.h2)),
+              const SizedBox(height: AppSpacing.s12),
               for (final member in snap.members) ...[
                 MemberCard(
                   name: member.displayName,
@@ -191,6 +245,9 @@ class _RaidResultsScreenState extends ConsumerState<RaidResultsScreen> {
                   const SizedBox(height: AppSpacing.s8),
                   QButton(
                     label: 'Add as friend',
+                    icon: Icons.person_add_alt_1_rounded,
+                    height: 46,
+                    foreground: AppColors.tealDeep,
                     variant: QButtonVariant.secondary,
                     loading: _busy.contains(member.userId),
                     onPressed: _busy.contains(member.userId) ? null : () => _addFriend(member.userId),
@@ -198,6 +255,7 @@ class _RaidResultsScreenState extends ConsumerState<RaidResultsScreen> {
                 ],
                 const SizedBox(height: AppSpacing.s12),
               ],
+              const SizedBox(height: AppSpacing.s12),
               QButton(
                 label: 'Done',
                 onPressed: () => context.go('/bosses'),

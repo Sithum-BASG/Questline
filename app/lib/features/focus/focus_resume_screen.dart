@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/supabase/supabase_providers.dart';
-import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 import 'focus_screen.dart';
 
 class FocusResumeArgs {
@@ -51,7 +51,7 @@ class FocusResumeScreen extends ConsumerWidget {
     return async.when(
       loading: () => const Scaffold(body: LoadingSkeleton()),
       error: (error, _) => Scaffold(
-        appBar: AppBar(title: Text('Focus', style: AppText.h2)),
+        appBar: const ClayHeader(title: 'Focus'),
         body: EmptyState(
           title: 'Could not resume session',
           body: 'Check your connection and try again.',
@@ -62,7 +62,7 @@ class FocusResumeScreen extends ConsumerWidget {
       data: (loaded) {
         if (loaded == null) {
           return Scaffold(
-            appBar: AppBar(title: Text('Focus', style: AppText.h2)),
+            appBar: const ClayHeader(title: 'Focus'),
             body: const EmptyState(
               title: 'Session not found',
               body: 'It may have already ended.',

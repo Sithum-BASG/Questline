@@ -8,6 +8,7 @@ import '../motion/app_haptics.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
+import 'clay.dart';
 import 'q_button.dart';
 
 enum RewardKind { levelUp, loot, boss, badge, streak }
@@ -267,56 +268,111 @@ class _RewardOverlayState extends State<RewardOverlay> with TickerProviderStateM
       }
     }
 
+    final field = moment.isMythic ? AppColors.mythic : moment.burstColor;
     return Material(
       color: AppColors.paper,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _onTap,
-        child: SafeArea(
-          child: AnimatedBuilder(
-            animation: Listenable.merge([_controller, ?_shimmer]),
-            builder: (context, child) {
-              return Opacity(
-                opacity: fade.value.clamp(0.0, 1.0),
-                child: Transform.scale(scale: scale.value, child: child),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.screen),
-              child: Column(
-                children: [
-                  const Spacer(),
-                  Text(
-                    moment.kind.label.toUpperCase(),
-                    style: AppText.caption.copyWith(
-                      color: moment.burstColor,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.center,
+        child: Stack(
+          children: [
+            // A full field of the reward's colour: a burst, not a dialog.
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: MediaQuery.sizeOf(context).height * 0.64,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppRadius.hero)),
+                  gradient: RadialGradient(
+                    center: const Alignment(0, 0.05),
+                    radius: 0.95,
+                    colors: [
+                      Color.lerp(field, AppColors.white, 0.45)!,
+                      field,
+                      Color.lerp(field, AppColors.ink, 0.35)!,
+                    ],
+                    stops: const [0, 0.42, 1],
                   ),
-                  const SizedBox(height: AppSpacing.s16),
-                  art,
-                  const SizedBox(height: AppSpacing.s24),
-                  Text(moment.title, style: AppText.display, textAlign: TextAlign.center),
-                  const SizedBox(height: AppSpacing.s8),
-                  Text(moment.subtitle, style: AppText.body, textAlign: TextAlign.center),
-                  const Spacer(),
-                  if (_settled)
-                    QButton(
-                      label: 'Claim',
-                      onPressed: () {
-                        // Claim first so a missing haptic channel never blocks the queue.
-                        widget.onClaim();
-                        AppHaptics.claim();
-                      },
-                    )
-                  else
-                    const SizedBox(height: AppSpacing.minTap),
-                ],
+                ),
               ),
             ),
-          ),
+            SafeArea(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_controller, ?_shimmer]),
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: fade.value.clamp(0.0, 1.0),
+                    child: Transform.scale(scale: scale.value, child: child),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s20, AppSpacing.screen, AppSpacing.s24),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 30,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: AppColors.white.withValues(alpha: 0.55), width: 1.5),
+                        ),
+                        child: Center(
+                          widthFactor: 1,
+                          child: Text(
+                            moment.kind.label.toUpperCase(),
+                            style: AppText.label.copyWith(color: AppColors.white, letterSpacing: 1.9),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        width: 240,
+                        height: 240,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: AppColors.white.withValues(alpha: 0.28), spreadRadius: 10),
+                            BoxShadow(color: AppColors.white.withValues(alpha: 0.12), spreadRadius: 22),
+                            const BoxShadow(color: Color(0x47101935), offset: Offset(0, 24), blurRadius: 40),
+                          ],
+                        ),
+                        child: Clay(
+                          circle: true,
+                          shadows: const [],
+                          child: Center(child: art),
+                        ),
+                      ),
+                      const Spacer(),
+                      const SizedBox(height: AppSpacing.s32),
+                      Text(moment.title, style: AppText.display, textAlign: TextAlign.center),
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        moment.subtitle,
+                        style: AppText.body.copyWith(color: AppColors.inkMuted),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.s32),
+                      if (_settled)
+                        QButton(
+                          label: 'Claim',
+                          onPressed: () {
+                            // Claim first so a missing haptic channel never blocks the queue.
+                            widget.onClaim();
+                            AppHaptics.claim();
+                          },
+                        )
+                      else
+                        const SizedBox(height: 60),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

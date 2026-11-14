@@ -10,6 +10,8 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/timer_display.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/stat_icon.dart';
 import 'focus_clock.dart';
 import 'focus_leave_store.dart';
 import 'presence_session.dart';
@@ -184,6 +186,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     final elapsed = _clock.elapsedSeconds(DateTime.now());
+    final statLabel = StatIcon.labelFor(widget.stat);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -192,23 +195,105 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       child: Scaffold(
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s12, AppSpacing.screen, AppSpacing.s24),
             child: Column(
               children: [
+                SizedBox(
+                  height: 48,
+                  child: Row(
+                    children: [
+                      ClayIconButton(
+                        icon: Icons.close_rounded,
+                        tooltip: 'End session',
+                        onPressed: _ending ? null : _confirmEnd,
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(color: AppColors.awakeningTeal, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 7),
+                            Semantics(
+                              header: true,
+                              label: _activity ? 'Activity' : 'Focus',
+                              excludeSemantics: true,
+                              child: Text(
+                                _activity ? 'ACTIVITY' : 'FOCUS',
+                                style: AppText.label.copyWith(fontSize: 11, letterSpacing: 1.1, color: AppColors.tealDeep),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
                 const Spacer(),
-                Text(_activity ? 'Activity' : 'Focus', style: AppText.h1),
-                const SizedBox(height: AppSpacing.s24),
-                TimerDisplay(elapsedSeconds: elapsed, estimateSeconds: widget.estimateMinutes * 60),
+                TimerDisplay(
+                  elapsedSeconds: elapsed,
+                  estimateSeconds: widget.estimateMinutes * 60,
+                  caption: widget.estimateMinutes > 0 ? 'of ~${widget.estimateMinutes} min' : null,
+                  size: 260,
+                ),
+                const SizedBox(height: 28),
+                Clay(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      ClayDot(
+                        size: 40,
+                        gradient: statGradient(widget.stat),
+                        icon: _activity ? Icons.directions_run_rounded : StatIcon.iconFor(widget.stat),
+                        semanticLabel: statLabel,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _activity ? '$statLabel activity' : '$statLabel focus',
+                              style: AppText.title,
+                            ),
+                            Text(
+                              _activity
+                                  ? 'Your phone can lock. Minutes still count.'
+                                  : 'Stay in the app. Leaving starts a short grace timer.',
+                              style: AppText.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 if (_clock.broken) ...[
                   const SizedBox(height: AppSpacing.s16),
-                  Text('Session ended', style: AppText.body.copyWith(color: AppColors.ink)),
+                  Text(
+                    'Session ended',
+                    style: AppText.title.copyWith(color: AppColors.errorText),
+                  ),
                 ],
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.s12),
-                  Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                  Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500),
+                  ),
                 ],
                 const Spacer(),
-                QButton(label: 'End session', loading: _ending, onPressed: _ending ? null : _confirmEnd),
+                QButton(
+                  label: 'End session',
+                  icon: Icons.stop_rounded,
+                  loading: _ending,
+                  onPressed: _ending ? null : _confirmEnd,
+                ),
               ],
             ),
           ),

@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
+import '../../core/widgets/clay.dart';
 
 /// Writes the owner's study context. The column grant allows this client update.
 final saveStudyContextProvider = Provider<Future<void> Function(String value)>((ref) {
@@ -72,8 +73,21 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.screen),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s24, AppSpacing.screen, AppSpacing.s32),
           children: [
+            const Center(
+              child: ClayDot(
+                size: 88,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.intellectLight, AppColors.intellect],
+                ),
+                icon: Icons.school_rounded,
+                iconSize: 40,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
             Text('What are you studying?', style: AppText.h1),
             const SizedBox(height: AppSpacing.s8),
             Text(
@@ -87,16 +101,29 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
               decoration: const InputDecoration(labelText: 'Study context'),
               style: AppText.body,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              'Task text and your optional study context are sent to our AI provider (Groq) to rate the task. Nothing else is shared.',
-              style: AppText.bodySmall.copyWith(color: AppColors.inkMuted),
+            const SizedBox(height: AppSpacing.s16),
+            Well(
+              radius: 20,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.tealDeep),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Task text and your optional study context are sent to our AI provider (Groq) to rate the task. Nothing else is shared.',
+                      style: AppText.bodySmall.copyWith(color: AppColors.inkMuted),
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (_error != null) ...[
               const SizedBox(height: AppSpacing.s12),
-              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
             ],
-            const SizedBox(height: AppSpacing.s20),
+            const SizedBox(height: AppSpacing.s32),
             QButton(
               label: 'Continue',
               loading: _busy,

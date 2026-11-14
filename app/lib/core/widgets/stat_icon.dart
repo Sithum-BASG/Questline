@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import 'clay.dart';
 
 /// One of the four stats, at 16, 20 or 24 px.
 class StatIcon extends StatelessWidget {
@@ -11,7 +12,7 @@ class StatIcon extends StatelessWidget {
 
   static const sizes = [16.0, 20.0, 24.0];
 
-  String get _label {
+  static String labelFor(String stat) {
     switch (stat) {
       case 'intellect':
         return 'Intellect';
@@ -26,27 +27,45 @@ class StatIcon extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: _label,
-      image: true,
-      child: Icon(_icon, size: size, color: AppColors.stat(stat)),
-    );
-  }
-
-  IconData get _icon {
+  static IconData iconFor(String stat) {
     switch (stat) {
       case 'intellect':
-        return Icons.menu_book_outlined;
+        return Icons.menu_book_rounded;
       case 'vitality':
-        return Icons.favorite_outline;
+        return Icons.favorite_rounded;
       case 'craft':
-        return Icons.handyman_outlined;
+        return Icons.handyman_rounded;
       case 'charisma':
-        return Icons.forum_outlined;
+        return Icons.forum_rounded;
       default:
         return Icons.circle_outlined;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: labelFor(stat),
+      image: true,
+      child: Icon(iconFor(stat), size: size, color: AppColors.stat(stat)),
+    );
+  }
+}
+
+/// A stat as a glossy clay dot with a white icon (quest rows, judgement).
+class StatDot extends StatelessWidget {
+  const StatDot({super.key, required this.stat, this.size = 36});
+
+  final String stat;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClayDot(
+      gradient: statGradient(stat),
+      icon: StatIcon.iconFor(stat),
+      size: size,
+      semanticLabel: StatIcon.labelFor(stat),
+    );
   }
 }

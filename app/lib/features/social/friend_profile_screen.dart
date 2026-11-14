@@ -12,6 +12,7 @@ import '../../core/widgets/stat_radar.dart';
 import '../../data/models/friend_summary.dart';
 import '../../data/models/profile.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
@@ -60,7 +61,7 @@ class FriendProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(friendProfileProvider(userId));
     return Scaffold(
-      appBar: AppBar(title: Text('Friend', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Friend'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(

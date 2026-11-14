@@ -5,15 +5,15 @@ import '../../../core/theme/shadows.dart';
 
 /// Soft clay fill used on the arch, nameplate and Google button.
 const LinearGradient authClayGradient = LinearGradient(
-  begin: Alignment(-0.6, -0.8),
-  end: Alignment(0.7, 0.9),
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
   colors: [AppColors.white, Color(0xFFF5F7FA)],
 );
 
-/// Approximate 145° gradient for soft clay / teal buttons.
+/// Teal primary button fill.
 const LinearGradient authTealButtonGradient = LinearGradient(
-  begin: Alignment(-0.6, -0.8),
-  end: Alignment(0.7, 0.9),
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
   colors: [AppColors.tealButtonStart, AppColors.tealButtonEnd],
 );
 

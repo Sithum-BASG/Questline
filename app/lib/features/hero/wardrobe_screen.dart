@@ -13,6 +13,7 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import '../home/providers/home_providers.dart';
 import 'providers/profile_providers.dart';
+import '../../core/widgets/clay.dart';
 
 class WardrobeItem {
   const WardrobeItem({required this.id, required this.name, required this.type});
@@ -113,7 +114,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(wardrobeProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Wardrobe', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Wardrobe'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
@@ -144,7 +145,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s12),
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
               ],
               const SizedBox(height: AppSpacing.s24),
               for (final type in const ['skin', 'background', 'frame']) ...[
