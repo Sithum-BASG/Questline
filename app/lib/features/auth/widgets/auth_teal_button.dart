@@ -5,6 +5,79 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/shadows.dart';
 import 'auth_clay.dart';
 
+/// Stadium-shaped button: the gradient and every shadow sit on one rounded
+/// decoration, and the ink ripple is clipped to the same stadium shape.
+class _PillButton extends StatelessWidget {
+  const _PillButton({
+    required this.height,
+    required this.gradient,
+    required this.shadows,
+    required this.semanticLabel,
+    required this.enabled,
+    required this.loading,
+    required this.onPressed,
+    required this.child,
+  });
+
+  final double height;
+  final Gradient gradient;
+  final List<BoxShadow> shadows;
+  final String semanticLabel;
+  final bool enabled;
+  final bool loading;
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: Opacity(
+        opacity: loading ? 0.85 : 1,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(height / 2),
+            gradient: gradient,
+            boxShadow: shadows,
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: enabled ? onPressed : null,
+              child: SizedBox(
+                height: height,
+                width: double.infinity,
+                child: Center(child: child),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ButtonSpinner extends StatelessWidget {
+  const _ButtonSpinner({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 3, color: color),
+    );
+  }
+}
+
 /// Full-width soft teal primary button for auth screens.
 class AuthTealButton extends StatelessWidget {
   const AuthTealButton({
@@ -20,50 +93,26 @@ class AuthTealButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool loading;
 
-  bool get _enabled => onPressed != null && !loading;
-
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: _enabled,
-      label: loading ? loadingLabel : label,
-      child: Opacity(
-        opacity: loading ? 0.85 : 1,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(29),
-            child: Ink(
-              height: 58,
-              decoration: BoxDecoration(
-                gradient: authTealButtonGradient,
-                borderRadius: BorderRadius.circular(29),
-                boxShadow: AppShadows.tealButton,
-              ),
-              child: Center(
-                child: loading
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 3,
-                              color: AppColors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(loadingLabel, style: AppText.authPrimaryButton),
-                        ],
-                      )
-                    : Text(label, style: AppText.authPrimaryButton),
-              ),
-            ),
-          ),
-        ),
+    final text = loading ? loadingLabel : label;
+    return _PillButton(
+      height: 58,
+      gradient: authTealButtonGradient,
+      shadows: AppShadows.tealButton,
+      semanticLabel: text,
+      enabled: onPressed != null && !loading,
+      loading: loading,
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (loading) ...[
+            const _ButtonSpinner(color: AppColors.white),
+            const SizedBox(width: 10),
+          ],
+          Text(text, style: AppText.authPrimaryButton),
+        ],
       ),
     );
   }
@@ -77,75 +126,44 @@ class AuthGoogleButton extends StatelessWidget {
     this.loading = false,
   });
 
+  static const _label = 'Continue with Google';
+
   final VoidCallback? onPressed;
   final bool loading;
 
-  bool get _enabled => onPressed != null && !loading;
-
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: _enabled,
-      label: 'Continue with Google',
-      child: Opacity(
-        opacity: loading ? 0.85 : 1,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(27),
-            child: Ink(
-              height: 54,
-              decoration: authClayDecoration(
-                borderRadius: BorderRadius.circular(27),
+    return _PillButton(
+      height: 54,
+      gradient: authClayGradient,
+      shadows: AppShadows.claySoft,
+      semanticLabel: _label,
+      enabled: onPressed != null && !loading,
+      loading: loading,
+      onPressed: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (loading)
+              const _ButtonSpinner(color: AppColors.ink)
+            else
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CustomPaint(painter: _GoogleGPainter()),
               ),
-              child: Center(
-                child: loading
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 3,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              'Continue with Google',
-                              style: AppText.authGoogleButton,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CustomPaint(painter: _GoogleGPainter()),
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              'Continue with Google',
-                              style: AppText.authGoogleButton,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
+            const SizedBox(width: 10),
+            const Flexible(
+              child: Text(
+                _label,
+                style: AppText.authGoogleButton,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

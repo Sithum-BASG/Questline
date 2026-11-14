@@ -148,6 +148,15 @@ class AppText {
     fontFeatures: tabular,
   );
 
+  static const TextStyle authFieldHint = TextStyle(
+    fontFamily: roboto,
+    fontSize: 15,
+    height: 20 / 15,
+    fontWeight: FontWeight.w500,
+    color: AppColors.fieldHint,
+    fontFeatures: tabular,
+  );
+
   static const TextStyle authLink = TextStyle(
     fontFamily: sora,
     fontSize: 13,
