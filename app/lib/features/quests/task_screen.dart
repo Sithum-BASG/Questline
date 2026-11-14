@@ -13,6 +13,8 @@ import '../../core/widgets/q_button.dart';
 import '../../data/models/task.dart';
 import 'providers/task_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/stat_icon.dart';
 
 const questStats = ['intellect', 'vitality', 'craft', 'charisma'];
 
@@ -128,112 +130,287 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     }
   }
 
+  static const _mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
   @override
   Widget build(BuildContext context) {
     final task = ref.watch(taskProvider(widget.taskId));
     return Scaffold(
-      body: SafeArea(
-        child: task.when(
-          loading: () => const LoadingSkeleton(),
-          error: (error, _) => EmptyState(
-            title: 'Could not load this quest',
-            body: 'Check your connection and try again.',
-            actionLabel: 'Try again',
-            onAction: () => ref.invalidate(taskProvider(widget.taskId)),
+      body: task.when(
+        loading: () => const SafeArea(child: LoadingSkeleton()),
+        error: (error, _) => SafeArea(
+          child: Column(
+            children: [
+              const ClayHeader(),
+              EmptyState(
+                title: 'Could not load this quest',
+                body: 'Check your connection and try again.',
+                icon: Icons.cloud_off_rounded,
+                actionLabel: 'Try again',
+                onAction: () => ref.invalidate(taskProvider(widget.taskId)),
+              ),
+            ],
           ),
-          data: (row) {
-            if (row == null) {
-              return const EmptyState(title: 'Quest not found', body: 'It may have been deleted.');
-            }
-            final judged = _judgement ?? (row.judgedAt == null ? null : JudgementView.fromTask(row));
-            if (judged == null && row.status == 'draft' && !_asked && !_busy) {
-              _asked = true;
-              Future<void>.microtask(_judge);
-            }
-            return ListView(
-              padding: const EdgeInsets.all(AppSpacing.screen),
-              children: [
-                Text(row.title, style: AppText.h1),
-                const SizedBox(height: AppSpacing.s16),
-                if (_busy) const Center(child: CircularProgressIndicator()),
-                if (judged != null)
-                  JudgementCard(
-                    stat: judged.stat,
-                    difficulty: judged.difficulty,
-                    minutes: judged.minutes,
-                    xpPreview: judged.xpPreview,
-                    reason: judged.reason.isNotEmpty
-                        ? judged.reason
-                        : (judged.provisional
-                            ? 'Provisional rating, we\'ll re-check it soon'
-                            : ''),
-                    provisional: judged.provisional,
-                    challenged: judged.challenged,
-                    tooBig: judged.tooBig,
-                    onStatTap: () => _cycleStat(judged),
-                    onSplit: () => context.go('/quests/new'),
-                    onMakeBoss: () => context.go('/bosses/new'),
-                  ),
-                if (_error != null) ...[
-                  const SizedBox(height: AppSpacing.s12),
-                  Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
-                  const SizedBox(height: AppSpacing.s12),
-                  QButton(label: 'Try again', onPressed: _judge),
-                ],
-                const SizedBox(height: AppSpacing.s20),
-                if (widget.onboarding && row.status == 'draft' && judged != null) ...[
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Part of an assignment or exam with a deadline?',
-                      style: AppText.body,
-                    ),
-                    value: _linkBoss,
-                    onChanged: _busy ? null : (value) => setState(() => _linkBoss = value),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                ],
-                if (row.status == 'draft' && judged != null)
-                  QButton(label: 'Save', onPressed: _busy ? null : () => _save(row)),
-                if (row.status == 'open' && !widget.onboarding) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  QButton(
-                    label: 'Focus',
-                    onPressed: _busy ? null : () => context.push('/focus/start?taskId=${row.id}'),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  QButton(
-                    label: 'Reschedule',
-                    variant: QButtonVariant.secondary,
-                    onPressed: _busy ? null : () => _reschedule(false),
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  QButton(
-                    label: 'Use a scroll',
-                    variant: QButtonVariant.text,
-                    onPressed: _busy ? null : () => _reschedule(true),
-                  ),
-                  if (judged != null && !judged.challenged) ...[
-                    const SizedBox(height: AppSpacing.s8),
-                    QButton(
-                      label: 'Disagree?',
-                      variant: QButtonVariant.secondary,
-                      onPressed: () => context.push('/quests/${row.id}/challenge'),
-                    ),
-                  ],
-                ],
-                if (row.status == 'draft') ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  QButton(
-                    label: 'Discard',
-                    variant: QButtonVariant.text,
-                    onPressed: _busy ? null : () => _discard(row.id),
-                  ),
-                ],
-              ],
-            );
-          },
         ),
+        data: (row) {
+          if (row == null) {
+            return const SafeArea(
+              child: Column(
+                children: [
+                  ClayHeader(),
+                  EmptyState(
+                    title: 'Quest not found',
+                    body: 'It may have been deleted.',
+                    icon: Icons.search_off_rounded,
+                  ),
+                ],
+              ),
+            );
+          }
+          final judged = _judgement ?? (row.judgedAt == null ? null : JudgementView.fromTask(row));
+          if (judged == null && row.status == 'draft' && !_asked && !_busy) {
+            _asked = true;
+            Future<void>.microtask(_judge);
+          }
+          final stat = judged?.stat ?? row.stat;
+          final due = row.dueAt?.toLocal();
+          final canPop = Navigator.of(context).canPop();
+          final list = ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // Stat-tinted field with the quest's gem as the hero.
+              Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -0.4),
+                    radius: 1.1,
+                    colors: [
+                      AppColors.white,
+                      Color.lerp(AppColors.white, AppColors.statLight(stat ?? ''), 0.45)!,
+                      Color.lerp(AppColors.white, AppColors.statLight(stat ?? ''), 0.9)!,
+                    ],
+                    stops: const [0, 0.34, 1],
+                  ),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s12, AppSpacing.screen, 72),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 44,
+                          child: Row(
+                            children: [
+                              if (canPop)
+                                ClayIconButton(
+                                  kind: ClayKind.onScene,
+                                  icon: Icons.chevron_left_rounded,
+                                  iconSize: 24,
+                                  tooltip: 'Back',
+                                  onPressed: () => Navigator.of(context).maybePop(),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (stat != null)
+                          StatDot(stat: stat, size: 92)
+                        else
+                          Container(
+                            width: 92,
+                            height: 92,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8ECF2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFC3CAD6), width: 1.6),
+                            ),
+                            child: const Icon(Icons.auto_awesome_rounded, color: AppColors.inkFaint, size: 30),
+                          ),
+                        const SizedBox(height: 16),
+                        if (row.status == 'draft')
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text('NEW QUEST', style: AppText.label.copyWith(letterSpacing: 0.48)),
+                          ),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            row.title,
+                            textAlign: TextAlign.center,
+                            style: AppText.h1.copyWith(fontSize: 24, height: 30 / 24, letterSpacing: -0.72),
+                          ),
+                        ),
+                        if ((row.notes ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            row.notes!,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.bodySmall.copyWith(fontSize: 14, height: 20 / 14, color: const Color(0xFF4F5A70)),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (stat != null)
+                              _HeaderChip(
+                                icon: StatIcon.iconFor(stat),
+                                label: StatIcon.labelFor(stat),
+                                color: AppColors.stat(stat),
+                              ),
+                            _HeaderChip(
+                              icon: Icons.calendar_today_rounded,
+                              label: due == null ? 'No due date' : 'Due ${due.day} ${_mo[due.month - 1]}',
+                              color: AppColors.ink,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_busy && judged == null)
+                        const Clay(
+                          radius: AppRadius.stage,
+                          height: 180,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      if (judged != null)
+                        JudgementCard(
+                          stat: judged.stat,
+                          difficulty: judged.difficulty,
+                          minutes: judged.minutes,
+                          xpPreview: judged.xpPreview,
+                          reason: judged.reason.isNotEmpty
+                              ? judged.reason
+                              : (judged.provisional ? 'Provisional rating, we\'ll re-check it soon' : ''),
+                          provisional: judged.provisional,
+                          challenged: judged.challenged,
+                          tooBig: judged.tooBig,
+                          onStatTap: () => _cycleStat(judged),
+                          onSplit: () => context.go('/quests/new'),
+                          onMakeBoss: () => context.go('/bosses/new'),
+                        ),
+                      if (_error != null) ...[
+                        const SizedBox(height: AppSpacing.s16),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: AppSpacing.s12),
+                        QButton(label: 'Try again', variant: QButtonVariant.secondary, onPressed: _judge),
+                      ],
+                      const SizedBox(height: AppSpacing.s24),
+                      if (widget.onboarding && row.status == 'draft' && judged != null) ...[
+                        Clay(
+                          kind: ClayKind.control,
+                          radius: 22,
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: SwitchListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                            title: Text(
+                              'Part of an assignment or exam with a deadline?',
+                              style: AppText.item,
+                            ),
+                            value: _linkBoss,
+                            onChanged: _busy ? null : (value) => setState(() => _linkBoss = value),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s20),
+                      ],
+                      if (row.status == 'open' && !widget.onboarding) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: QButton(
+                                label: 'Reschedule',
+                                variant: QButtonVariant.secondary,
+                                icon: Icons.event_repeat_rounded,
+                                onPressed: _busy ? null : () => _reschedule(false),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.s12),
+                            Expanded(
+                              child: QButton(
+                                label: 'Use a scroll',
+                                variant: QButtonVariant.secondary,
+                                foreground: AppColors.tealDeep,
+                                onPressed: _busy ? null : () => _reschedule(true),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (judged != null && !judged.challenged) ...[
+                          const SizedBox(height: AppSpacing.s8),
+                          Center(
+                            child: QButton(
+                              label: 'Disagree?',
+                              variant: QButtonVariant.text,
+                              onPressed: () => context.push('/quests/${row.id}/challenge'),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+          final showSave = row.status == 'draft' && judged != null;
+          final showFocus = row.status == 'open' && !widget.onboarding;
+          final showDiscard = row.status == 'draft';
+          return Column(
+            children: [
+              Expanded(child: list),
+              if (showSave || showFocus || showDiscard)
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (showSave)
+                          QButton(label: 'Save', loading: _busy, onPressed: _busy ? null : () => _save(row)),
+                        if (showFocus)
+                          QButton(
+                            label: 'Focus',
+                            icon: Icons.play_arrow_rounded,
+                            onPressed: _busy ? null : () => context.push('/focus/start?taskId=${row.id}'),
+                          ),
+                        if (showDiscard) ...[
+                          const SizedBox(height: AppSpacing.s4),
+                          Center(
+                            child: QButton(
+                              label: 'Discard',
+                              variant: QButtonVariant.text,
+                              foreground: AppColors.inkMuted,
+                              onPressed: _busy ? null : () => _discard(row.id),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -341,5 +518,31 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  const _HeaderChip({required this.icon, required this.label, required this.color});
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Clay(
+      kind: ClayKind.onScene,
+      radius: 16,
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(label, style: AppText.caption.copyWith(color: color, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
   }
 }

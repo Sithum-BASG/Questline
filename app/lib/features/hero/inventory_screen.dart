@@ -12,6 +12,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 class ConsumableCounts {
   const ConsumableCounts({
@@ -85,7 +86,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(inventoryCountsProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Inventory', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Inventory'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
@@ -111,7 +112,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
             children: [
               if (_error != null) ...[
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                 const SizedBox(height: AppSpacing.s8),
               ],
               _ConsumableTile(

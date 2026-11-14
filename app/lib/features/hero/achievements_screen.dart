@@ -12,6 +12,7 @@ import '../../core/widgets/q_chip.dart';
 import 'achievement_copy.dart';
 import 'providers/achievements_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 /// Badges with pin (max 3) and owned titles to equip.
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -68,7 +69,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(achievementsViewProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Achievements', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Achievements'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
@@ -145,7 +146,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
               ],
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s16),
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
               ],
             ],
           );

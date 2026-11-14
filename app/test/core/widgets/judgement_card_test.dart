@@ -18,10 +18,10 @@ void main() {
         ),
       ),
     );
-    expect(find.text('This looks bigger than one sitting.'), findsOneWidget);
+    // The redesigned verdict swaps the XP headline for a too-big warning.
+    expect(find.text('Bigger than one sitting'), findsOneWidget);
     expect(find.text('Make it a boss'), findsOneWidget);
-    expect(find.text('Split'), findsOneWidget);
-    expect(find.text('86 XP'), findsNothing);
-    expect(find.text('120 XP'), findsOneWidget);
+    expect(find.text('Split it'), findsOneWidget);
+    expect(find.text('86'), findsNothing);
   });
 }

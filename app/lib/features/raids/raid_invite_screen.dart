@@ -11,10 +11,10 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
-import '../../core/widgets/q_card.dart';
 import '../../data/models/raid.dart';
 import 'raid_links.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 final raidInviteProvider = FutureProvider.autoDispose.family<Raid?, String>((ref, raidId) async {
   final row = await ref.watch(supabaseClientProvider).from('raids').select().eq('id', raidId).maybeSingle();
@@ -32,12 +32,9 @@ class RaidInviteScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(raidInviteProvider(raidId));
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Invite', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/raids/$raidId'),
-        ),
+      appBar: ClayHeader(
+        title: 'Invite',
+        onBack: () => context.go('/raids/$raidId'),
       ),
       body: async.when(
         loading: () => const LoadingSkeleton(),
@@ -58,24 +55,31 @@ class RaidInviteScreen extends ConsumerWidget {
             );
           }
           return ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
             children: [
-              Text(raid.name, style: AppText.h1),
-              Text(raid.title, style: AppText.bodySmall),
+              Text(raid.name, style: AppText.h1, textAlign: TextAlign.center),
+              Text(raid.title, style: AppText.bodySmall, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.s24),
               Center(
-                child: QrImageView(
-                  data: raidInviteUri(code),
-                  size: 200,
-                  backgroundColor: AppColors.white,
+                child: Clay(
+                  radius: AppRadius.stage,
+                  padding: const EdgeInsets.all(20),
+                  child: QrImageView(
+                    data: raidInviteUri(code),
+                    size: 200,
+                    backgroundColor: AppColors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
-              QCard(
+              const SizedBox(height: AppSpacing.s24),
+              Well(
+                radius: 22,
+                padding: const EdgeInsets.fromLTRB(20, 6, 6, 6),
                 child: Row(
                   children: [
-                    Expanded(child: Text(code, style: AppText.h2)),
-                    IconButton(
+                    Expanded(child: Text(code, style: AppText.h2.copyWith(fontSize: 22, letterSpacing: 4))),
+                    ClayIconButton(
+                      icon: Icons.copy_rounded,
                       tooltip: 'Copy',
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: code));
@@ -85,19 +89,19 @@ class RaidInviteScreen extends ConsumerWidget {
                           );
                         }
                       },
-                      icon: const Icon(Icons.copy),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
+              const SizedBox(height: AppSpacing.s24),
               QButton(
+                icon: Icons.ios_share_rounded,
                 label: 'Share invite',
                 onPressed: () => SharePlus.instance.share(
                   ShareParams(text: raidInviteShareText(code)),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s8),
+              const SizedBox(height: AppSpacing.s12),
               QButton(
                 label: 'Open raid',
                 variant: QButtonVariant.secondary,

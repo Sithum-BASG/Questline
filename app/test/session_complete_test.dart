@@ -38,6 +38,7 @@ void main() {
       ),
     );
     expect(find.text('86 XP'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('frame_margin_notes'), 200);
     expect(find.text('frame_margin_notes'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();

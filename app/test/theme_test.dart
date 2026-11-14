@@ -16,7 +16,7 @@ void main() {
     expect(theme.textTheme.bodyLarge?.fontSize, 16);
     expect(AppText.display.fontWeight, isNotNull);
     expect(AppSpacing.screen, 20);
-    expect(AppRadius.card, 20);
+    expect(AppRadius.card, 24);
     expect(AppColors.rarity('legendary'), AppColors.legendary);
     expect(AppColors.stat('vitality'), AppColors.vitality);
   });

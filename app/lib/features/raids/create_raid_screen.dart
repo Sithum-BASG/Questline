@@ -8,6 +8,9 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_chip.dart';
 import '../social/providers/guild_providers.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/boss_card.dart';
+import '../../core/theme/app_colors.dart';
 
 const _types = [
   ('assignment', 'Assignment'),
@@ -160,23 +163,21 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
     final preview = _preview;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(preview == null ? 'Start raid' : 'Confirm raid', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.go('/bosses'),
-        ),
+      appBar: ClayHeader(
+        title: preview == null ? 'Start raid' : 'Confirm raid',
+        closeIcon: true,
+        onBack: () => context.go('/bosses'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
         children: [
           if (_error != null) ...[
-            Text(_error!, style: AppText.bodySmall),
+            Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500)),
             const SizedBox(height: AppSpacing.s12),
           ],
           if (preview == null) ...[
-            Text('Team type', style: AppText.title),
-            const SizedBox(height: AppSpacing.s8),
+            Text('TEAM', style: AppText.label),
+            const SizedBox(height: 10),
             Wrap(
               spacing: AppSpacing.s8,
               children: [
@@ -204,7 +205,9 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
               const SizedBox(height: AppSpacing.s8),
               Text('Join a guild to start a guild fight.', style: AppText.caption),
             ],
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
+            Text('DEADLINE QUEST', style: AppText.label),
+            const SizedBox(height: 10),
             TextField(
               controller: _title,
               decoration: const InputDecoration(labelText: 'Title'),
@@ -217,11 +220,12 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
               maxLines: 3,
               enabled: !_busy,
             ),
-            const SizedBox(height: AppSpacing.s12),
-            Text('Type', style: AppText.title),
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s24),
+            Text('TYPE', style: AppText.label),
+            const SizedBox(height: 10),
             Wrap(
               spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
               children: [
                 for (final entry in _types)
                   QChip(
@@ -231,7 +235,12 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
+            Clay(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
             Text('Participants: $_participants', style: AppText.title),
             Slider(
               value: _participants.toDouble(),
@@ -246,25 +255,54 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
                         _preview = null;
                       }),
             ),
-            const SizedBox(height: AppSpacing.s8),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s20),
             QButton(
+              icon: Icons.event_rounded,
               label: _deadline == null
                   ? 'Pick deadline'
                   : 'Deadline ${_deadline!.toLocal()}'.split('.').first,
               variant: QButtonVariant.secondary,
               onPressed: _busy ? null : _pickDeadline,
             ),
-            const SizedBox(height: AppSpacing.s24),
-            QButton(label: 'Estimate', loading: _busy, onPressed: _busy ? null : _estimate),
+            const SizedBox(height: AppSpacing.s32),
+            QButton(label: 'Estimate', icon: Icons.auto_awesome_rounded, loading: _busy, onPressed: _busy ? null : _estimate),
           ] else ...[
-            Text(preview['name'] as String? ?? 'Raid', style: AppText.h1),
-            Text(preview['title'] as String? ?? '', style: AppText.body),
-            const SizedBox(height: AppSpacing.s12),
+            const SizedBox(height: AppSpacing.s16),
+            Center(
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Clay(
+                      circle: true,
+                      width: 200,
+                      height: 200,
+                      gradient: RadialGradient(colors: [Color(0xFFF4F3FF), Color(0xFFD9DBF7)]),
+                    ),
+                    BossArt(tier: '${preview['tier'] ?? 'brute'}', size: 170),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s20),
+            Text(preview['name'] as String? ?? 'Raid', style: AppText.h1, textAlign: TextAlign.center),
+            Text(
+              preview['title'] as String? ?? '',
+              style: AppText.body.copyWith(color: AppColors.inkMuted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               '${preview['tier']} · ${preview['maxHp']} HP · $_participants people',
               style: AppText.bodySmall,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
             Text('Per-person hours: ${_hours.round()}', style: AppText.title),
             Slider(
               value: _hours.clamp(2, 40),
@@ -276,9 +314,9 @@ class _CreateRaidScreenState extends ConsumerState<CreateRaidScreen> {
             ),
             if (preview['coinsEligible'] != true)
               Text('Created under 48 hours before the deadline — no coins.', style: AppText.caption),
-            const SizedBox(height: AppSpacing.s24),
+            const SizedBox(height: AppSpacing.s32),
             QButton(label: 'Start raid', loading: _busy, onPressed: _busy ? null : _confirm),
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s12),
             QButton(
               label: 'Back',
               variant: QButtonVariant.secondary,

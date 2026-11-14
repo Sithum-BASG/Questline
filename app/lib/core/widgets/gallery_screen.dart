@@ -24,6 +24,7 @@ import 'stat_radar.dart';
 import 'stat_tile.dart';
 import 'task_tile.dart';
 import 'timer_display.dart';
+import 'clay.dart';
 
 /// Debug-only catalogue of the shared widgets.
 class GalleryScreen extends StatelessWidget {
@@ -32,7 +33,7 @@ class GalleryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gallery', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Gallery'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s16, AppSpacing.screen, AppSpacing.aboveTabBar),
         children: [

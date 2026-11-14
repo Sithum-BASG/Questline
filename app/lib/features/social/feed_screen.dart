@@ -9,6 +9,7 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/feed_providers.dart';
+import '../../core/widgets/clay.dart';
 
 /// Paginated friends activity feed (`activity_events` via `visible_to` RLS).
 class FeedScreen extends ConsumerStatefulWidget {
@@ -50,13 +51,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final loadingMore = lastPage.isLoading && lastPage.hasValue == false && _pages > 1;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Feed', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/social'),
-        ),
-      ),
+      appBar: ClayHeader(title: 'Feed', onBack: () => context.go('/social')),
       body: loadingFirst
           ? const LoadingSkeleton()
           : firstError != null

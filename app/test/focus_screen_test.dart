@@ -128,7 +128,7 @@ void main() {
         }),
       ],
     ));
-    expect(find.text('Activity'), findsOneWidget);
+    expect(find.text('ACTIVITY'), findsOneWidget);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(alerts.shown, 0);

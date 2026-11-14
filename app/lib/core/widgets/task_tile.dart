@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
-import 'q_card.dart';
+import 'clay.dart';
 import 'stat_icon.dart';
 
-/// A task row. Late dues use the error colour. Play and tick are optional.
+/// A quest row: stat dot, title, meta and a quiet round start button.
+/// On its own it sits in a clay card; inside a [ClayList] pass [bare].
 class TaskTile extends StatelessWidget {
   const TaskTile({
     super.key,
@@ -17,6 +18,8 @@ class TaskTile extends StatelessWidget {
     this.provisional = false,
     this.onPlay,
     this.onTick,
+    this.onTap,
+    this.bare = false,
   });
 
   final String title;
@@ -26,51 +29,78 @@ class TaskTile extends StatelessWidget {
   final bool provisional;
   final VoidCallback? onPlay;
   final VoidCallback? onTick;
+  final VoidCallback? onTap;
+
+  /// Render without the surrounding card (for rows inside a ClayList).
+  final bool bare;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: '$title, $dueLabel${provisional ? ', provisional' : ''}',
-      child: QCard(
+    final row = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 68),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
         child: Row(
           children: [
-            StatIcon(stat: stat),
-            const SizedBox(width: AppSpacing.s12),
+            StatDot(stat: stat),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title, style: AppText.title, softWrap: true),
-                  Text(
-                    dueLabel,
-                    style: AppText.bodySmall.copyWith(color: late ? AppColors.error : AppColors.inkMuted),
-                    softWrap: true,
+                  Text(title, style: AppText.item, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      if (provisional) ...[
+                        const Tooltip(
+                          message: 'Provisional judgement',
+                          child: Icon(Icons.hourglass_empty_rounded, size: 13, color: AppColors.inkFaint),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          dueLabel,
+                          style: AppText.bodySmall.copyWith(
+                            color: late ? AppColors.errorText : AppColors.inkMuted,
+                            fontWeight: late ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            if (provisional)
-              const Tooltip(
-                message: 'Provisional judgement',
-                child: Icon(Icons.hourglass_empty, color: AppColors.inkFaint),
-              ),
             if (onTick != null)
-              IconButton(
-                onPressed: onTick,
-                icon: const Icon(Icons.check),
+              SoftIconButton(
+                icon: Icons.check_rounded,
                 tooltip: 'Tick task',
-                constraints: const BoxConstraints(minWidth: AppSpacing.minTap, minHeight: AppSpacing.minTap),
+                onPressed: onTick,
+                background: AppColors.well,
+                color: AppColors.inkMuted,
               ),
-            if (onPlay != null)
-              IconButton(
-                onPressed: onPlay,
-                icon: const Icon(Icons.play_arrow),
-                tooltip: 'Start focus',
-                constraints: const BoxConstraints(minWidth: AppSpacing.minTap, minHeight: AppSpacing.minTap),
-              ),
+            if (onPlay != null) SoftIconButton(icon: Icons.play_arrow_rounded, tooltip: 'Start focus', onPressed: onPlay),
           ],
         ),
       ),
+    );
+
+    final semantic = '$title, $dueLabel${provisional ? ', provisional' : ''}';
+    if (bare) {
+      return Semantics(
+        label: semantic,
+        child: onTap == null
+            ? row
+            : Material(type: MaterialType.transparency, child: InkWell(onTap: onTap, child: row)),
+      );
+    }
+    return Semantics(
+      label: semantic,
+      child: Clay(radius: AppRadius.card, onTap: onTap, child: row),
     );
   }
 }

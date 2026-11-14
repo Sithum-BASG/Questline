@@ -8,7 +8,8 @@ class AppColors {
   static const Color teal = awakeningTeal;
   static const Color tealDeep = Color(0xFF0F766E);
   static const Color ink = Color(0xFF101935);
-  static const Color paper = Color(0xFFF7F6F3);
+  /// Page background behind every screen (soft cool grey, the clay ground).
+  static const Color paper = Color(0xFFF2F4F8);
   static const Color white = Color(0xFFFFFFFF);
 
   static const Color common = Color(0xFF9CA3AF);
@@ -30,6 +31,115 @@ class AppColors {
   static const Color vitality = Color(0xFF5E9A6E);
   static const Color craft = Color(0xFFB07A4F);
   static const Color charisma = Color(0xFFB0708F);
+
+  // ---------------------------------------------------------------------------
+  // Clay UI (phase 17 redesign)
+  // ---------------------------------------------------------------------------
+
+  /// Bottom stop of the white clay gradient.
+  static const Color clayFace = Color(0xFFF5F7FA);
+
+  /// Sunken well behind bars, inputs and empty slots.
+  static const Color well = Color(0xFFECEFF4);
+
+  /// Hairline between rows inside a clay card.
+  static const Color hairline = Color(0xFFE8ECF2);
+
+  /// Soft divider / drag handle grey.
+  static const Color handle = Color(0xFFCDD3DD);
+
+  /// Placeholder text in inputs.
+  static const Color placeholder = Color(0xFFA3AAB9);
+
+  /// Soft teal wash behind teal icons (start buttons, Judge sparkle).
+  static const Color tealSoft = Color(0xFFE6F4F1);
+
+  /// Brighter teal wash for selected rows.
+  static const Color tealWash = Color(0xFFE9FBF7);
+
+  /// Top stop of the XP fill and teal glows.
+  static const Color tealLight = Color(0xFF5EEAD4);
+
+  static const Color emberLight = Color(0xFFFDBA74);
+  static const Color emberSoft = Color(0xFFFFF2E8);
+  static const Color successLight = Color(0xFF86EFAC);
+  static const Color successText = Color(0xFF15803D);
+  static const Color errorText = Color(0xFFC2410C);
+
+  static const Color bossHpLight = Color(0xFFF07C9C);
+  static const Color bossHpText = Color(0xFFA72A4B);
+  static const Color bossHpSoft = Color(0xFFF8E6EB);
+
+  static const Color rareSoft = Color(0xFFEAF1FE);
+  static const Color rareText = Color(0xFF1D4ED8);
+  static const Color epicSoft = Color(0xFFF1ECFE);
+  static const Color epicText = Color(0xFF6D28D9);
+  static const Color legendarySoft = Color(0xFFFEF6DC);
+  static const Color legendaryText = Color(0xFF8A5A00);
+  static const Color mythicSoft = Color(0xFFFBE8ED);
+  static const Color commonSoft = Color(0xFFF3F4F6);
+  static const Color commonText = Color(0xFF4B5563);
+
+  static const Color intellectLight = Color(0xFFA9C2D8);
+  static const Color vitalityLight = Color(0xFFB5DDBF);
+  static const Color craftLight = Color(0xFFDDB896);
+  static const Color charismaLight = Color(0xFFE2B7CB);
+
+  /// Night "world" scene behind the quest board and reward moments.
+  static const Color sceneTop = Color(0xFF4B4FA8);
+  static const Color sceneMid = Color(0xFF2A2D74);
+  static const Color sceneDeep = Color(0xFF1B1D4F);
+
+  /// Dim behind sheets and dialogs (ink at 38%).
+  static const Color scrim = Color(0x61101935);
+
+  /// Light top-left stop of a stat's clay dot gradient.
+  static Color statLight(String stat) {
+    switch (stat) {
+      case 'intellect':
+        return intellectLight;
+      case 'vitality':
+        return vitalityLight;
+      case 'craft':
+        return craftLight;
+      case 'charisma':
+        return charismaLight;
+      default:
+        return inkFaint;
+    }
+  }
+
+  /// Soft tile wash for a rarity.
+  static Color raritySoft(String rarity) {
+    switch (rarity) {
+      case 'rare':
+        return rareSoft;
+      case 'epic':
+        return epicSoft;
+      case 'legendary':
+        return legendarySoft;
+      case 'mythic':
+        return mythicSoft;
+      default:
+        return commonSoft;
+    }
+  }
+
+  /// Readable text colour for a rarity word.
+  static Color rarityText(String rarity) {
+    switch (rarity) {
+      case 'rare':
+        return rareText;
+      case 'epic':
+        return epicText;
+      case 'legendary':
+        return legendaryText;
+      case 'mythic':
+        return mythic;
+      default:
+        return commonText;
+    }
+  }
 
   /// Bottom edge of a clay primary button.
   static const Color clayEdge = Color(0xFF0B5A54);

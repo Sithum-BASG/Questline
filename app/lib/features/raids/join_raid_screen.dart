@@ -10,6 +10,8 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../data/models/raid.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Join a party raid by invite code (optional `?code=` prefill).
 class JoinRaidScreen extends ConsumerStatefulWidget {
@@ -103,27 +105,28 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
   Widget build(BuildContext context) {
     final preview = _preview;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Join raid', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.go('/bosses'),
-        ),
+      appBar: ClayHeader(
+        title: 'Join raid',
+        closeIcon: true,
+        onBack: () => context.go('/bosses'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
         children: [
-          if (_error != null) ...[
-            Text(_error!, style: AppText.bodySmall),
-            const SizedBox(height: AppSpacing.s12),
-          ],
+          Text('INVITE CODE', style: AppText.label),
+          const SizedBox(height: 10),
           TextField(
             controller: _code,
             decoration: const InputDecoration(labelText: 'Invite code'),
             textCapitalization: TextCapitalization.characters,
+            style: AppText.h2.copyWith(fontSize: 22, letterSpacing: 4),
             enabled: !_busy,
           ),
-          const SizedBox(height: AppSpacing.s12),
+          if (_error != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500)),
+          ],
+          const SizedBox(height: AppSpacing.s16),
           QButton(
             label: 'Look up',
             variant: QButtonVariant.secondary,
@@ -133,9 +136,12 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
           if (preview != null) ...[
             const SizedBox(height: AppSpacing.s16),
             QCard(
+              padding: const EdgeInsets.all(AppSpacing.s20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('PARTY RAID', style: AppText.label.copyWith(color: AppColors.bossHpText)),
+                  const SizedBox(height: 6),
                   Text(preview.name, style: AppText.h2),
                   Text(preview.title, style: AppText.body),
                   const SizedBox(height: AppSpacing.s8),
@@ -146,7 +152,7 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
             QButton(label: 'Join', loading: _busy, onPressed: _busy ? null : _join),
           ],
         ],

@@ -9,6 +9,8 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../chests/providers/chest_providers.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/theme/app_colors.dart';
 import 'onboarding_flags.dart';
 
 /// Onboarding step 6: open the free chest from the first-session bonus.
@@ -57,18 +59,33 @@ class _OnboardingChestScreenState extends ConsumerState<OnboardingChestScreen> {
           child: Column(
             children: [
               const Spacer(),
-              Image.asset(GameAssets.icon('chest_large'), width: 160, height: 160),
+              SizedBox(
+                width: 240,
+                height: 240,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Clay(
+                      circle: true,
+                      width: 240,
+                      height: 240,
+                      gradient: RadialGradient(colors: [AppColors.white, AppColors.legendarySoft]),
+                    ),
+                    Image.asset(GameAssets.icon('chest_large'), width: 180, height: 180),
+                  ],
+                ),
+              ),
               const SizedBox(height: AppSpacing.s24),
               Text('Your free chest is ready', style: AppText.h1, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.s8),
               Text(
                 'Level 2 unlocked a frame — open the chest for your first loot.',
-                style: AppText.body,
+                style: AppText.body.copyWith(color: AppColors.inkMuted),
                 textAlign: TextAlign.center,
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s12),
-                Text(_error!, style: AppText.bodySmall, textAlign: TextAlign.center),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText), textAlign: TextAlign.center),
               ],
               const Spacer(),
               QButton(

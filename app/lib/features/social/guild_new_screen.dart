@@ -10,6 +10,7 @@ import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import 'guild_emblems.dart';
 import 'providers/guild_providers.dart';
+import '../../core/widgets/clay.dart';
 
 /// Create a guild with a preset emblem, or join with an invite code.
 class GuildNewScreen extends ConsumerStatefulWidget {
@@ -70,13 +71,7 @@ class _GuildNewScreenState extends ConsumerState<GuildNewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Create or join', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/social/guild'),
-        ),
-      ),
+      appBar: ClayHeader(title: 'Create or join', onBack: () => context.go('/social/guild')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [

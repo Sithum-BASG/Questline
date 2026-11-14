@@ -150,7 +150,7 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
                     left: AppSpacing.screen,
                     right: AppSpacing.screen,
                     bottom: AppSpacing.minTap + AppSpacing.s24,
-                    child: Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                    child: Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                   ),
               ],
             ),

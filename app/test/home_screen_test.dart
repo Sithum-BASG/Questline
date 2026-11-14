@@ -92,11 +92,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hi, Asha'), findsOneWidget);
+    expect(find.bySemanticsLabel('Hi, Asha'), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Got a deadline coming up?'), 200);
     expect(find.text('Got a deadline coming up?'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Start focus'), 200);
     expect(find.text('Start focus'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Add your first quest'), 200);
     expect(find.text('Add your first quest'), findsOneWidget);
   });
 }
