@@ -125,7 +125,7 @@ final gearViewProvider = FutureProvider<GearView>((ref) async {
       .select('id, name, rarity, slot, level, passive, assets')
       .eq('type', 'gear')
       .eq('source', 'level')
-      .order('level');
+      .order('level', ascending: true);
   return GearView(
     items: items,
     coins: (player?['coins'] as num?)?.toInt() ?? 0,

@@ -99,7 +99,7 @@ final levelRoadProvider = FutureProvider<LevelRoadData>((ref) async {
   final client = ref.watch(supabaseClientProvider);
   final view = await ref.watch(profileViewProvider.future);
   final profile = view.profile;
-  final rows = await client.from('level_rewards').select('level, rewards').order('level');
+  final rows = await client.from('level_rewards').select('level, rewards').order('level', ascending: true);
   final ids = <String>{
     for (final row in rows)
       if (row['rewards'] is List)

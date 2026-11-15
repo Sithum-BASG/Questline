@@ -61,7 +61,7 @@ class HomeRepository {
         .from('bosses')
         .select(_bossCols)
         .inFilter('status', ['active', 'staggered'])
-        .order('deadline')
+        .order('deadline', ascending: true)
         .limit(1);
     final closestBoss = bossRows.isEmpty ? null : Boss.fromJson(bossRows.first);
 
@@ -88,7 +88,7 @@ class HomeRepository {
         .from('level_rewards')
         .select('level, rewards')
         .gt('level', profile.level)
-        .order('level')
+        .order('level', ascending: true)
         .limit(1);
     if (rewardRows.isNotEmpty) {
       nextRewardLevel = (rewardRows.first['level'] as num).toInt();
