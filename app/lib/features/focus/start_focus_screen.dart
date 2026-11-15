@@ -25,6 +25,7 @@ final startSessionProvider = Provider<
 });
 
 final potionCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final row = await client.from('player_state').select('potions').maybeSingle();
   return (row?['potions'] as num?)?.toInt() ?? 0;

@@ -58,6 +58,7 @@ class LeaderboardSnapshot {
 }
 
 final leaderboardProvider = FutureProvider.autoDispose<LeaderboardSnapshot>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
   if (myId == null) throw StateError('Not signed in');

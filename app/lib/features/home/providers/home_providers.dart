@@ -27,12 +27,13 @@ class HomeRepository {
       'id, user_id, name, title, type, tier, hours, max_hp, damage, deadline, created_at, status, last_work_day, coins_eligible, loot, result_seen';
 
   Future<HomeSnapshot> load() async {
+    final uid = _client.auth.currentUser?.id;
     try {
       final snapshot = await _fetchLive();
-      await _cache.save(snapshot.toJson());
+      if (uid != null) await _cache.save(uid, snapshot.toJson());
       return snapshot;
     } catch (_) {
-      final cached = _cache.load();
+      final cached = uid == null ? null : _cache.load(uid);
       if (cached != null) return HomeSnapshot.fromJson(cached, offline: true);
       rethrow;
     }
@@ -153,6 +154,7 @@ final homeSnapshotCacheProvider = FutureProvider<HomeSnapshotCache>((ref) async 
 });
 
 final homeRepositoryProvider = FutureProvider<HomeRepository>((ref) async {
+  watchAccount(ref);
   final cache = await ref.watch(homeSnapshotCacheProvider.future);
   return HomeRepository(ref.watch(supabaseClientProvider), cache);
 });

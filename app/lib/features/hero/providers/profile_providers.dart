@@ -100,6 +100,7 @@ class ProfileRepository {
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
+  watchAccount(ref);
   return ProfileRepository(ref.watch(supabaseClientProvider));
 });
 

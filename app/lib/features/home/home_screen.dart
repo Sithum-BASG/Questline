@@ -29,6 +29,7 @@ import '../../core/widgets/loading_skeleton.dart';
 
 /// Cold-start reclaim: kill → open app lands on Home with an orphaned active session.
 final activeFocusSessionIdProvider = FutureProvider.autoDispose<String?>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final uid = ref.watch(authStateProvider).asData?.value.session?.user.id;
   if (uid == null) return null;

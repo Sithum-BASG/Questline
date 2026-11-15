@@ -94,6 +94,7 @@ bool _dayInIsoWeek(String day, int year, int week) {
 }
 
 final recapRepositoryProvider = Provider<RecapRepository>((ref) {
+  watchAccount(ref);
   return RecapRepository(ref.watch(supabaseClientProvider));
 });
 

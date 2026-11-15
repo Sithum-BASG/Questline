@@ -306,5 +306,6 @@ class ApiClient {
 }
 
 final apiClientProvider = Provider<ApiClient>((ref) {
+  watchAccount(ref);
   return ApiClient(ref.watch(supabaseClientProvider));
 });

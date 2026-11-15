@@ -81,6 +81,7 @@ Future<RaidDetailSnapshot?> loadRaidDetail(SupabaseClient client, String raidId,
 
 /// Live raid detail: HP, members, ticker via Realtime.
 final raidDetailProvider = StreamProvider.autoDispose.family<RaidDetailSnapshot?, String>((ref, raidId) async* {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
 

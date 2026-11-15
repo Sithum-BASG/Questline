@@ -98,5 +98,6 @@ class SupabaseFocusPresence implements FocusPresence {
 }
 
 final focusPresenceProvider = Provider<FocusPresence>((ref) {
+  watchAccount(ref);
   return SupabaseFocusPresence(ref.watch(supabaseClientProvider));
 });

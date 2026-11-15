@@ -6,6 +6,7 @@ import '../../../data/models/boss.dart';
 
 /// Active and recent solo bosses, soonest deadline first.
 final bossesProvider = FutureProvider.autoDispose<List<Boss>>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final rows = await client
       .from('bosses')
@@ -18,6 +19,7 @@ final bossesProvider = FutureProvider.autoDispose<List<Boss>>((ref) async {
 
 /// Solo bosses + raids that still count toward the 15-fight cap.
 final activeFightCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final bosses = await client
       .from('bosses')

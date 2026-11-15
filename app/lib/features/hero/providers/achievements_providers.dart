@@ -115,6 +115,7 @@ class AchievementsRepository {
 }
 
 final achievementsRepositoryProvider = Provider<AchievementsRepository>((ref) {
+  watchAccount(ref);
   return AchievementsRepository(ref.watch(supabaseClientProvider));
 });
 

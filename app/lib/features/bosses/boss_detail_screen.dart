@@ -20,6 +20,7 @@ import '../../core/widgets/boss_card.dart';
 import '../../core/widgets/clay.dart';
 
 final bossDetailProvider = FutureProvider.autoDispose.family<Boss?, String>((ref, id) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final row = await client.from('bosses').select().eq('id', id).maybeSingle();
   if (row == null) return null;
@@ -27,6 +28,7 @@ final bossDetailProvider = FutureProvider.autoDispose.family<Boss?, String>((ref
 });
 
 final bossTasksProvider = FutureProvider.autoDispose.family<List<Task>, String>((ref, bossId) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final rows = await client
       .from('tasks')

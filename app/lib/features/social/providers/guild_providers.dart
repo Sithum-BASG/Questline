@@ -48,6 +48,7 @@ final myGuildIdProvider = FutureProvider.autoDispose<String?>((ref) async {
 });
 
 final guildHomeProvider = FutureProvider.autoDispose<GuildHomeSnapshot?>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final userId = ref.watch(authStateProvider).asData?.value.session?.user.id;
   if (userId == null) return null;

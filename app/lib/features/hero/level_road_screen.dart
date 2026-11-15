@@ -96,6 +96,7 @@ class LevelRoadData {
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
 final levelRoadProvider = FutureProvider<LevelRoadData>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final view = await ref.watch(profileViewProvider.future);
   final profile = view.profile;

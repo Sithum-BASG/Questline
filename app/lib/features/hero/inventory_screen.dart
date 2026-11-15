@@ -43,6 +43,7 @@ class ConsumableCounts {
 }
 
 final inventoryCountsProvider = FutureProvider<ConsumableCounts>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final config = ref.watch(gameConfigReaderProvider);
   final row = await client

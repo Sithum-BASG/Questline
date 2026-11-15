@@ -17,6 +17,7 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/clay.dart';
 
 final raidInviteProvider = FutureProvider.autoDispose.family<Raid?, String>((ref, raidId) async {
+  watchAccount(ref);
   final row = await ref.watch(supabaseClientProvider).from('raids').select().eq('id', raidId).maybeSingle();
   if (row == null) return null;
   return Raid.fromJson(Map<String, dynamic>.from(row));

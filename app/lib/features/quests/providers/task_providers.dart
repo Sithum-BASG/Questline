@@ -53,6 +53,7 @@ class TaskRepository {
 }
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
+  watchAccount(ref);
   return TaskRepository(ref.watch(supabaseClientProvider));
 });
 

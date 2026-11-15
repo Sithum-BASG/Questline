@@ -35,6 +35,7 @@ class ChestScreenData {
 }
 
 final chestScreenProvider = FutureProvider<ChestScreenData>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final config = ref.watch(gameConfigReaderProvider);
   final row = await client

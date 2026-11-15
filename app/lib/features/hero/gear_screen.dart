@@ -39,6 +39,7 @@ String _gearArt(String id, dynamic assets) =>
     ((assets is Map ? assets['image'] : null) as String?) ?? 'assets/images/gear/$id.webp';
 
 final gearListProvider = FutureProvider<List<GearRow>>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final rows = await client
       .from('inventory')
@@ -114,6 +115,7 @@ class GearView {
 }
 
 final gearViewProvider = FutureProvider<GearView>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final config = ref.watch(gameConfigReaderProvider);
   final items = await ref.watch(gearListProvider.future);
