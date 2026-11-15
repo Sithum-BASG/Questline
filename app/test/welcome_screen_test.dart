@@ -13,6 +13,7 @@ class _FakeAuth implements AuthApi {
   bool signUpSignsIn = true;
   int signIns = 0;
   int googleCalls = 0;
+  bool googleSignsIn = true;
   int resets = 0;
 
   @override
@@ -27,8 +28,9 @@ class _FakeAuth implements AuthApi {
   }
 
   @override
-  Future<void> signInWithGoogle({required String serverClientId}) async {
+  Future<bool> signInWithGoogle({required String serverClientId}) async {
     googleCalls += 1;
+    return googleSignsIn;
   }
 
   @override
@@ -103,6 +105,20 @@ void main() {
     await tester.tap(find.text('Continue with Google'));
     await tester.pump();
     expect(auth.googleCalls, 1);
+  });
+
+  testWidgets('a cancelled Google sign-in stops before onboarding', (tester) async {
+    final auth = _FakeAuth()..googleSignsIn = false;
+    final steps = <String>[];
+    await _pumpWelcome(tester, auth, onboardingSteps: steps);
+
+    await tester.ensureVisible(find.text('Continue with Google'));
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+
+    expect(auth.googleCalls, 1);
+    expect(steps, isEmpty);
+    expect(find.text('Google sign-in was cancelled. Try again.'), findsOneWidget);
   });
 
   testWidgets('sign up that needs email confirmation asks the user to check their email', (tester) async {

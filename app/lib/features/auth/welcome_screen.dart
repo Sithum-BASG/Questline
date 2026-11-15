@@ -96,7 +96,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signInWithGoogle(serverClientId: googleWebClientId);
+      final signedIn = await ref.read(authRepositoryProvider).signInWithGoogle(serverClientId: googleWebClientId);
+      if (!signedIn) {
+        if (mounted) {
+          setState(() => _error = const AuthUiError(message: 'Google sign-in was cancelled. Try again.'));
+        }
+        return;
+      }
       await ref.read(completeOnboardingProvider)(
         'signed_in',
         data: const {'timezone': 'Asia/Colombo'},
