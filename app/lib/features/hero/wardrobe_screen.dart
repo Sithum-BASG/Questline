@@ -182,6 +182,24 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
     }
   }
 
+  Future<void> _clearTitle() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(achievementsRepositoryProvider).setTitleId(null);
+      invalidateAchievementViews(ref);
+      ref.invalidate(wardrobeProvider);
+      ref.invalidate(homeSnapshotProvider);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Could not remove the title. Check your connection and try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(wardrobeProvider);
@@ -223,6 +241,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
                   titles: items,
                   equippedId: data.titleId,
                   onEquip: _busy ? null : _equip,
+                  onClear: _busy ? null : _clearTitle,
                 )
               else
                 GridView(
@@ -687,11 +706,14 @@ const _greyscale = ColorFilter.matrix(<double>[
 ]);
 
 class _TitleList extends StatelessWidget {
-  const _TitleList({required this.titles, required this.equippedId, required this.onEquip});
+  const _TitleList({required this.titles, required this.equippedId, required this.onEquip, required this.onClear});
 
   final List<WardrobeItem> titles;
   final String? equippedId;
   final void Function(WardrobeItem)? onEquip;
+
+  /// Removes the equipped title.
+  final VoidCallback? onClear;
 
   String _source(WardrobeItem t) {
     switch (t.source) {
@@ -759,7 +781,13 @@ class _TitleList extends StatelessWidget {
                       ),
                     ),
                     if (titles[i].id == equippedId)
-                      Container(
+                      Semantics(
+                        button: true,
+                        label: 'Equipped. Tap to remove the title',
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          onTap: onClear,
+                          child: Container(
                         height: 26,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: const BoxDecoration(
@@ -780,6 +808,8 @@ class _TitleList extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                          ),
                         ),
                       )
                     else if (titles[i].owned)

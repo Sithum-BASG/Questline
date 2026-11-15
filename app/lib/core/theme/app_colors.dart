@@ -62,6 +62,9 @@ class AppColors {
 
   static const Color emberLight = Color(0xFFFDBA74);
   static const Color emberSoft = Color(0xFFFFF2E8);
+
+  /// Soft green wash behind success / scroll art.
+  static const Color successSoft = Color(0xFFEEF6EE);
   static const Color successLight = Color(0xFF86EFAC);
   static const Color successText = Color(0xFF15803D);
   static const Color errorText = Color(0xFFC2410C);
