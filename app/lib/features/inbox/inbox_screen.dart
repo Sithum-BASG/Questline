@@ -38,7 +38,7 @@ class InboxScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(inboxMessagesProvider);
     return Scaffold(
-      appBar: ClayHeader(title: 'Inbox', onBack: () => context.pop()),
+      appBar: const ClayHeader(title: 'Inbox'),
       body: async.when(
         loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(

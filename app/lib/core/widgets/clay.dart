@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../parent_route.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
@@ -563,7 +565,16 @@ class ClayHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final canPop = Navigator.of(context).canPop();
-    final back = showBack && (onBack != null || canPop);
+    // Screens opened with `go` have nothing to pop, so fall back to the parent route.
+    String? parent;
+    if (!canPop && onBack == null) {
+      try {
+        parent = parentRoute(GoRouterState.of(context).uri.path);
+      } catch (_) {
+        parent = null;
+      }
+    }
+    final back = showBack && (onBack != null || canPop || parent != null);
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -581,7 +592,10 @@ class ClayHeader extends StatelessWidget implements PreferredSizeWidget {
                           icon: closeIcon ? Icons.close_rounded : Icons.chevron_left_rounded,
                           iconSize: closeIcon ? 20 : 24,
                           tooltip: closeIcon ? 'Close' : 'Back',
-                          onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+                          onPressed: onBack ??
+                              (canPop || parent == null
+                                  ? () => Navigator.of(context).maybePop()
+                                  : () => context.go(parent!)),
                         )
                       : null,
                 ),
