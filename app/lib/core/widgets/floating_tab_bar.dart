@@ -17,6 +17,9 @@ class TabDestination {
 /// Floating clay bar. The active tab's icon sits in a teal clay pill with a
 /// teal label under it.
 class FloatingTabBar extends StatelessWidget {
+  /// Height of the bar itself.
+  static const double height = 76;
+
   const FloatingTabBar({
     super.key,
     required this.index,
@@ -40,7 +43,7 @@ class FloatingTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Clay(
       radius: 38,
-      height: 76,
+      height: height,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
       child: Row(
         children: [

@@ -71,11 +71,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       body: 'When friends level up or beat bosses, it shows here',
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         AppSpacing.screen,
                         AppSpacing.s8,
                         AppSpacing.screen,
-                        AppSpacing.aboveTabBar,
+                        bottomClearance(context),
                       ),
                       itemCount: items.length + 1,
                       itemBuilder: (context, index) {

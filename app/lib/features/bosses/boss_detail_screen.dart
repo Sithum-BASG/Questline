@@ -117,7 +117,7 @@ class _BossDetailScreenState extends ConsumerState<BossDetailScreen> {
           final canSubmit = boss.status == 'active' || boss.status == 'staggered';
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 64, AppSpacing.screen, 48),
+            padding: EdgeInsets.fromLTRB(AppSpacing.screen, 64, AppSpacing.screen, bottomClearance(context, 48)),
             children: [
               Stack(
                 clipBehavior: Clip.none,

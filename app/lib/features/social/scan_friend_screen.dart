@@ -51,14 +51,17 @@ class _ScanFriendScreenState extends ConsumerState<ScanFriendScreen> {
           Expanded(
             child: MobileScanner(onDetect: _onDetect),
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.screen),
-            child: Text(
-              _error ?? 'Point the camera at a Questline friend QR.',
-              style: _error != null
-                  ? AppText.bodySmall.copyWith(color: AppColors.errorText)
-                  : AppText.bodySmall,
-              textAlign: TextAlign.center,
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.screen),
+              child: Text(
+                _error ?? 'Point the camera at a Questline friend QR.',
+                style: _error != null
+                    ? AppText.bodySmall.copyWith(color: AppColors.errorText)
+                    : AppText.bodySmall,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],

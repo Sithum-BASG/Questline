@@ -344,14 +344,25 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final barBottom = AppSpacing.s16 + media.viewPadding.bottom * 0.5;
+    // Screens under the floating bar see it as part of the bottom inset, so
+    // SafeArea docks and bottomClearance() lists stay above it.
+    final clearance = barBottom + FloatingTabBar.height + AppSpacing.s8;
     return Scaffold(
       body: Stack(
         children: [
-          navigationShell,
+          MediaQuery(
+            data: media.copyWith(
+              padding: media.padding.copyWith(bottom: clearance),
+              viewPadding: media.viewPadding.copyWith(bottom: clearance),
+            ),
+            child: navigationShell,
+          ),
           Positioned(
             left: AppSpacing.s16,
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16 + MediaQuery.viewPaddingOf(context).bottom * 0.5,
+            bottom: barBottom,
             child: FloatingTabBar(
               index: navigationShell.currentIndex,
               onSelected: (index) {

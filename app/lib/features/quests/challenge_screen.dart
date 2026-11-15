@@ -65,7 +65,7 @@ class _ChallengeScreenState extends ConsumerState<ChallengeScreen> {
     return Scaffold(
       appBar: const ClayHeader(closeIcon: true),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+        padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
         children: [
           Semantics(
             header: true,

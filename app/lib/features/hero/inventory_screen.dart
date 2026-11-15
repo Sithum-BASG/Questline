@@ -109,7 +109,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           final empty = counts.shields == 0 && counts.potions == 0 && counts.scrolls == 0 && counts.freeChests == 0;
           if (empty) return _EmptyInventory(onChests: () => context.go('/chests'));
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+            padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
             children: [
               if (_error != null) ...[
                 Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
@@ -305,7 +305,7 @@ class _EmptyInventory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s24, AppSpacing.screen, AppSpacing.s32),
+      padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s24, AppSpacing.screen, bottomClearance(context)),
       children: [
         Clay(
           radius: 30,

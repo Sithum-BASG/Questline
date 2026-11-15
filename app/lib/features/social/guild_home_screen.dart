@@ -99,11 +99,11 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
               : (guild.questProgress / guild.questGoal).clamp(0.0, 1.0);
           final focusingCount = snap.members.where((m) => m.focusing).length;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.screen,
               AppSpacing.s8,
               AppSpacing.screen,
-              AppSpacing.aboveTabBar,
+              bottomClearance(context),
             ),
             children: [
               QCard(

@@ -78,7 +78,12 @@ class FriendProfileScreen extends ConsumerWidget {
           final summary = data.summary;
           final body = profile.bodyType == 'b' ? BodyType.b : BodyType.a;
           return ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.screen,
+              AppSpacing.screen,
+              bottomClearance(context, AppSpacing.screen),
+            ),
             children: [
               Text(profile.displayName, style: AppText.h1),
               Text('@${profile.username}', style: AppText.bodySmall),

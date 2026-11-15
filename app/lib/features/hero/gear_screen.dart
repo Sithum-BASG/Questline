@@ -229,7 +229,7 @@ class _GearScreenState extends ConsumerState<GearScreen> {
           final equippedCount = _slots.where((s) => view.equipped(s) != null).length;
           final spare = [for (final item in view.items) if (item.equippedSlot == null) item];
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+            padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
             children: [
               _BoostCard(view: view),
               if (_error != null) ...[
@@ -596,6 +596,7 @@ class QAttuneSheet extends StatelessWidget {
   static Future<String?> show(BuildContext context, {required GearRow item, required GearView view}) {
     return showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       builder: (context) => QAttuneSheet(item: item, view: view),
     );
   }

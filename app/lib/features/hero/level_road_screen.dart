@@ -203,7 +203,7 @@ class _LevelRoadScreenState extends ConsumerState<LevelRoadScreen> {
                   ).createShader(rect),
                   blendMode: BlendMode.dstIn,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, AppSpacing.s32),
+                    padding: EdgeInsets.fromLTRB(16, 24, 16, bottomClearance(context)),
                     child: Column(
                       children: [
                         for (var i = 0; i < road.length; i++)

@@ -217,7 +217,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           final tab = _tabs[_tab];
           final items = data.ofType(tab.type);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+            padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
             children: [
               _WearingCard(data: data),
               const SizedBox(height: 20),

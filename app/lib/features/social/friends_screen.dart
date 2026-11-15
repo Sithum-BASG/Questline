@@ -196,11 +196,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
         data: (data) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.screen,
               AppSpacing.s8,
               AppSpacing.screen,
-              100,
+              bottomClearance(context),
             ),
             children: [
               if (myCode != null) ...[

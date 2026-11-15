@@ -379,6 +379,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           return Column(
             children: [
               Expanded(child: list),
+              if (!showSave && !showFocus && !showDiscard)
+                // Nothing docked: keep the list clear of the tab bar.
+                SizedBox(height: MediaQuery.paddingOf(context).bottom),
               if (showSave || showFocus || showDiscard)
                 SafeArea(
                   top: false,

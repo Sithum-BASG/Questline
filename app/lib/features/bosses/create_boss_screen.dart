@@ -180,7 +180,7 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
         },
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+        padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
         children: [
           if (preview == null) ...[
             Text('DEADLINE QUEST', style: AppText.label),

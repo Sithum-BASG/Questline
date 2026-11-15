@@ -100,7 +100,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
             }
           }
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
+            padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
             children: [
               _SummaryCard(
                 earned: earned,
@@ -118,9 +118,13 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                 children: [
                   Expanded(child: Semantics(header: true, child: Text('Badges', style: AppText.h2))),
                   if (coins.length >= 3)
-                    Text(
-                      'Tier I ${coins[0]} · II ${coins[1]} · III ${coins[2]} + title',
-                      style: AppText.caption,
+                    Flexible(
+                      flex: 2,
+                      child: Text(
+                        'Tier I ${coins[0]} · II ${coins[1]} · III ${coins[2]} + title',
+                        textAlign: TextAlign.right,
+                        style: AppText.caption,
+                      ),
                     ),
                 ],
               ),
@@ -196,22 +200,24 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Badge tiers earned', style: AppText.title.copyWith(fontSize: 17, height: 22 / 17)),
+                Text('Badge tiers earned', softWrap: true, style: AppText.title.copyWith(fontSize: 17, height: 22 / 17)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Image.asset(GameAssets.icon('coin'), width: 16, height: 16),
                     const SizedBox(width: 5),
-                    Text.rich(
-                      TextSpan(
-                        style: AppText.bodySmall.copyWith(fontSize: 13),
-                        children: [
-                          TextSpan(
-                            text: '$coins',
-                            style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
-                          ),
-                          const TextSpan(text: ' coins from badges'),
-                        ],
+                    Flexible(
+                      child: Text.rich(
+                        TextSpan(
+                          style: AppText.bodySmall.copyWith(fontSize: 13),
+                          children: [
+                            TextSpan(
+                              text: '$coins',
+                              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+                            ),
+                            const TextSpan(text: ' coins from badges'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -221,7 +227,9 @@ class _SummaryCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.push_pin_rounded, size: 14, color: AppColors.tealDeep),
                     const SizedBox(width: 5),
-                    Text('$pinned of 3 pinned to your profile', style: AppText.bodySmall.copyWith(fontSize: 13)),
+                    Flexible(
+                      child: Text('$pinned of 3 pinned to your profile', style: AppText.bodySmall.copyWith(fontSize: 13)),
+                    ),
                   ],
                 ),
               ],

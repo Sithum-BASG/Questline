@@ -552,6 +552,11 @@ class ClayPill extends StatelessWidget {
   }
 }
 
+/// Bottom padding for a scrolling screen: the space the floating tab bar
+/// (inside the tab shell) or the system gesture area takes, plus [extra].
+double bottomClearance(BuildContext context, [double extra = AppSpacing.s32]) =>
+    MediaQuery.paddingOf(context).bottom + extra;
+
 /// Header for pushed screens: clay back button, centred title, optional
 /// trailing action. Use as `Scaffold.appBar`.
 class ClayHeader extends StatelessWidget implements PreferredSizeWidget {

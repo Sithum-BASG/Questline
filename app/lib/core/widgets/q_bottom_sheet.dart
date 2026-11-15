@@ -30,6 +30,7 @@ class QBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.paper,
       barrierColor: AppColors.scrim,
