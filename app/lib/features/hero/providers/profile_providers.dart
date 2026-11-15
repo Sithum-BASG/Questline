@@ -13,6 +13,7 @@ class ProfileViewData {
     required this.radar30,
     required this.radar7,
     required this.badgeTiers,
+    this.xpTotal,
   });
 
   final Profile profile;
@@ -20,6 +21,9 @@ class ProfileViewData {
   final StatRadarValues radar30;
   final StatRadarValues radar7;
   final Map<String, int> badgeTiers;
+
+  /// Lifetime XP for the nameplate bar. Null when the player row is missing.
+  final int? xpTotal;
 }
 
 class ProfileRepository {
@@ -36,6 +40,9 @@ class ProfileRepository {
         .maybeSingle();
     if (profileRow == null) throw StateError('Profile missing');
     final profile = Profile.fromJson(profileRow);
+
+    final player = await _client.from('player_state').select('xp_total').maybeSingle();
+    final xpTotal = (player?['xp_total'] as num?)?.toInt();
 
     String? titleName;
     if (profile.titleId != null) {
@@ -82,6 +89,7 @@ class ProfileRepository {
       radar30: radar30,
       radar7: radar7,
       badgeTiers: badgeTiers,
+      xpTotal: xpTotal,
     );
   }
 }

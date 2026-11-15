@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/assets/game_assets.dart';
+import '../../core/game/level_curve.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/badge_medallion.dart';
@@ -10,9 +11,11 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/theme/shadows.dart';
+import '../../core/widgets/stat_icon.dart';
 import '../../core/widgets/stat_radar.dart';
 import '../../core/widgets/clay.dart';
 import '../../core/theme/app_colors.dart';
+import 'gear_screen.dart';
 import 'providers/profile_providers.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
@@ -67,7 +70,24 @@ class ProfileScreen extends ConsumerWidget {
                   onChangeLook: () => context.go('/hero/wardrobe'),
                 ),
                 const SizedBox(height: 15),
-                _Nameplate(name: profile.displayName, title: data.titleName, level: profile.level),
+                _Nameplate(
+                  name: profile.displayName,
+                  title: data.titleName,
+                  level: profile.level,
+                  xpTotal: data.xpTotal,
+                ),
+                const SizedBox(height: 28),
+                SectionHeader(
+                  title: 'Equipment',
+                  action: 'Change gear',
+                  onAction: () => context.go('/hero/gear'),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                _EquipmentRow(
+                  gear: ref.watch(gearListProvider).asData?.value ?? const [],
+                  frameId: profile.equippedFrameId.isEmpty ? null : _short(profile.equippedFrameId, 'frame_'),
+                  onTap: () => context.go('/hero/gear'),
+                ),
                 const SizedBox(height: 28),
                 Semantics(header: true, child: Text('Pinned badges', style: AppText.h2)),
                 const SizedBox(height: AppSpacing.s12),
@@ -221,11 +241,12 @@ class _HeroStage extends StatelessWidget {
 
 /// Character sheet under the stage: level crest, name and title.
 class _Nameplate extends StatelessWidget {
-  const _Nameplate({required this.name, required this.title, required this.level});
+  const _Nameplate({required this.name, required this.title, required this.level, this.xpTotal});
 
   final String name;
   final String? title;
   final int level;
+  final int? xpTotal;
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +290,10 @@ class _Nameplate extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (xpTotal != null) ...[
+                  const SizedBox(height: AppSpacing.s16),
+                  _XpClimb(level: level, xpTotal: xpTotal!),
+                ],
               ],
             ),
           ),
@@ -300,6 +325,194 @@ class _Nameplate extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Climb to the next level on the nameplate: Lv N, bar, Lv N+1, then the numbers.
+class _XpClimb extends StatelessWidget {
+  const _XpClimb({required this.level, required this.xpTotal});
+
+  final int level;
+  final int xpTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    const curve = LevelCurve.defaults;
+    final maxed = level >= curve.maxLevel;
+    final floor = curve.totalForLevel(level);
+    final span = curve.totalForLevel(level + 1) - floor;
+    final inLevel = (xpTotal - floor).clamp(0, span < 1 ? 1 : span);
+    final toGo = span - inLevel;
+    final ends = AppText.title.copyWith(fontSize: 12, height: 16 / 12);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Text('Lv $level', style: ends.copyWith(color: AppColors.tealDeep)),
+            const SizedBox(width: 10),
+            Expanded(child: ClayBar(value: maxed ? 1 : curve.progressInLevel(xpTotal, level))),
+            const SizedBox(width: 10),
+            Text(maxed ? 'Max' : 'Lv ${level + 1}', style: ends.copyWith(color: AppColors.inkMuted)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text.rich(
+          TextSpan(
+            style: AppText.caption,
+            children: maxed
+                ? [const TextSpan(text: 'Top level reached')]
+                : [
+                    TextSpan(
+                      text: _thousands(inLevel),
+                      style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+                    ),
+                    TextSpan(text: ' / ${_thousands(span)} XP · ${_thousands(toGo)} to go'),
+                  ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+String _thousands(int n) {
+  final digits = n.toString();
+  final out = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');
+    out.write(digits[i]);
+  }
+  return out.toString();
+}
+
+/// The four equipment sockets: weapon, armour, accessory, frame.
+class _EquipmentRow extends StatelessWidget {
+  const _EquipmentRow({required this.gear, required this.frameId, required this.onTap});
+
+  final List<GearRow> gear;
+  final String? frameId;
+  final VoidCallback onTap;
+
+  GearRow? _equipped(String slot) {
+    for (final item in gear) {
+      if (item.equippedSlot == slot) return item;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final frame = frameId;
+    return Clay(
+      radius: AppRadius.feature,
+      padding: const EdgeInsets.fromLTRB(8, 20, 8, 22),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (final slot in const ['weapon', 'armour', 'accessory'])
+            _Socket(
+              label: slot.toUpperCase(),
+              art: _equipped(slot)?.art,
+              rarity: _equipped(slot)?.rarity ?? 'common',
+              stat: _equipped(slot)?.attunedStat,
+              semantic: _equipped(slot) == null ? '$slot: empty' : '$slot: ${_equipped(slot)!.name}',
+              onTap: onTap,
+            ),
+          _Socket(
+            label: 'FRAME',
+            art: frame == null ? null : GameAssets.frame(frame),
+            rarity: 'common',
+            semantic: frame == null ? 'frame: empty' : 'frame: ${frame.replaceAll('_', ' ')}',
+            onTap: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Socket extends StatelessWidget {
+  const _Socket({
+    required this.label,
+    required this.art,
+    required this.rarity,
+    required this.semantic,
+    required this.onTap,
+    this.stat,
+  });
+
+  final String label;
+  final String? art;
+  final String rarity;
+  final String? stat;
+  final String semantic;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final metal = AppColors.rarity(rarity);
+    final soft = AppColors.raritySoft(rarity);
+    final image = art;
+    return Semantics(
+      button: true,
+      label: semantic,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 70,
+          height: 94,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: SweepGradient(colors: [soft, metal, soft, metal, soft]),
+                  boxShadow: AppShadows.dot,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      center: const Alignment(0, -0.24),
+                      colors: [AppColors.white, soft],
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: image == null
+                      ? const Icon(Icons.add_rounded, size: 24, color: AppColors.inkFaint)
+                      : ClipOval(child: Image.asset(image, width: 46, height: 46, fit: BoxFit.contain)),
+                ),
+              ),
+              if (stat != null) Positioned(right: -2, top: -2, child: StatDot(stat: stat!, size: 22)),
+              Positioned(
+                top: 76,
+                child: Container(
+                  height: 18,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink.withValues(alpha: 0.72),
+                    borderRadius: const BorderRadius.all(Radius.circular(9)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    style: AppText.label.copyWith(fontSize: 9, height: 10 / 9, color: AppColors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
