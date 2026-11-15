@@ -513,6 +513,9 @@ class _RewardCard extends StatelessWidget {
     final kinds = row.rewards.map((r) => r.kind).toSet().join(' + ');
     final names = row.rewards.map((r) => r.label).join(', ');
     final rarity = main.rarity;
+    final showTag = !claimed && main.itemType == 'gear' && rarity != null && rarity != 'common';
+    // The card is a fixed 76 px tall: with a status line under the name, the name gets one line.
+    final hasStatus = claimed || showTag;
     return Semantics(
       label: 'Level ${row.level}: $names${claimed ? ', claimed' : ''}',
       excludeSemantics: true,
@@ -553,11 +556,13 @@ class _RewardCard extends StatelessWidget {
                     style: AppText.label.copyWith(fontSize: 9, height: 12 / 9, letterSpacing: 0.9),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    names,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.title.copyWith(fontSize: 12, height: 15 / 12),
+                  Flexible(
+                    child: Text(
+                      names,
+                      maxLines: hasStatus ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.title.copyWith(fontSize: 12, height: 15 / 12),
+                    ),
                   ),
                   if (claimed)
                     Text(
@@ -569,7 +574,7 @@ class _RewardCard extends StatelessWidget {
                         color: AppColors.tealDeep,
                       ),
                     )
-                  else if (main.itemType == 'gear' && rarity != null && rarity != 'common')
+                  else if (showTag)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Container(
