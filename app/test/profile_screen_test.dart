@@ -55,9 +55,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Hero'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Asha'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Asha'), findsOneWidget);
     expect(find.text('Freshly Awakened'), findsOneWidget);
-    expect(find.text('Level 3'), findsOneWidget);
+    expect(find.text('LV'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Stats'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Stats'), findsOneWidget);
   });

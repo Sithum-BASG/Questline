@@ -110,6 +110,12 @@ const List<InnerShadow> dotGloss = [
 ];
 
 /// Paints [shadows] inside a rounded rect (or circle).
+/// Recessed edge on the hero stage art.
+const List<InnerShadow> stageInnerShade = [
+  InnerShadow(Offset(5, 6), 14, Color(0x33101935)),
+  InnerShadow(Offset(-4, -4), 10, Color(0x73FFFFFF)),
+];
+
 class InnerShadowPainter extends CustomPainter {
   const InnerShadowPainter({required this.shadows, this.borderRadius = BorderRadius.zero, this.circle = false});
 
