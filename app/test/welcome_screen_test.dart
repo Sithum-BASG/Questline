@@ -10,13 +10,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _FakeAuth implements AuthApi {
   int signUps = 0;
+  bool signUpSignsIn = true;
   int signIns = 0;
   int googleCalls = 0;
   int resets = 0;
 
   @override
-  Future<void> signUp({required String email, required String password}) async {
+  Future<bool> signUp({required String email, required String password}) async {
     signUps += 1;
+    return signUpSignsIn;
   }
 
   @override
@@ -46,6 +48,7 @@ Future<void> _pumpWelcome(
   AuthApi auth, {
   Size size = const Size(390, 844),
   double keyboard = 0,
+  List<String>? onboardingSteps,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -60,7 +63,7 @@ Future<void> _pumpWelcome(
         authRepositoryProvider.overrideWithValue(auth),
         authStateProvider.overrideWith((ref) => const Stream<AuthState>.empty()),
         completeOnboardingProvider.overrideWith((ref) {
-          return (String step, {Map<String, dynamic>? data}) async {};
+          return (String step, {Map<String, dynamic>? data}) async => onboardingSteps?.add(step);
         }),
       ],
       child: MaterialApp(theme: AppTheme.light, home: const WelcomeScreen()),
@@ -100,6 +103,27 @@ void main() {
     await tester.tap(find.text('Continue with Google'));
     await tester.pump();
     expect(auth.googleCalls, 1);
+  });
+
+  testWidgets('sign up that needs email confirmation asks the user to check their email', (tester) async {
+    final auth = _FakeAuth()..signUpSignsIn = false;
+    final steps = <String>[];
+    await _pumpWelcome(tester, auth, onboardingSteps: steps);
+
+    await tester.ensureVisible(find.text('Create an account'));
+    await tester.tap(find.text('Create an account'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'ada@questline.test');
+    await tester.enterText(find.byType(TextField).at(1), 'secret1');
+    await tester.ensureVisible(find.text('Create account'));
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+
+    expect(auth.signUps, 1);
+    expect(steps, isEmpty);
+    expect(find.text('Check your email to confirm your account, then sign in.'), findsOneWidget);
+    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.textContaining('Something went wrong'), findsNothing);
   });
 
   testWidgets('both modes fit and scroll on 360x740 with the keyboard open', (tester) async {

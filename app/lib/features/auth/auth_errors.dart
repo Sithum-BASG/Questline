@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/supabase/api_client.dart';
+
 enum AuthFieldOutline { none, email, password }
 
 /// Mapped auth error for the welcome / reset screens.
@@ -35,14 +37,34 @@ AuthUiError mapAuthException(AuthException error) {
       signInAction: true,
     );
   }
-  return const AuthUiError(
-    message: 'Something went wrong. Check your connection and try again.',
-  );
+  final code = error.code ?? '';
+  if (code == 'email_not_confirmed' || raw.contains('email not confirmed')) {
+    return const AuthUiError(
+      message: 'Confirm your email first. Check your inbox for the link.',
+      outline: AuthFieldOutline.email,
+    );
+  }
+  if (code.contains('rate_limit') || error.statusCode == '429' || raw.contains('rate limit')) {
+    return const AuthUiError(message: 'Too many attempts. Wait a minute and try again.');
+  }
+  if (code == 'weak_password' || raw.contains('password should')) {
+    return AuthUiError(message: error.message, outline: AuthFieldOutline.password);
+  }
+  if (raw.contains('not configured')) {
+    return const AuthUiError(message: "Google sign-in isn't set up in this build yet.");
+  }
+  if (error is AuthRetryableFetchException || error.message.trim().isEmpty) {
+    return const AuthUiError(message: _connectionMessage);
+  }
+  // Anything else: show Supabase's (or Google's) own reason.
+  return AuthUiError(message: error.message);
 }
+
+const _connectionMessage = 'Something went wrong. Check your connection and try again.';
 
 AuthUiError mapAuthFailure(Object error) {
   if (error is AuthException) return mapAuthException(error);
-  return const AuthUiError(
-    message: 'Something went wrong. Check your connection and try again.',
-  );
+  // Edge Function errors already carry friendly copy.
+  if (error is ApiException) return AuthUiError(message: error.message);
+  return const AuthUiError(message: _connectionMessage);
 }

@@ -66,7 +66,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     try {
       final auth = ref.read(authRepositoryProvider);
       if (_mode == _AuthMode.signUp) {
-        await auth.signUp(email: email, password: password);
+        final signedIn = await auth.signUp(email: email, password: password);
+        if (!signedIn) {
+          if (!mounted) return;
+          setState(() => _mode = _AuthMode.signIn);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Check your email to confirm your account, then sign in.')),
+          );
+          return;
+        }
       } else {
         await auth.signIn(email: email, password: password);
       }

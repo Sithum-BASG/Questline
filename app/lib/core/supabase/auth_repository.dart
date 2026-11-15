@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Email and password auth. Google sign-in is added on the welcome screen.
 abstract class AuthApi {
-  Future<void> signUp({required String email, required String password});
+  /// Returns true when the new account is signed in straight away, false when
+  /// the project requires the email to be confirmed first.
+  Future<bool> signUp({required String email, required String password});
   Future<void> signIn({required String email, required String password});
   Future<void> signInWithGoogle({required String serverClientId});
   Future<void> resetPasswordForEmail(String email);
@@ -17,8 +19,9 @@ class AuthRepository implements AuthApi {
   final SupabaseClient _client;
 
   @override
-  Future<void> signUp({required String email, required String password}) {
-    return _client.auth.signUp(email: email, password: password);
+  Future<bool> signUp({required String email, required String password}) async {
+    final response = await _client.auth.signUp(email: email, password: password);
+    return response.session != null;
   }
 
   @override
