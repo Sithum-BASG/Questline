@@ -15,6 +15,7 @@ import 'providers/task_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/clay.dart';
 import '../../core/widgets/stat_icon.dart';
+import '../onboarding/onboarding_skip_button.dart';
 
 const questStats = ['intellect', 'vitality', 'craft', 'charisma'];
 
@@ -210,6 +211,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                                   tooltip: 'Back',
                                   onPressed: () => Navigator.of(context).maybePop(),
                                 ),
+                              const Spacer(),
+                              if (widget.onboarding) const OnboardingSkipButton(foreground: AppColors.ink),
                             ],
                           ),
                         ),

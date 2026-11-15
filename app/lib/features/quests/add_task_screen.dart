@@ -9,6 +9,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/clay.dart';
 import 'providers/task_providers.dart';
+import '../onboarding/onboarding_skip_button.dart';
 
 /// Title, optional notes and due date. Judge inserts a draft row.
 class AddTaskScreen extends ConsumerStatefulWidget {
@@ -117,6 +118,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     child: Text('New quest', style: AppText.h1.copyWith(fontSize: 22, height: 28 / 22)),
                   ),
                 ),
+                if (widget.onboarding) const OnboardingSkipButton(),
                 if (canClose)
                   ClayIconButton(
                     icon: Icons.close_rounded,

@@ -13,6 +13,7 @@ import '../quests/providers/task_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/clay.dart';
 import '../../core/widgets/stat_icon.dart';
+import 'onboarding_skip_button.dart';
 
 /// Onboarding step 5–6. A short first session unlocks the starter XP for level 2.
 class FirstSessionScreen extends ConsumerStatefulWidget {
@@ -31,7 +32,15 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
     final tasks = ref.watch(tasksProvider);
     return Scaffold(
       body: SafeArea(
-        child: tasks.when(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.s8, 0),
+              child: Align(alignment: Alignment.centerRight, child: OnboardingSkipButton()),
+            ),
+            Expanded(
+              child: tasks.when(
           loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load your quest',
@@ -54,7 +63,6 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: AppSpacing.s16),
                   const Text('First focus', style: AppText.h1),
                   const SizedBox(height: AppSpacing.s12),
                   Text(
@@ -105,6 +113,9 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
               ),
             );
           },
+              ),
+            ),
+          ],
         ),
       ),
     );

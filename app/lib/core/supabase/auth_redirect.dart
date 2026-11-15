@@ -13,7 +13,7 @@ String routeForOnboardingStep(String? step) {
     case 'study':
       return '/onboarding/first-task';
     case 'first_task':
-      return '/onboarding/first-task';
+      return '/onboarding/first-session';
     case 'first_session':
       return '/onboarding/chest';
     default:
@@ -41,7 +41,8 @@ String? authRedirect({
   }
   final target = routeForOnboardingStep(onboardingStep);
   if (target == '/home') return location == '/welcome' ? '/home' : null;
-  if (onboardingStep == 'first_session' &&
+  // The first focus session runs on the normal focus, reward and chest routes.
+  if ((onboardingStep == 'first_task' || onboardingStep == 'first_session') &&
       (location.startsWith('/focus') ||
           location.startsWith('/reward') ||
           location.startsWith('/chests') ||
