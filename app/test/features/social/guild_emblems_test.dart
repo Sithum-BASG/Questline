@@ -5,6 +5,6 @@ void main() {
   test('guild emblems are eight preset crest ids', () {
     expect(guildEmblemIds.length, 8);
     expect(guildEmblemIds.first, 'crest_1');
-    expect(guildEmblemLabel('crest_3'), 'Crest 3');
+    expect(guildEmblemLabel('crest_3'), 'Book crest');
   });
 }

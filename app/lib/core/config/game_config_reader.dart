@@ -106,6 +106,9 @@ class GameConfigReader {
 
   Future<int> consumableOverflowCoins() => _int('consumable_overflow_coins', 100);
 
+  /// Most members a guild can hold.
+  Future<int> guildMax() => _int('guild_max', 10);
+
   Future<Map<String, double>> rarityRates() async {
     final raw = (await load())['chest_rarity_rates'];
     if (raw is! Map) {

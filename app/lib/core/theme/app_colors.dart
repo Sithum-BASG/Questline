@@ -65,6 +65,21 @@ class AppColors {
 
   /// Soft green wash behind success / scroll art.
   static const Color successSoft = Color(0xFFEEF6EE);
+
+  /// Guild crest shield gradients (light, deep), crest_1 to crest_8.
+  static const List<(Color, Color)> guildCrests = [
+    (Color(0xFF5EEAD4), Color(0xFF0F766E)),
+    (Color(0xFF8EA2FF), Color(0xFF2B3168)),
+    (Color(0xFFA9C2D8), Color(0xFF5B7C99)),
+    (Color(0xFFFDBA74), Color(0xFFC2410C)),
+    (Color(0xFFB5DDBF), Color(0xFF3F7A50)),
+    (Color(0xFFE2B7CB), Color(0xFF8E4F6E)),
+    (Color(0xFFFFD966), Color(0xFFA16207)),
+    (Color(0xFFC4B5FD), Color(0xFF5B21B6)),
+  ];
+
+  /// Error wash, e.g. a "Full" pill.
+  static const Color errorSoft = Color(0xFFFDEEE6);
   static const Color successLight = Color(0xFF86EFAC);
   static const Color successText = Color(0xFF15803D);
   static const Color errorText = Color(0xFFC2410C);

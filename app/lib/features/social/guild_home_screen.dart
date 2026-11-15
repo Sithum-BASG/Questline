@@ -29,10 +29,6 @@ class GuildHomeScreen extends ConsumerStatefulWidget {
 class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
   var _leaving = false;
 
-  String _crestShort(String emblem) {
-    return emblem.startsWith('crest_') ? emblem.substring(6) : emblem;
-  }
-
   String _wonLabel(DateTime? wonAt) {
     if (wonAt == null) return 'Raid win';
     final local = wonAt.toLocal();
@@ -102,8 +98,6 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
               ? 0.0
               : (guild.questProgress / guild.questGoal).clamp(0.0, 1.0);
           final focusingCount = snap.members.where((m) => m.focusing).length;
-          final crest = _crestShort(guild.emblem);
-
           return ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.screen,
@@ -115,20 +109,7 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
               QCard(
                 child: Column(
                   children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.awakeningTeal.withValues(alpha: 0.16),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.tealDeep, width: 2),
-                      ),
-                      child: Text(
-                        crest,
-                        style: AppText.h1.copyWith(color: AppColors.tealDeep),
-                      ),
-                    ),
+                    GuildEmblem(id: guild.emblem, width: 68),
                     const SizedBox(height: AppSpacing.s16),
                     Text(guild.name, style: AppText.h1, textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.s8),
