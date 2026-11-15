@@ -38,6 +38,26 @@ class RoadReward {
   }
 
   String get label => type == 'coins' ? '${amount ?? 0} coins' : (name ?? (id ?? '').replaceAll('_', ' '));
+
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'id': id,
+        'amount': amount,
+        'name': name,
+        'rarity': rarity,
+        'slot': slot,
+        'itemType': itemType,
+      };
+
+  factory RoadReward.fromJson(Map<String, dynamic> json) => RoadReward(
+        type: json['type'] as String? ?? 'item',
+        id: json['id'] as String?,
+        amount: (json['amount'] as num?)?.toInt(),
+        name: json['name'] as String?,
+        rarity: json['rarity'] as String?,
+        slot: json['slot'] as String?,
+        itemType: json['itemType'] as String?,
+      );
 }
 
 class LevelRoadRow {
@@ -539,7 +559,7 @@ class _RewardCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  child: _RewardArt(reward: main, claimed: claimed),
+                  child: RewardArt(reward: main, claimed: claimed),
                 ),
               ),
             ),
@@ -601,8 +621,10 @@ class _RewardCard extends StatelessWidget {
   }
 }
 
-class _RewardArt extends StatelessWidget {
-  const _RewardArt({required this.reward, required this.claimed});
+/// Picture for one level reward: coins, a title, gear, a background, a frame,
+/// or a skin (a silhouette until it is claimed).
+class RewardArt extends StatelessWidget {
+  const RewardArt({super.key, required this.reward, this.claimed = false});
 
   final RoadReward reward;
   final bool claimed;

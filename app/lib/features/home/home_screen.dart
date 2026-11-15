@@ -22,6 +22,7 @@ import '../bosses/providers/boss_providers.dart';
 import '../inbox/providers/inbox_providers.dart';
 import '../social/providers/friends_providers.dart';
 import '../social/providers/presence_providers.dart';
+import '../hero/level_road_screen.dart';
 import 'home_snapshot.dart';
 import 'providers/home_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
@@ -214,6 +215,8 @@ class _HomeBody extends ConsumerWidget {
                 xpSpan: (ceiling - floor).clamp(1, 1 << 30),
                 progress: xpProgress,
                 nextReward: snapshot.nextRewardLabel ?? 'Next reward',
+                rewardItem: snapshot.nextReward,
+                rewardLevel: snapshot.nextRewardLevel,
               ),
               const SizedBox(height: 32),
               Row(
@@ -349,6 +352,84 @@ class _HomeBody extends ConsumerWidget {
 
 /// The hero in a clay window, head breaking out of the top, with the level
 /// strip docked inside the bottom.
+/// The next level-road reward in a round socket ringed in its rarity colour,
+/// with the level it unlocks at as a corner badge.
+class _NextRewardSocket extends StatelessWidget {
+  const _NextRewardSocket({required this.reward, required this.level});
+
+  final RoadReward? reward;
+  final int? level;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = reward;
+    final accent = item == null
+        ? AppColors.rare
+        : item.type == 'coins'
+            ? AppColors.legendary
+            : item.type == 'title'
+                ? AppColors.awakeningTeal
+                : AppColors.rarity(item.rarity ?? 'common');
+    final soft = Color.lerp(accent, AppColors.white, 0.82)!;
+    return SizedBox(
+      width: 46,
+      height: 46,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: const Alignment(-0.2, -0.3),
+                colors: [AppColors.white, soft, Color.lerp(soft, accent, 0.15)!],
+                stops: const [0, 0.55, 1],
+              ),
+              border: Border.all(color: Color.lerp(accent, AppColors.white, 0.25)!, width: 2.5),
+              boxShadow: AppShadows.onScene,
+            ),
+            child: ClipOval(
+              child: item == null
+                  ? Icon(Icons.card_giftcard_rounded, size: 22, color: accent)
+                  : Padding(
+                      padding: EdgeInsets.all(item.itemType == 'background' ? 0 : 3),
+                      child: RewardArt(reward: item),
+                    ),
+            ),
+          ),
+          if (level != null)
+            Positioned(
+              top: -5,
+              right: -7,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 22),
+                height: 22,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(11)),
+                  border: Border.all(color: AppColors.white, width: 2),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color.lerp(accent, AppColors.white, 0.15)!, accent],
+                  ),
+                  boxShadow: const [BoxShadow(color: Color(0x38101935), offset: Offset(1, 2), blurRadius: 4)],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$level',
+                  style: AppText.title.copyWith(fontSize: 10, height: 12 / 10, color: AppColors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HeroWindow extends StatelessWidget {
   const _HeroWindow({
     required this.skinId,
@@ -359,6 +440,8 @@ class _HeroWindow extends StatelessWidget {
     required this.xpSpan,
     required this.progress,
     required this.nextReward,
+    this.rewardItem,
+    this.rewardLevel,
   });
 
   final String skinId;
@@ -368,7 +451,13 @@ class _HeroWindow extends StatelessWidget {
   final int xpIn;
   final int xpSpan;
   final double progress;
+
+  /// Spoken / tooltip text for the next reward.
   final String nextReward;
+
+  /// The next reward on the level road and its unlock level, when known.
+  final RoadReward? rewardItem;
+  final int? rewardLevel;
 
   @override
   Widget build(BuildContext context) {
@@ -532,21 +621,7 @@ class _HeroWindow extends StatelessWidget {
                         const SizedBox(width: 12),
                         Tooltip(
                           message: nextReward,
-                          child: Container(
-                            width: 46,
-                            height: 46,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const RadialGradient(
-                                center: Alignment(-0.2, -0.3),
-                                colors: [AppColors.white, AppColors.rareSoft, Color(0xFFDCE8FD)],
-                                stops: [0, 0.55, 1],
-                              ),
-                              border: Border.all(color: const Color(0xFF74A6F6), width: 2.5),
-                              boxShadow: AppShadows.onScene,
-                            ),
-                            child: const Icon(Icons.card_giftcard_rounded, size: 22, color: AppColors.rareText),
-                          ),
+                          child: _NextRewardSocket(reward: rewardItem, level: rewardLevel),
                         ),
                       ],
                     ),

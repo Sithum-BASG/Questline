@@ -9,6 +9,7 @@ import '../../../data/models/player_state.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/task.dart';
 import '../home_snapshot.dart';
+import '../../hero/level_road_screen.dart';
 
 class HomeRepository {
   HomeRepository(this._client, this._cache);
@@ -81,6 +82,8 @@ class HomeRepository {
     final unreadInbox = (unread as List).length;
 
     String? nextRewardLabel;
+    RoadReward? nextReward;
+    int? nextRewardLevel;
     final rewardRows = await _client
         .from('level_rewards')
         .select('level, rewards')
@@ -88,9 +91,38 @@ class HomeRepository {
         .order('level')
         .limit(1);
     if (rewardRows.isNotEmpty) {
-      final level = rewardRows.first['level'] as num;
-      final gap = level.toInt() - profile.level;
-      nextRewardLabel = gap == 1 ? 'Next level reward' : '$gap levels until the next reward';
+      nextRewardLevel = (rewardRows.first['level'] as num).toInt();
+      final entries = [
+        for (final r in (rewardRows.first['rewards'] as List? ?? const []))
+          if (r is Map) Map<String, dynamic>.from(r),
+      ];
+      // Show the item if the level has one, else the title, else the coins.
+      Map<String, dynamic>? pick;
+      for (final type in const ['item', 'title', 'coins']) {
+        pick ??= entries.where((r) => r['type'] == type).firstOrNull;
+      }
+      pick ??= entries.firstOrNull;
+      if (pick != null) {
+        final id = pick['id'];
+        Map<String, dynamic>? item;
+        if (id is String) {
+          item = await _client.from('catalog_items').select('name, type, rarity, slot').eq('id', id).maybeSingle();
+        }
+        final reward = RoadReward(
+          type: pick['type'] as String? ?? 'item',
+          id: id is String ? id : null,
+          amount: (pick['amount'] as num?)?.toInt(),
+          name: item?['name'] as String?,
+          rarity: item?['rarity'] as String?,
+          slot: item?['slot'] as String?,
+          itemType: item?['type'] as String?,
+        );
+        nextReward = reward;
+        final rarity = reward.rarity;
+        final rarityText =
+            rarity == null || rarity == 'common' ? '' : ', ${rarity[0].toUpperCase()}${rarity.substring(1)}';
+        nextRewardLabel = 'Next reward at level $nextRewardLevel: ${reward.label}$rarityText';
+      }
     }
 
     final friends = await _client
@@ -108,6 +140,8 @@ class HomeRepository {
       weeklyRank: weeklyRank,
       unreadInbox: unreadInbox,
       nextRewardLabel: nextRewardLabel,
+      nextReward: nextReward,
+      nextRewardLevel: nextRewardLevel,
       showAddFriends: showAddFriends,
     );
   }

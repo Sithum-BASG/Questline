@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/data/models/player_state.dart';
 import 'package:questline/data/models/profile.dart';
+import 'package:questline/features/hero/level_road_screen.dart';
 import 'package:questline/features/home/home_screen.dart';
 import 'package:questline/features/home/home_snapshot.dart';
 import 'package:questline/features/home/providers/home_providers.dart';
@@ -58,12 +59,29 @@ HomeSnapshot _sample({bool offline = false}) {
     ),
     tasks: const [],
     weeklyRank: 1,
-    nextRewardLabel: 'Next level reward',
+    nextRewardLabel: 'Next reward at level 5: Apprentice Wand',
+    nextReward: const RoadReward(
+      type: 'item',
+      id: 'gear_weapon_apprentice_wand',
+      name: 'Apprentice Wand',
+      itemType: 'gear',
+      slot: 'weapon',
+      rarity: 'common',
+    ),
+    nextRewardLevel: 5,
     offline: offline,
   );
 }
 
 void main() {
+  test('the next reward survives the offline cache', () {
+    final restored = HomeSnapshot.fromJson(_sample().toJson());
+    expect(restored.nextRewardLevel, 5);
+    expect(restored.nextReward?.name, 'Apprentice Wand');
+    expect(restored.nextReward?.itemType, 'gear');
+    expect(restored.nextRewardLabel, 'Next reward at level 5: Apprentice Wand');
+  });
+
   testWidgets('Home shows greeting, offline pill and boss placeholder', (tester) async {
     final router = GoRouter(
       routes: [
