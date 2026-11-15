@@ -35,6 +35,7 @@ class RecapRepository {
         .select(
           'day, xp_intellect, xp_vitality, xp_craft, xp_charisma, raw_xp',
         )
+        .eq('user_id', _client.auth.currentUser?.id ?? '')
         .order('day');
     var intellect = 0;
     var vitality = 0;

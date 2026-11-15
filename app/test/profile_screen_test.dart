@@ -64,4 +64,26 @@ void main() {
     await tester.scrollUntilVisible(find.text('Stats'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Stats'), findsOneWidget);
   });
+
+  testWidgets('settings stay reachable when the profile fails to load', (tester) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => const ProfileScreen()),
+        GoRoute(path: '/settings', builder: (context, state) => const Text('settings page')),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          profileViewProvider.overrideWith((ref) async => throw StateError('boom')),
+        ],
+        child: MaterialApp.router(theme: AppTheme.light, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Could not load profile'), findsOneWidget);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('settings page'), findsOneWidget);
+  });
 }

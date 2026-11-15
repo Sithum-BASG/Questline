@@ -32,14 +32,33 @@ class ProfileScreen extends ConsumerWidget {
         bottom: false,
         child: async.when(
           loading: () => const LoadingSkeleton(),
-          error: (error, _) => Center(
-            child: EmptyState(
-              title: 'Could not load profile',
-              body: 'Check your connection and try again.',
-              icon: Icons.cloud_off_rounded,
-              actionLabel: 'Try again',
-              onAction: () => ref.invalidate(profileViewProvider),
-            ),
+          error: (error, _) => Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s16, AppSpacing.screen, 0),
+                child: Row(
+                  children: [
+                    Expanded(child: Semantics(header: true, child: Text('Hero', style: AppText.h1))),
+                    ClayIconButton(
+                      icon: Icons.settings_outlined,
+                      tooltip: 'Settings',
+                      onPressed: () => context.push('/settings'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: EmptyState(
+                    title: 'Could not load profile',
+                    body: 'Check your connection and try again.',
+                    icon: Icons.cloud_off_rounded,
+                    actionLabel: 'Try again',
+                    onAction: () => ref.invalidate(profileViewProvider),
+                  ),
+                ),
+              ),
+            ],
           ),
           data: (data) {
             final profile = data.profile;

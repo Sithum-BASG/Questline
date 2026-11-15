@@ -38,7 +38,9 @@ class HomeRepository {
   }
 
   Future<HomeSnapshot> _fetchLive() async {
-    final profileRow = await _client.from('profiles').select(_profileCols).maybeSingle();
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    final profileRow = await _client.from('profiles').select(_profileCols).eq('id', uid).maybeSingle();
     if (profileRow == null) throw StateError('Profile missing');
     final profile = Profile.fromJson(profileRow);
 

@@ -32,11 +32,15 @@ class ProfileRepository {
   final SupabaseClient _client;
 
   Future<ProfileViewData> load() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    // Every signed-in user can read all profiles (leaderboards), so filter to ours.
     final profileRow = await _client
         .from('profiles')
         .select(
           'id, username, friend_code, display_name, body_type, level, title_id, equipped_skin_id, equipped_background_id, equipped_frame_id, pinned_badges, guild_id, hide_radar, show_boss_names, created_at',
         )
+        .eq('id', uid)
         .maybeSingle();
     if (profileRow == null) throw StateError('Profile missing');
     final profile = Profile.fromJson(profileRow);
@@ -55,6 +59,7 @@ class ProfileRepository {
         .select(
           'user_id, day, xp_intellect, xp_vitality, xp_craft, xp_charisma, raw_xp, focus_minutes, sessions_started, met_minimum, rest_day, paused',
         )
+        .eq('user_id', uid)
         .order('day', ascending: false)
         .limit(30);
     final stats = [for (final row in dayRows) DailyStat.fromJson(row)];

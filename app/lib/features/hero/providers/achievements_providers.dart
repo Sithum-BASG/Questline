@@ -46,9 +46,12 @@ class AchievementsRepository {
   final SupabaseClient _client;
 
   Future<AchievementsViewData> load() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
     final profile = await _client
         .from('profiles')
         .select('pinned_badges, title_id')
+        .eq('id', uid)
         .maybeSingle();
     final pinned = [
       for (final id in (profile?['pinned_badges'] as List? ?? const []))
