@@ -14,17 +14,23 @@ class RewardScreen extends ConsumerStatefulWidget {
 }
 
 class _RewardScreenState extends ConsumerState<RewardScreen> {
+  // Kept so dispose can unsubscribe without touching ref after the widget unmounts.
+  late final RewardQueue _queue;
+
+  /// Moments already claimed on this screen, for the queue dots.
+  var _played = 0;
+
   @override
   void initState() {
     super.initState();
-    final queue = ref.read(rewardQueueProvider);
-    queue.addListener(_onQueue);
-    if (queue.current == null) queue.next();
+    _queue = ref.read(rewardQueueProvider);
+    _queue.addListener(_onQueue);
+    if (_queue.current == null) _queue.next();
   }
 
   @override
   void dispose() {
-    ref.read(rewardQueueProvider).removeListener(_onQueue);
+    _queue.removeListener(_onQueue);
     super.dispose();
   }
 
@@ -50,7 +56,10 @@ class _RewardScreenState extends ConsumerState<RewardScreen> {
     return RewardOverlay(
       key: ValueKey('${moment.kind}-${moment.title}-${queue.pending.length}'),
       moment: moment,
+      position: _played + 1,
+      count: _played + 1 + queue.pending.length,
       onClaim: () {
+        _played += 1;
         queue.claim();
         if (queue.current == null && queue.pending.isEmpty && context.mounted) {
           _finish();
