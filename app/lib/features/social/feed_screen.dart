@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import 'providers/feed_providers.dart';
+import '../../core/widgets/clay.dart';
 
 /// Paginated friends activity feed (`activity_events` via `visible_to` RLS).
 class FeedScreen extends ConsumerStatefulWidget {
@@ -43,19 +45,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       for (final page in pages)
         ...?(page.asData?.value.items),
     ];
-    final lastHasMore = pages.last.asData?.value.hasMore ?? false;
-    final loadingMore = pages.last.isLoading && pages.last.hasValue == false && _pages > 1;
+    final lastPage = pages.last;
+    final lastHasMore = lastPage.asData?.value.hasMore ?? false;
+    final lastPageError = lastPage.hasError && _pages > 1;
+    final loadingMore = lastPage.isLoading && lastPage.hasValue == false && _pages > 1;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Feed', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/social'),
-        ),
-      ),
+      appBar: ClayHeader(title: 'Feed', onBack: () => context.go('/social')),
       body: loadingFirst
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingSkeleton()
           : firstError != null
               ? EmptyState(
                   title: 'Could not load feed',
@@ -73,15 +71,27 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                       body: 'When friends level up or beat bosses, it shows here',
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         AppSpacing.screen,
                         AppSpacing.s8,
                         AppSpacing.screen,
-                        AppSpacing.aboveTabBar,
+                        bottomClearance(context),
                       ),
                       itemCount: items.length + 1,
                       itemBuilder: (context, index) {
                         if (index == items.length) {
+                          if (lastPageError) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+                              child: Center(
+                                child: QButton(
+                                  label: 'Retry',
+                                  variant: QButtonVariant.secondary,
+                                  onPressed: () => ref.invalidate(feedPageProvider(_pages - 1)),
+                                ),
+                              ),
+                            );
+                          }
                           if (!lastHasMore) {
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),

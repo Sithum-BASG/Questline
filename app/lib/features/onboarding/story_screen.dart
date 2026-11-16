@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Display name and body type chosen on the character screen.
 class OnboardingLook {
@@ -98,7 +99,7 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.paper,
       body: look.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (_, _) => const Center(child: Text('Could not load your character.')),
         data: (value) {
           final body = value?.body ?? BodyType.a;
@@ -149,7 +150,7 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
                     left: AppSpacing.screen,
                     right: AppSpacing.screen,
                     bottom: AppSpacing.minTap + AppSpacing.s24,
-                    child: Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                    child: Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                   ),
               ],
             ),

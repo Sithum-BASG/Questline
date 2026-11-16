@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/assets/game_assets.dart';
 import '../../core/notifications/notification_replan.dart';
 import '../../core/supabase/api_client.dart';
 import '../../core/theme/app_colors.dart';
@@ -10,6 +9,8 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_chip.dart';
+import '../../core/widgets/boss_card.dart';
+import '../../core/widgets/clay.dart';
 import 'providers/boss_providers.dart';
 
 const _types = [
@@ -168,20 +169,22 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
         _deadline!.difference(DateTime.now()).inHours >= 48;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(preview == null ? 'Create boss' : 'Summon', style: AppText.h2),
-        leading: BackButton(onPressed: () {
+      appBar: ClayHeader(
+        title: preview == null ? 'Create boss' : 'Summon',
+        onBack: () {
           if (preview != null) {
             setState(() => _preview = null);
           } else {
             context.go('/bosses');
           }
-        }),
+        },
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, bottomClearance(context)),
         children: [
           if (preview == null) ...[
+            Text('DEADLINE QUEST', style: AppText.label),
+            const SizedBox(height: 10),
             TextField(
               controller: _title,
               textCapitalization: TextCapitalization.sentences,
@@ -197,11 +200,12 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
               decoration: const InputDecoration(labelText: 'Description (optional)'),
               style: AppText.body,
             ),
-            const SizedBox(height: AppSpacing.s16),
-            Text('Type', style: AppText.h2),
-            const SizedBox(height: AppSpacing.s8),
+            const SizedBox(height: AppSpacing.s24),
+            Text('TYPE', style: AppText.label),
+            const SizedBox(height: 10),
             Wrap(
               spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
               children: [
                 for (final entry in _types)
                   QChip(
@@ -214,8 +218,11 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
+            Text('DEADLINE', style: AppText.label),
+            const SizedBox(height: 10),
             QButton(
+              icon: Icons.event_rounded,
               label: _deadline == null
                   ? 'Pick a deadline'
                   : 'Due ${_deadline!.day}/${_deadline!.month} ${_deadline!.hour.toString().padLeft(2, '0')}:${_deadline!.minute.toString().padLeft(2, '0')}',
@@ -223,27 +230,58 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
               onPressed: _busy ? null : _pickDeadline,
             ),
             const SizedBox(height: AppSpacing.s24),
+            Well(
+              radius: 20,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: const BoxDecoration(color: AppColors.tealSoft, shape: BoxShape.circle),
+                    child: const Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.tealDeep),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'The AI estimates the hours; you can adjust 2–40 h. No coins for bosses made less than 48 h before the deadline.',
+                      style: AppText.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
             if (_error != null) ...[
-              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500)),
               const SizedBox(height: AppSpacing.s12),
             ],
             QButton(
+              icon: Icons.auto_awesome_rounded,
               label: _busy ? 'Estimating…' : 'Estimate',
               onPressed: _busy ? null : _estimate,
             ),
           ] else ...[
+            const SizedBox(height: AppSpacing.s16),
             Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                child: Image.asset(
-                  GameAssets.boss(tier),
-                  width: 160,
-                  height: 160,
-                  fit: BoxFit.cover,
+              child: SizedBox(
+                width: 220,
+                height: 220,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Clay(
+                      circle: true,
+                      width: 220,
+                      height: 220,
+                      gradient: RadialGradient(colors: [Color(0xFFF4F3FF), Color(0xFFD9DBF7)]),
+                    ),
+                    BossArt(tier: tier, size: 190),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s20),
             Text(preview['name'] as String? ?? 'Boss', style: AppText.h1, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.s8),
             Text(
@@ -252,6 +290,11 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.s24),
+            Clay(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
             Text('Estimated hours: ${_hours.round()}', style: AppText.h2),
             Slider(
               value: _hours.clamp(2, 40),
@@ -265,16 +308,19 @@ class _CreateBossScreenState extends ConsumerState<CreateBossScreen> {
               'Lower hours lowers HP and loot. Adjust if the estimate feels off.',
               style: AppText.bodySmall,
             ),
+                ],
+              ),
+            ),
             if (!coinsEligible) ...[
               const SizedBox(height: AppSpacing.s16),
               Text(
                 'No coins for this boss — the deadline is under 48 hours away.',
-                style: AppText.bodySmall.copyWith(color: AppColors.error),
+                style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500),
               ),
             ],
             const SizedBox(height: AppSpacing.s24),
             if (_error != null) ...[
-              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+              Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText, fontWeight: FontWeight.w500)),
               const SizedBox(height: AppSpacing.s12),
             ],
             QButton(

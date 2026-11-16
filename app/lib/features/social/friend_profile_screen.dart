@@ -11,6 +11,8 @@ import '../../core/widgets/stage_card.dart';
 import '../../core/widgets/stat_radar.dart';
 import '../../data/models/friend_summary.dart';
 import '../../data/models/profile.dart';
+import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 String _short(String id, String prefix) => id.startsWith(prefix) ? id.substring(prefix.length) : id;
 
@@ -59,9 +61,9 @@ class FriendProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(friendProfileProvider(userId));
     return Scaffold(
-      appBar: AppBar(title: Text('Friend', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Friend'),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load friend',
           body: 'They may have removed you, or you are offline.',
@@ -76,7 +78,12 @@ class FriendProfileScreen extends ConsumerWidget {
           final summary = data.summary;
           final body = profile.bodyType == 'b' ? BodyType.b : BodyType.a;
           return ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.screen,
+              AppSpacing.screen,
+              bottomClearance(context, AppSpacing.screen),
+            ),
             children: [
               Text(profile.displayName, style: AppText.h1),
               Text('@${profile.username}', style: AppText.bodySmall),

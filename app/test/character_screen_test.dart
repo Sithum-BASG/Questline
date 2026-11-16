@@ -29,6 +29,7 @@ void main() {
     expect(find.text('Who is waking up?'), findsOneWidget);
     await tester.tap(find.text('Look B'));
     await tester.pump();
+    await tester.scrollUntilVisible(find.byType(TextField), 200);
     await tester.enterText(find.byType(TextField), 'Ada');
     await tester.tap(find.text('Continue'));
     await tester.pump();

@@ -25,7 +25,7 @@ void main() {
     expect(routeForOnboardingStep('character'), '/onboarding/story');
     expect(routeForOnboardingStep('story'), '/onboarding/study');
     expect(routeForOnboardingStep('study'), '/onboarding/first-task');
-    expect(routeForOnboardingStep('first_task'), '/onboarding/first-task');
+    expect(routeForOnboardingStep('first_task'), '/onboarding/first-session');
     expect(routeForOnboardingStep('first_session'), '/onboarding/chest');
     expect(routeForOnboardingStep('done'), '/home');
     expect(
@@ -42,6 +42,29 @@ void main() {
   test('auth loading does not redirect', () {
     expect(
       authRedirect(loading: true, signedIn: false, location: '/home'),
+      isNull,
+    );
+  });
+
+  test('password recovery keeps the player on the reset screen', () {
+    expect(
+      authRedirect(
+        loading: false,
+        signedIn: true,
+        location: '/home',
+        onboardingStep: 'done',
+        passwordRecovery: true,
+      ),
+      '/auth/reset-password',
+    );
+    expect(
+      authRedirect(
+        loading: false,
+        signedIn: true,
+        location: '/auth/reset-password',
+        onboardingStep: 'done',
+        passwordRecovery: true,
+      ),
       isNull,
     );
   });

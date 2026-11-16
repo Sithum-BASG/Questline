@@ -40,6 +40,7 @@ class InboxRepository {
 }
 
 final inboxRepositoryProvider = Provider<InboxRepository>((ref) {
+  watchAccount(ref);
   return InboxRepository(ref.watch(supabaseClientProvider));
 });
 

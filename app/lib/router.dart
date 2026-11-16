@@ -11,13 +11,15 @@ import 'core/theme/app_spacing.dart';
 import 'core/widgets/floating_tab_bar.dart';
 import 'core/widgets/gallery_screen.dart';
 import 'core/widgets/placeholder_screen.dart';
+import 'features/auth/providers/password_recovery_provider.dart';
+import 'features/auth/reset_password_screen.dart';
 import 'features/auth/settings_screen.dart';
 import 'features/auth/welcome_screen.dart';
 import 'features/bosses/boss_detail_screen.dart';
 import 'features/bosses/boss_result_screen.dart';
 import 'features/bosses/bosses_screen.dart';
 import 'features/bosses/create_boss_screen.dart';
-import 'features/focus/focus_screen.dart';
+import 'features/focus/focus_resume_screen.dart';
 import 'features/focus/session_complete_screen.dart';
 import 'features/focus/start_focus_screen.dart';
 import 'features/chests/chest_open_screen.dart';
@@ -71,6 +73,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         location: state.uri.path,
         onboardingStep: step.asData?.value,
         stepLoading: signedIn && step.isLoading,
+        passwordRecovery: ref.read(passwordRecoveryProvider),
       );
     },
     routes: [
@@ -87,7 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: '/quests',
               builder: (context, state) => const QuestsScreen(),
               routes: [
-                GoRoute(path: 'new', builder: (context, state) => const AddTaskScreen()),
+                GoRoute(
+                  path: 'new',
+                  builder: (context, state) => AddTaskScreen(
+                    bossId: state.uri.queryParameters['bossId'],
+                    raidId: state.uri.queryParameters['raidId'],
+                  ),
+                ),
                 GoRoute(
                   path: ':taskId',
                   builder: (context, state) => TaskScreen(taskId: state.pathParameters['taskId']!),
@@ -182,6 +191,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(
+        path: '/auth/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
       GoRoute(path: '/onboarding/character', builder: (context, state) => const CharacterScreen()),
       GoRoute(path: '/onboarding/story', builder: (context, state) => const StoryScreen()),
       GoRoute(path: '/onboarding/study', builder: (context, state) => const StudyScreen()),
@@ -196,18 +209,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/focus/:sessionId',
         builder: (context, state) {
           final extra = state.extra;
-          final startedAt = extra is Map ? extra['startedAt'] as DateTime? : null;
-          final estimate = extra is Map ? extra['estimateMinutes'] as int? : null;
-          final mode = extra is Map ? extra['mode'] as String? : null;
-          final stat = extra is Map ? extra['stat'] as String? : null;
-          final onboarding = extra is Map && extra['onboarding'] == true;
-          return FocusScreen(
+          FocusResumeArgs? args;
+          if (extra is Map && extra['startedAt'] is DateTime) {
+            args = FocusResumeArgs(
+              startedAt: extra['startedAt'] as DateTime,
+              estimateMinutes: (extra['estimateMinutes'] as int?) ?? 25,
+              mode: (extra['mode'] as String?) ?? 'focus',
+              stat: (extra['stat'] as String?) ?? 'intellect',
+              onboarding: extra['onboarding'] == true,
+            );
+          }
+          return FocusResumeScreen(
             sessionId: state.pathParameters['sessionId']!,
-            startedAt: startedAt ?? DateTime.now(),
-            estimateMinutes: estimate ?? 25,
-            mode: mode ?? 'focus',
-            stat: stat ?? 'intellect',
-            onboarding: onboarding,
+            args: args,
           );
         },
         routes: [
@@ -305,15 +319,20 @@ class _AuthRefresh extends ChangeNotifier {
     _step = ref.listen<AsyncValue<String?>>(onboardingStepProvider, (_, _) {
       notifyListeners();
     });
+    _recovery = ref.listen<bool>(passwordRecoveryProvider, (_, _) {
+      notifyListeners();
+    });
   }
 
   late final ProviderSubscription<AsyncValue<AuthState>> _sub;
   late final ProviderSubscription<AsyncValue<String?>> _step;
+  late final ProviderSubscription<bool> _recovery;
 
   @override
   void dispose() {
     _sub.close();
     _step.close();
+    _recovery.close();
     super.dispose();
   }
 }
@@ -326,14 +345,25 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final barBottom = AppSpacing.s16 + media.viewPadding.bottom * 0.5;
+    // Screens under the floating bar see it as part of the bottom inset, so
+    // SafeArea docks and bottomClearance() lists stay above it.
+    final clearance = barBottom + FloatingTabBar.height + AppSpacing.s8;
     return Scaffold(
       body: Stack(
         children: [
-          navigationShell,
+          MediaQuery(
+            data: media.copyWith(
+              padding: media.padding.copyWith(bottom: clearance),
+              viewPadding: media.viewPadding.copyWith(bottom: clearance),
+            ),
+            child: navigationShell,
+          ),
           Positioned(
             left: AppSpacing.s16,
             right: AppSpacing.s16,
-            bottom: AppSpacing.s16,
+            bottom: barBottom,
             child: FloatingTabBar(
               index: navigationShell.currentIndex,
               onSelected: (index) {

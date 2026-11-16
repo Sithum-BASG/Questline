@@ -13,6 +13,7 @@ class GameConfigReader {
   static const defaults = <String, dynamic>{
     'chest_cost': 500,
     'chest_legendary_pity': 30,
+    'max_active_fights': 15,
     'chest_rarity_rates': {
       'common': 0.55,
       'rare': 0.30,
@@ -48,6 +49,94 @@ class GameConfigReader {
     final value = (await load())['chest_legendary_pity'];
     return value is num ? value.round() : 30;
   }
+
+  Future<int> maxActiveFights() async {
+    final value = (await load())['max_active_fights'];
+    return value is num ? value.round() : 15;
+  }
+
+  Future<int> _int(String key, int fallback) async {
+    final value = (await load())[key];
+    return value is num ? value.round() : fallback;
+  }
+
+  Future<double> _double(String key, double fallback) async {
+    final value = (await load())[key];
+    return value is num ? value.toDouble() : fallback;
+  }
+
+  Future<Map<String, double>> _doubleMap(String key, Map<String, double> fallback) async {
+    final raw = (await load())[key];
+    if (raw is! Map) return fallback;
+    return {
+      for (final entry in raw.entries)
+        if (entry.key is String && entry.value is num) entry.key as String: (entry.value as num).toDouble(),
+    };
+  }
+
+  /// XP boost per gear rarity (0.03 = +3%).
+  Future<Map<String, double>> gearBoost() =>
+      _doubleMap('gear_boost', const {'common': 0.03, 'rare': 0.05, 'epic': 0.07, 'legendary': 0.09});
+
+  /// Highest total gear boost one stat can reach.
+  Future<double> gearStatCap() => _double('gear_stat_cap', 0.25);
+
+  Future<int> reattuneCost() => _int('reattune_cost', 200);
+
+  /// Coins for a duplicate cosmetic, by rarity.
+  Future<Map<String, double>> duplicateRefund() =>
+      _doubleMap('duplicate_refund', const {'rare': 100, 'epic': 200, 'legendary': 400, 'mythic': 500});
+
+  /// Coin pouch amounts a Common drop can give.
+  Future<List<int>> commonPouchAmounts() async {
+    final raw = (await load())['chest_common_pouches'];
+    if (raw is! List) return const [50, 100, 200, 500];
+    return [
+      for (final entry in raw)
+        if (entry is List && entry.isNotEmpty && entry.first is num) (entry.first as num).round(),
+    ];
+  }
+
+  /// Coins for badge tiers I, II and III.
+  Future<List<int>> badgeTierCoins() async {
+    final raw = (await load())['badge_tier_coins'];
+    if (raw is! List) return const [50, 100, 200];
+    return [for (final v in raw) if (v is num) v.round()];
+  }
+
+  Future<int> consumableOverflowCoins() => _int('consumable_overflow_coins', 100);
+
+  /// Share of the fair share (HP ÷ members) a raider must deal to earn loot.
+  Future<double> raidFairShareRatio() => _double('raid_fair_share_ratio', 0.5);
+
+  /// Share of the raid HP that still counts as a narrow win.
+  Future<double> raidNarrowThreshold() => _double('raid_narrow_threshold', 0.75);
+
+  /// Extra loot for beating a raid before its deadline (0.25 = +25%).
+  Future<double> raidVictoryBonus() => _double('raid_victory_bonus', 0.25);
+
+  /// Coins lost by raiders below their share when the boss escapes.
+  Future<int> bossEscapePenalty() => _int('boss_escape_penalty', 100);
+
+  /// Smallest and largest party a raid can start with.
+  Future<int> partyMin() => _int('party_min', 2);
+  Future<int> partyMax() => _int('party_max', 8);
+
+  /// Boss tiers as (name, hours below which it applies, base loot coins).
+  Future<List<(String, double, int)>> bossTiers() async {
+    final raw = (await load())['boss_tiers'];
+    const fallback = [('minion', 4.0, 100), ('brute', 12.0, 150), ('warlord', 25.0, 200), ('titan', 999.0, 300)];
+    if (raw is! List) return fallback;
+    final tiers = [
+      for (final row in raw)
+        if (row is List && row.length >= 4 && row[0] is String && row[2] is num && row[3] is num)
+          (row[0] as String, (row[2] as num).toDouble(), (row[3] as num).round()),
+    ];
+    return tiers.isEmpty ? fallback : tiers;
+  }
+
+  /// Most members a guild can hold.
+  Future<int> guildMax() => _int('guild_max', 10);
 
   Future<Map<String, double>> rarityRates() async {
     final raw = (await load())['chest_rarity_rates'];

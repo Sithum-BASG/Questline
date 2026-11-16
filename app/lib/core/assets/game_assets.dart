@@ -146,6 +146,9 @@ class GameAssets {
     'streak_shield',
     'focus_potion',
     'reschedule_scroll',
+    'wardrobe', // hoodie on a hanger (Hero menu)
+    'inventory', // satchel (Hero menu)
+    'level_road', // map scroll (Hero menu)
   ];
 
   // ---------------------------------------------------------------------------

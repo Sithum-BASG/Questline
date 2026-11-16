@@ -13,6 +13,7 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
 import '../home/providers/home_providers.dart';
+import '../../core/widgets/clay.dart';
 
 const _weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -236,7 +237,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep account')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete forever', style: AppText.body.copyWith(color: AppColors.error)),
+            child: Text('Delete forever', style: AppText.body.copyWith(color: AppColors.errorText)),
           ),
         ],
       ),
@@ -266,15 +267,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final home = ref.watch(homeSnapshotProvider);
     final streak = home.asData?.value.player.streakCount;
     return Scaffold(
-      appBar: AppBar(title: Text('Settings', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Settings'),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.screen),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.screen, AppSpacing.s32),
         children: [
           if (streak != null) ...[
             QCard(
               child: Row(
                 children: [
-                  Icon(Icons.local_fire_department_outlined, color: AppColors.streakEmber),
+                  const ClayDot(
+                    size: 44,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.emberLight, AppColors.ember],
+                    ),
+                    icon: Icons.local_fire_department_rounded,
+                  ),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: Column(
@@ -291,10 +300,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.s16),
+            const SizedBox(height: AppSpacing.s24),
           ],
-          Text('Notifications', style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
+          Text('NOTIFICATIONS', style: AppText.label),
+          const SizedBox(height: 10),
+          ClayList(
+            dividerIndent: 16,
+            radius: 26,
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            children: [
           _NotifTile(
             title: 'Bosses',
             value: _notifBosses,
@@ -340,38 +354,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _patchSettings({'notif_leaderboard_nudge': value});
             },
           ),
-          const SizedBox(height: AppSpacing.s24),
-          Text('Quiet hours', style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
+            ],
+          ),
+          const SizedBox(height: 26),
+          Text('QUIET HOURS', style: AppText.label),
+          const SizedBox(height: 6),
           Text(
             'Local reminders stay silent in this window.',
-            style: AppText.bodySmall,
+            style: AppText.caption.copyWith(fontWeight: FontWeight.w400),
           ),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: QButton(
+                  variant: QButtonVariant.secondary,
+                  icon: Icons.bedtime_outlined,
+                  label: 'From ${labelQuietTime(_quietStart)}',
                   onPressed: _busy || !_loaded ? null : () => _pickQuiet(start: true),
-                  child: Text('From ${labelQuietTime(_quietStart)}', style: AppText.body),
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: OutlinedButton(
+                child: QButton(
+                  variant: QButtonVariant.secondary,
+                  icon: Icons.wb_sunny_outlined,
+                  label: 'Until ${labelQuietTime(_quietEnd)}',
                   onPressed: _busy || !_loaded ? null : () => _pickQuiet(start: false),
-                  child: Text('Until ${labelQuietTime(_quietEnd)}', style: AppText.body),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s24),
-          Text('Privacy', style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
+          const SizedBox(height: 26),
+          Text('PRIVACY', style: AppText.label),
+          const SizedBox(height: 10),
+          ClayList(
+            dividerIndent: 16,
+            radius: 26,
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            children: [
           SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('Appear offline', style: AppText.body),
-            subtitle: Text('Hides the focusing status from friends.', style: AppText.bodySmall),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text('Appear offline', style: AppText.title.copyWith(fontSize: 15), softWrap: true),
+            subtitle: Text('Hides the focusing status from friends.', style: AppText.bodySmall, softWrap: true),
             value: _appearOffline,
             onChanged: _busy || !_loaded
                 ? null
@@ -381,9 +406,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
           ),
           SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('Hide stat radar', style: AppText.body),
-            subtitle: Text('Friends will not see your radar chart.', style: AppText.bodySmall),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text('Hide stat radar', style: AppText.title.copyWith(fontSize: 15), softWrap: true),
+            subtitle: Text('Friends will not see your radar chart.', style: AppText.bodySmall, softWrap: true),
             value: _hideRadar,
             onChanged: _busy || !_loaded
                 ? null
@@ -393,9 +418,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
           ),
           SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('Show boss names in feed', style: AppText.body),
-            subtitle: Text('Off keeps boss titles private in activity.', style: AppText.bodySmall),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text('Show boss names in feed', style: AppText.title.copyWith(fontSize: 15), softWrap: true),
+            subtitle: Text('Off keeps boss titles private in activity.', style: AppText.bodySmall, softWrap: true),
             value: _showBossNames,
             onChanged: _busy || !_loaded
                 ? null
@@ -404,54 +429,92 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _patchProfile({'show_boss_names': value});
                   },
           ),
-          const SizedBox(height: AppSpacing.s24),
-          Text('Rest day', style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            'Takes effect next leaderboard week. Streaks skip this weekday.',
-            style: AppText.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: [
-              for (var i = 0; i < _weekdays.length; i++)
-                QChip(
-                  label: _weekdays[i],
-                  selected: _pendingRest == i,
-                  onTap: _busy ? null : () => _saveRest(i),
-                ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s24),
-          Text('Pause mode', style: AppText.h2),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            'Freezes streaks and boss healing. ${_pauseDaysUsed.clamp(0, 7)} / 7 days used this month.',
-            style: AppText.bodySmall,
+          const SizedBox(height: 26),
+          Text('REST DAY', style: AppText.label),
+          const SizedBox(height: 10),
+          QCard(
+            radius: 26,
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  children: [
+                    for (var i = 0; i < _weekdays.length; i++)
+                      QChip(
+                        label: _weekdays[i],
+                        selected: _pendingRest == i,
+                        onTap: _busy ? null : () => _saveRest(i),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Takes effect next leaderboard week. Streaks skip this weekday.',
+                  style: AppText.caption.copyWith(fontWeight: FontWeight.w400),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(_pauseActive == true ? 'Pause on' : 'Pause off', style: AppText.body),
-            value: _pauseActive == true,
-            onChanged: _busy ? null : (value) => _togglePause(value),
+          const SizedBox(height: 26),
+          Text('PAUSE MODE', style: AppText.label),
+          const SizedBox(height: 10),
+          QCard(
+            radius: 26,
+            padding: const EdgeInsets.fromLTRB(0, 14, 0, 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(color: Color(0xFFEEF0FB), shape: BoxShape.circle),
+                        child: const Icon(Icons.beach_access_rounded, size: 20, color: Color(0xFF2B3168)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Freezes streaks and boss healing. ${_pauseDaysUsed.clamp(0, 7)} / 7 days used this month.',
+                          style: AppText.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  title: Text(_pauseActive == true ? 'Pause on' : 'Pause off', style: AppText.title.copyWith(fontSize: 15)),
+                  value: _pauseActive == true,
+                  onChanged: _busy ? null : (value) => _togglePause(value),
+                ),
+              ],
+            ),
           ),
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.s8),
-            Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+            Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
           ],
-          const SizedBox(height: AppSpacing.s32),
+          const SizedBox(height: 36),
           QButton(
             label: 'Sign out',
+            icon: Icons.logout_rounded,
             variant: QButtonVariant.secondary,
             onPressed: _busy ? null : () => ref.read(authRepositoryProvider).signOut(),
           ),
           const SizedBox(height: AppSpacing.s12),
           QButton(
             label: 'Delete account',
-            variant: QButtonVariant.destructive,
+            variant: QButtonVariant.secondary,
+            foreground: AppColors.errorText,
             onPressed: _busy ? null : _confirmDelete,
           ),
         ],
@@ -476,8 +539,8 @@ class _NotifTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: AppText.body),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      title: Text(title, style: AppText.title.copyWith(fontSize: 15)),
       value: value,
       onChanged: enabled ? onChanged : null,
     );

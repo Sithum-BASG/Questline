@@ -5,7 +5,8 @@ import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 import 'q_button.dart';
 
-/// Sheet with a drag handle, title, content and one primary action.
+/// Sheet on the page colour with a drag handle, title, content and one
+/// primary action.
 class QBottomSheet extends StatelessWidget {
   const QBottomSheet({
     super.key,
@@ -29,8 +30,11 @@ class QBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.paper,
+      barrierColor: AppColors.scrim,
+      showDragHandle: false,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
@@ -46,28 +50,40 @@ class QBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s12, AppSpacing.screen, AppSpacing.s24),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        10,
+        AppSpacing.screen,
+        AppSpacing.s24 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.line,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-            ),
-          ),
+          const SheetHandle(),
           const SizedBox(height: AppSpacing.s16),
-          Text(title, style: AppText.h1),
+          Text(title, style: AppText.h1.copyWith(fontSize: 22, height: 28 / 22)),
           const SizedBox(height: AppSpacing.s16),
           child,
-          const SizedBox(height: AppSpacing.s20),
+          const SizedBox(height: AppSpacing.s24),
           QButton(label: actionLabel, onPressed: onAction),
         ],
+      ),
+    );
+  }
+}
+
+/// The grey pill at the top of a sheet.
+class SheetHandle extends StatelessWidget {
+  const SheetHandle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 5,
+        decoration: BoxDecoration(color: AppColors.handle, borderRadius: BorderRadius.circular(AppRadius.pill)),
       ),
     );
   }

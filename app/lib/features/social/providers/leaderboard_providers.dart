@@ -16,6 +16,7 @@ class LeaderboardEntry {
     required this.title,
     required this.skinId,
     required this.backgroundId,
+    required this.frameId,
     required this.body,
     required this.isYou,
   });
@@ -27,6 +28,7 @@ class LeaderboardEntry {
   final String title;
   final String skinId;
   final String backgroundId;
+  final String frameId;
   final BodyType body;
   final bool isYou;
 }
@@ -56,6 +58,7 @@ class LeaderboardSnapshot {
 }
 
 final leaderboardProvider = FutureProvider.autoDispose<LeaderboardSnapshot>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
   if (myId == null) throw StateError('Not signed in');
@@ -114,6 +117,7 @@ final leaderboardProvider = FutureProvider.autoDispose<LeaderboardSnapshot>((ref
         title: leaderboardTitleLabel(profile.titleId, profile.level),
         skinId: catalogAssetShort(profile.equippedSkinId, 'skin_'),
         backgroundId: catalogAssetShort(profile.equippedBackgroundId, 'bg_'),
+        frameId: catalogAssetShort(profile.equippedFrameId, 'frame_'),
         body: profile.bodyType == 'b' ? BodyType.b : BodyType.a,
         isYou: userId == myId,
       ),
@@ -133,6 +137,7 @@ final leaderboardProvider = FutureProvider.autoDispose<LeaderboardSnapshot>((ref
           title: leaderboardTitleLabel(me.titleId, me.level),
           skinId: catalogAssetShort(me.equippedSkinId, 'skin_'),
           backgroundId: catalogAssetShort(me.equippedBackgroundId, 'bg_'),
+          frameId: catalogAssetShort(me.equippedFrameId, 'frame_'),
           body: me.bodyType == 'b' ? BodyType.b : BodyType.a,
           isYou: true,
         ),
@@ -148,6 +153,7 @@ final leaderboardProvider = FutureProvider.autoDispose<LeaderboardSnapshot>((ref
           title: e.title,
           skinId: e.skinId,
           backgroundId: e.backgroundId,
+          frameId: e.frameId,
           body: e.body,
           isYou: e.isYou,
         );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_text.dart';
+import 'clay.dart';
 
 /// Stand-in for a screen that a later phase fills in.
 class PlaceholderScreen extends StatelessWidget {
@@ -11,7 +12,7 @@ class PlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title, style: AppText.h2)),
+      appBar: ClayHeader(title: title),
       body: Center(child: Text(title, style: AppText.body)),
     );
   }

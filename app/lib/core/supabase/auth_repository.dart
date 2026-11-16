@@ -3,9 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Email and password auth. Google sign-in is added on the welcome screen.
 abstract class AuthApi {
-  Future<void> signUp({required String email, required String password});
+  /// Returns true when the new account is signed in straight away, false when
+  /// the project requires the email to be confirmed first.
+  Future<bool> signUp({required String email, required String password});
   Future<void> signIn({required String email, required String password});
-  Future<void> signInWithGoogle({required String serverClientId});
+  /// Returns true once Supabase has a session, false when the user (or the
+  /// platform) cancelled the Google prompt.
+  Future<bool> signInWithGoogle({required String serverClientId});
+  Future<void> resetPasswordForEmail(String email);
+  Future<void> updatePassword(String password);
   Future<void> signOut();
 }
 
@@ -15,8 +21,9 @@ class AuthRepository implements AuthApi {
   final SupabaseClient _client;
 
   @override
-  Future<void> signUp({required String email, required String password}) {
-    return _client.auth.signUp(email: email, password: password);
+  Future<bool> signUp({required String email, required String password}) async {
+    final response = await _client.auth.signUp(email: email, password: password);
+    return response.session != null;
   }
 
   @override
@@ -25,7 +32,7 @@ class AuthRepository implements AuthApi {
   }
 
   @override
-  Future<void> signInWithGoogle({required String serverClientId}) async {
+  Future<bool> signInWithGoogle({required String serverClientId}) async {
     if (serverClientId.isEmpty) {
       throw const AuthException('Google sign-in is not configured yet.');
     }
@@ -40,14 +47,28 @@ class AuthRepository implements AuthApi {
       if (idToken == null || idToken.isEmpty) {
         throw const AuthException('Google did not return a sign-in token.');
       }
-      await _client.auth.signInWithIdToken(
+      final response = await _client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
       );
+      return response.session != null;
     } on GoogleSignInException catch (error) {
-      if (error.code == GoogleSignInExceptionCode.canceled) return;
+      if (error.code == GoogleSignInExceptionCode.canceled) return false;
       throw AuthException(error.description ?? 'Google sign-in failed.');
     }
+  }
+
+  @override
+  Future<void> resetPasswordForEmail(String email) {
+    return _client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'questline://auth-callback',
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String password) {
+    return _client.auth.updateUser(UserAttributes(password: password));
   }
 
   @override

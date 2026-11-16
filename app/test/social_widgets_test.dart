@@ -23,7 +23,8 @@ void main() {
       ),
     );
     expect(find.text('~90 min'), findsOneWidget);
-    expect(find.text('86 XP'), findsOneWidget);
+    expect(find.text('86'), findsOneWidget);
+    expect(find.text('XP'), findsOneWidget);
   });
 
   testWidgets('leaderboard and member rows show names', (tester) async {
@@ -40,6 +41,7 @@ void main() {
                 xp: 500,
                 skinId: 'starter',
                 backgroundId: 'starter',
+                frameId: 'apprentice',
                 body: BodyType.a,
                 isYou: true,
               ),

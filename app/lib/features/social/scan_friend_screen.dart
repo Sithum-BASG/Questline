@@ -8,6 +8,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import 'friend_links.dart';
 import 'providers/pending_friend_code.dart';
+import '../../core/widgets/clay.dart';
 
 /// Camera QR scan for a friend invite. Permission is requested by the plugin on open.
 class ScanFriendScreen extends ConsumerStatefulWidget {
@@ -44,20 +45,23 @@ class _ScanFriendScreenState extends ConsumerState<ScanFriendScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Scan friend code', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Scan friend code'),
       body: Column(
         children: [
           Expanded(
             child: MobileScanner(onDetect: _onDetect),
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.screen),
-            child: Text(
-              _error ?? 'Point the camera at a Questline friend QR.',
-              style: _error != null
-                  ? AppText.bodySmall.copyWith(color: AppColors.error)
-                  : AppText.bodySmall,
-              textAlign: TextAlign.center,
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.screen),
+              child: Text(
+                _error ?? 'Point the camera at a Questline friend QR.',
+                style: _error != null
+                    ? AppText.bodySmall.copyWith(color: AppColors.errorText)
+                    : AppText.bodySmall,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],

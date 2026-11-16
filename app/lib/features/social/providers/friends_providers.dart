@@ -16,6 +16,7 @@ class FriendRow {
 
 /// Accepted friends and incoming/outgoing requests for the signed-in user.
 final friendshipsProvider = FutureProvider.autoDispose<List<Friendship>>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final rows = await client.from('friendships').select().order('since', ascending: false);
   return [

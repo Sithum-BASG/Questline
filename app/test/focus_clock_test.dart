@@ -26,5 +26,7 @@ void main() {
     clock.returned(start.add(const Duration(minutes: 1, seconds: 31)));
     expect(clock.broken, isTrue);
     expect(clock.interruptions, isEmpty);
+    // Open leave stays so endSession can subtract AFK minutes.
+    expect(clock.leftAt, isNotNull);
   });
 }

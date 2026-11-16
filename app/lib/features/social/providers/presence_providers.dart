@@ -16,6 +16,7 @@ bool isFocusingNow(Presence row, DateTime now) {
 
 /// Live focusing map for accepted friends. Realtime on presence; stale after 2 minutes.
 final focusingFriendsProvider = StreamProvider.autoDispose<Map<String, Presence>>((ref) async* {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final friendships = await ref.watch(friendshipsProvider.future);
   final friendIds = friendships

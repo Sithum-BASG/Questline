@@ -18,12 +18,12 @@ class _Alerts implements SessionAlerts {
   Future<void> clearReturnPrompt() async {}
 
   @override
-  Future<void> showOngoing(String elapsed) async {
+  Future<void> showOngoing(String elapsed, {String? sessionId}) async {
     ongoing += 1;
   }
 
   @override
-  Future<void> showReturnPrompt() async {
+  Future<void> showReturnPrompt({String? sessionId}) async {
     shown += 1;
   }
 }
@@ -128,7 +128,7 @@ void main() {
         }),
       ],
     ));
-    expect(find.text('Activity'), findsOneWidget);
+    expect(find.text('ACTIVITY'), findsOneWidget);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(alerts.shown, 0);

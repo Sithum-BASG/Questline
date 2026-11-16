@@ -24,6 +24,7 @@ import 'stat_radar.dart';
 import 'stat_tile.dart';
 import 'task_tile.dart';
 import 'timer_display.dart';
+import 'clay.dart';
 
 /// Debug-only catalogue of the shared widgets.
 class GalleryScreen extends StatelessWidget {
@@ -32,7 +33,7 @@ class GalleryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gallery', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Gallery'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s16, AppSpacing.screen, AppSpacing.aboveTabBar),
         children: [
@@ -96,6 +97,7 @@ class GalleryScreen extends StatelessWidget {
             minutes: 90,
             xpPreview: 86,
             reason: 'A long writing task.',
+            tooBig: true,
           ),
           const _Label('People'),
           const LeaderboardRow(
@@ -105,6 +107,7 @@ class GalleryScreen extends StatelessWidget {
             xp: 500,
             skinId: 'starter',
             backgroundId: 'starter',
+            frameId: 'apprentice',
             body: BodyType.a,
             isYou: true,
           ),
@@ -113,6 +116,7 @@ class GalleryScreen extends StatelessWidget {
             title: 'Freshly awakened',
             skinId: 'starter',
             backgroundId: 'starter',
+            frameId: 'apprentice',
             body: BodyType.b,
             focusing: true,
           ),

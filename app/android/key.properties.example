@@ -1,0 +1,6 @@
+# Copy to key.properties (gitignored) for local signed builds.
+# CI writes the same file from GitHub Actions secrets (see .github/workflows/release-apk.yml).
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=questline
+storeFile=../questline-release.jks

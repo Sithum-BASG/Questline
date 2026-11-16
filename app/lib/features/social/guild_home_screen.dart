@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/supabase/api_client.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/empty_state.dart';
@@ -11,26 +12,75 @@ import '../../core/widgets/member_card.dart';
 import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
+import '../../core/widgets/q_chip.dart';
+import '../bosses/boss_time.dart';
+import '../bosses/providers/boss_providers.dart';
+import '../../core/widgets/boss_card.dart';
 import 'guild_emblems.dart';
 import 'providers/guild_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 /// Guild home: members, focusing dots, weekly quest and trophies.
-class GuildHomeScreen extends ConsumerWidget {
+class GuildHomeScreen extends ConsumerStatefulWidget {
   const GuildHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GuildHomeScreen> createState() => _GuildHomeScreenState();
+}
+
+class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
+  var _leaving = false;
+
+  String _wonLabel(DateTime? wonAt) {
+    if (wonAt == null) return 'Raid win';
+    final local = wonAt.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    return 'Won $y-$m-$d';
+  }
+
+  Future<void> _leaveGuild({required bool isLeader}) async {
+    if (_leaving) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Leave guild?', style: AppText.h2),
+        content: Text(
+          isLeader
+              ? 'Leadership passes to the next member, or the guild is deleted if you are alone.'
+              : 'You can join another guild later with an invite code.',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Leave')),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    setState(() => _leaving = true);
+    try {
+      await ref.read(apiClientProvider).leaveGuild();
+      ref.invalidate(myGuildIdProvider);
+      ref.invalidate(guildHomeProvider);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _leaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(guildHomeProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Guild', style: AppText.h2),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/social'),
-        ),
-      ),
+      appBar: ClayHeader(title: 'Guild', onBack: () => context.go('/social')),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load guild',
           body: 'Check your connection and try again.',
@@ -50,40 +100,62 @@ class GuildHomeScreen extends ConsumerWidget {
           final progress = guild.questGoal <= 0
               ? 0.0
               : (guild.questProgress / guild.questGoal).clamp(0.0, 1.0);
+          final focusingCount = snap.members.where((m) => m.focusing).length;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.screen,
               AppSpacing.s8,
               AppSpacing.screen,
-              AppSpacing.aboveTabBar,
+              bottomClearance(context),
             ),
             children: [
-              Text(guild.name, style: AppText.h1),
-              Text(guildEmblemLabel(guild.emblem), style: AppText.caption),
-              const SizedBox(height: AppSpacing.s12),
               QCard(
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Invite code', style: AppText.title),
-                          Text(guild.inviteCode, style: AppText.body),
-                        ],
-                      ),
+                    GuildEmblem(id: guild.emblem, width: 68),
+                    const SizedBox(height: AppSpacing.s16),
+                    Text(guild.name, style: AppText.h1, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.s8),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      children: [
+                        QChip(label: guildEmblemLabel(guild.emblem)),
+                        QChip(
+                          label: snap.members.length == 1
+                              ? '1 member'
+                              : '${snap.members.length} members',
+                          selected: true,
+                        ),
+                        if (snap.isLeader) const QChip(label: 'Leader'),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: 'Copy code',
-                      onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: guild.inviteCode));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Invite code copied')),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.copy),
+                    const SizedBox(height: AppSpacing.s16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Invite code', style: AppText.caption),
+                              Text(guild.inviteCode, style: AppText.title),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Copy code',
+                          onPressed: () async {
+                            await Clipboard.setData(ClipboardData(text: guild.inviteCode));
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Invite code copied')),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.copy),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -91,13 +163,31 @@ class GuildHomeScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s16),
               Text('Weekly quest', style: AppText.h2),
               const SizedBox(height: AppSpacing.s8),
-              ProgressBar(
-                value: progress,
-                leading: 'Raw XP',
-                trailing: '${guild.questProgress} / ${guild.questGoal}',
+              QCard(
+                child: ProgressBar(
+                  value: progress,
+                  leading: 'Raw XP',
+                  trailing: '${guild.questProgress} / ${guild.questGoal}',
+                ),
               ),
+              for (final fight in [
+                for (final r in ref.watch(myRaidsProvider).asData?.value ?? const <RaidSummary>[])
+                  if (r.isGuild && r.isActive && r.raid.guildId == guild.id) r,
+              ]) ...[
+                const SizedBox(height: AppSpacing.s16),
+                _GuildFightCard(fight: fight),
+              ],
               const SizedBox(height: AppSpacing.s24),
-              Text('Members', style: AppText.h2),
+              Row(
+                children: [
+                  Expanded(child: Text('Members', style: AppText.h2)),
+                  if (focusingCount > 0)
+                    QChip(
+                      label: focusingCount == 1 ? '1 focusing' : '$focusingCount focusing',
+                      selected: true,
+                    ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.s8),
               for (final view in snap.members) ...[
                 MemberCard(
@@ -105,6 +195,7 @@ class GuildHomeScreen extends ConsumerWidget {
                   title: 'Level ${view.profile.level}',
                   skinId: assetShort(view.profile.equippedSkinId, 'skin_'),
                   backgroundId: assetShort(view.profile.equippedBackgroundId, 'bg_'),
+                  frameId: assetShort(view.profile.equippedFrameId, 'frame_'),
                   body: bodyFromProfile(view.profile),
                   focusing: view.focusing,
                 ),
@@ -120,45 +211,101 @@ class GuildHomeScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.s8),
                     child: QCard(
-                      child: Text(trophy.name ?? 'Raid win', style: AppText.body),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.legendary.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(AppRadius.button),
+                            ),
+                            child: const Icon(Icons.emoji_events, color: AppColors.legendary),
+                          ),
+                          const SizedBox(width: AppSpacing.s12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(trophy.name ?? 'Raid win', style: AppText.title),
+                                Text(_wonLabel(trophy.wonAt), style: AppText.caption),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               const SizedBox(height: AppSpacing.s24),
               QButton(
                 label: 'Leave guild',
                 variant: QButtonVariant.destructive,
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Leave guild?', style: AppText.h2),
-                      content: Text(
-                        snap.isLeader
-                            ? 'Leadership passes to the next member, or the guild is deleted if you are alone.'
-                            : 'You can join another guild later with an invite code.',
-                        style: AppText.body,
-                      ),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Leave')),
-                      ],
-                    ),
-                  );
-                  if (confirm != true || !context.mounted) return;
-                  try {
-                    await ref.read(apiClientProvider).leaveGuild();
-                    ref.invalidate(myGuildIdProvider);
-                    ref.invalidate(guildHomeProvider);
-                  } on ApiException catch (error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
-                    }
-                  }
-                },
+                loading: _leaving,
+                onPressed: _leaving ? null : () => _leaveGuild(isLeader: snap.isLeader),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// An active guild battle: the boss, how many are in, time left, and a way in.
+class _GuildFightCard extends StatelessWidget {
+  const _GuildFightCard({required this.fight});
+
+  final RaidSummary fight;
+
+  @override
+  Widget build(BuildContext context) {
+    final raid = fight.raid;
+    final tier = raid.tier.isEmpty ? raid.tier : raid.tier[0].toUpperCase() + raid.tier.substring(1);
+    return Clay(
+      radius: AppRadius.feature,
+      height: 100,
+      padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+      onTap: () => context.go('/raids/${raid.id}'),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 76,
+            height: 76,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                const BossPortal(size: 66),
+                Positioned(top: -22, child: BossArt(tier: raid.tier, size: 92)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GUILD FIGHT · ACTIVE',
+                  style: AppText.label.copyWith(fontSize: 10, height: 12 / 10, color: AppColors.sceneMid),
+                ),
+                const SizedBox(height: 4),
+                Text(raid.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 15)),
+                const SizedBox(height: 2),
+                Text(
+                  '$tier · ${fight.members.length} in · ${bossTimeLeft(raid.deadline, DateTime.now())}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          QButton(label: 'Open', height: 40, onPressed: () => context.go('/raids/${raid.id}')),
+        ],
       ),
     );
   }

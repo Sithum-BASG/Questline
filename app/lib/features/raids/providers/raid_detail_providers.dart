@@ -17,6 +17,9 @@ class RaidDetailSnapshot {
     required this.events,
     required this.focusingIds,
     required this.isCreator,
+    this.damageByUser = const {},
+    this.myId,
+    this.reconnecting = false,
   });
 
   final Raid raid;
@@ -24,6 +27,25 @@ class RaidDetailSnapshot {
   final List<RaidEvent> events;
   final Set<String> focusingIds;
   final bool isCreator;
+
+  /// Exact damage per raider. RLS returns only your own row, or every row
+  /// for the raid creator.
+  final Map<String, int> damageByUser;
+  final String? myId;
+  final bool reconnecting;
+
+  RaidDetailSnapshot copyWith({bool? reconnecting}) {
+    return RaidDetailSnapshot(
+      raid: raid,
+      members: members,
+      events: events,
+      focusingIds: focusingIds,
+      isCreator: isCreator,
+      damageByUser: damageByUser,
+      myId: myId,
+      reconnecting: reconnecting ?? this.reconnecting,
+    );
+  }
 }
 
 Future<RaidDetailSnapshot?> loadRaidDetail(SupabaseClient client, String raidId, String? myId) async {
@@ -57,63 +79,137 @@ Future<RaidDetailSnapshot?> loadRaidDetail(SupabaseClient client, String raidId,
     }
   }
 
+  final damageRows = await client.from('raid_damage').select('user_id, damage').eq('raid_id', raidId);
+  final damageByUser = <String, int>{
+    for (final d in damageRows)
+      if (d['user_id'] is String && d['damage'] is num) d['user_id'] as String: (d['damage'] as num).toInt(),
+  };
+
   return RaidDetailSnapshot(
     raid: raid,
     members: members,
     events: events,
     focusingIds: focusing,
     isCreator: myId != null && raid.createdBy == myId,
+    damageByUser: damageByUser,
+    myId: myId,
   );
 }
 
 /// Live raid detail: HP, members, ticker via Realtime.
 final raidDetailProvider = StreamProvider.autoDispose.family<RaidDetailSnapshot?, String>((ref, raidId) async* {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final myId = ref.watch(authStateProvider).asData?.value.session?.user.id;
 
-  Future<RaidDetailSnapshot?> load() => loadRaidDetail(client, raidId, myId);
+  var reconnecting = false;
+  RaidDetailSnapshot? lastGood;
+  final memberIds = <String>{};
 
-  yield await load();
+  Future<RaidDetailSnapshot?> load() async {
+    final snap = await loadRaidDetail(client, raidId, myId);
+    if (snap != null) {
+      memberIds
+        ..clear()
+        ..addAll(snap.members.map((m) => m.userId));
+      lastGood = snap.copyWith(reconnecting: reconnecting);
+      return lastGood;
+    }
+    return lastGood?.copyWith(reconnecting: reconnecting);
+  }
+
+  try {
+    yield await load();
+  } catch (_) {
+    yield null;
+  }
 
   final controller = StreamController<RaidDetailSnapshot?>();
   ref.onDispose(controller.close);
 
-  void push() async {
-    if (!controller.isClosed) controller.add(await load());
+  var loadSeq = 0;
+  Future<void> push() async {
+    final seq = ++loadSeq;
+    try {
+      final snap = await load();
+      if (seq != loadSeq || controller.isClosed) return;
+      controller.add(snap);
+    } catch (_) {
+      if (seq != loadSeq || controller.isClosed) return;
+      reconnecting = true;
+      if (lastGood != null) {
+        controller.add(lastGood!.copyWith(reconnecting: true));
+      }
+    }
   }
 
-  final channel = client
-      .channel('raid-$raidId')
-      .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'raids',
-        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'id', value: raidId),
-        callback: (_) => push(),
-      )
-      .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'raid_members',
-        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'raid_id', value: raidId),
-        callback: (_) => push(),
-      )
-      .onPostgresChanges(
-        event: PostgresChangeEvent.insert,
-        schema: 'public',
-        table: 'raid_events',
-        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'raid_id', value: raidId),
-        callback: (_) => push(),
-      )
-      .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'presence',
-        callback: (_) => push(),
-      )
-      .subscribe();
+  RealtimeChannel? channel;
+  var channelGeneration = 0;
+
+  void attachChannel() {
+    final gen = ++channelGeneration;
+    final name = 'raid-$raidId-$gen';
+    final previous = channel;
+    if (previous != null) {
+      client.removeChannel(previous);
+    }
+    channel = client
+        .channel(name)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'raids',
+          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'id', value: raidId),
+          callback: (_) => push(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'raid_members',
+          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'raid_id', value: raidId),
+          callback: (_) => push(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'raid_events',
+          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'raid_id', value: raidId),
+          callback: (_) => push(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'presence',
+          callback: (payload) {
+            // Hotspot: ignore friend heartbeats outside this raid's party.
+            final row = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+            final uid = row['user_id'];
+            if (uid is String && memberIds.contains(uid)) push();
+          },
+        )
+        .subscribe((status, [_]) {
+          if (gen != channelGeneration) return;
+          final ok = status == RealtimeSubscribeStatus.subscribed;
+          reconnecting = !ok;
+          push();
+          if (!ok &&
+              (status == RealtimeSubscribeStatus.timedOut ||
+                  status == RealtimeSubscribeStatus.channelError ||
+                  status == RealtimeSubscribeStatus.closed)) {
+            // Re-open the channel so live HP/ticker recover after a hotspot blip.
+            Future<void>.delayed(const Duration(seconds: 2), () {
+              if (gen != channelGeneration || controller.isClosed) return;
+              attachChannel();
+            });
+          }
+        });
+  }
+
+  attachChannel();
   ref.onDispose(() {
-    client.removeChannel(channel);
+    channelGeneration++;
+    final current = channel;
+    if (current != null) client.removeChannel(current);
   });
 
   final ticker = Timer.periodic(const Duration(seconds: 30), (_) => push());

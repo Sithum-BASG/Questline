@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../motion/app_motion.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
+import 'clay.dart';
 
 enum ProgressKind { xp, bossHp, streak }
 
-/// Labelled bar. XP is teal, boss HP is rose, streak is ember.
+/// Labelled clay bar in a sunken track. XP is teal, boss HP is rose,
+/// streak is ember. Labels sit under the bar.
 class ProgressBar extends StatelessWidget {
   const ProgressBar({
     super.key,
@@ -14,53 +16,65 @@ class ProgressBar extends StatelessWidget {
     this.kind = ProgressKind.xp,
     this.leading,
     this.trailing,
+    this.trailingColor,
+    this.height = 10,
   });
 
   final double value;
   final ProgressKind kind;
   final String? leading;
   final String? trailing;
+  final Color? trailingColor;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final fill = switch (kind) {
-      ProgressKind.xp => AppColors.awakeningTeal,
-      ProgressKind.bossHp => AppColors.bossHp,
-      ProgressKind.streak => AppColors.ember,
+      ProgressKind.xp => xpFillGradient,
+      ProgressKind.bossHp => hpFillGradient,
+      ProgressKind.streak => emberFillGradient,
     };
-    final clamped = value.clamp(0.0, 1.0);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (leading != null || trailing != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(leading ?? '', style: AppText.caption),
-                Text(trailing ?? '', style: AppText.numbers.copyWith(fontSize: 12)),
-              ],
-            ),
+    final clamped = value.isNaN ? 0.0 : value.clamp(0.0, 1.0);
+    final duration = kind == ProgressKind.bossHp ? AppMotion.bossDamage(context) : AppMotion.xpFill(context);
+
+    final labelBits = [
+      if (leading != null && leading!.isNotEmpty) leading!,
+      if (trailing != null && trailing!.isNotEmpty) trailing!,
+      '${(clamped * 100).round()} percent',
+    ];
+
+    final hasLabels = leading != null || trailing != null;
+    return Semantics(
+      label: labelBits.join(', '),
+      value: '${(clamped * 100).round()}%',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(
+            child: ClayBar(value: clamped, gradient: fill, height: height, duration: duration),
           ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          child: SizedBox(
-            height: 8,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                const ColoredBox(color: AppColors.line),
-                FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: clamped,
-                  child: ColoredBox(color: fill),
-                ),
-              ],
+          if (hasLabels)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(child: Text(leading ?? '', style: AppText.caption, softWrap: true)),
+                  const SizedBox(width: AppSpacing.s8),
+                  Flexible(
+                    child: Text(
+                      trailing ?? '',
+                      style: AppText.caption.copyWith(fontWeight: FontWeight.w700, color: trailingColor),
+                      textAlign: TextAlign.end,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

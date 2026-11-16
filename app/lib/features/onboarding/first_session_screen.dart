@@ -10,6 +10,10 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/q_button.dart';
 import '../focus/start_focus_screen.dart';
 import '../quests/providers/task_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
+import '../../core/widgets/stat_icon.dart';
+import 'onboarding_skip_button.dart';
 
 /// Onboarding step 5–6. A short first session unlocks the starter XP for level 2.
 class FirstSessionScreen extends ConsumerStatefulWidget {
@@ -28,8 +32,16 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
     final tasks = ref.watch(tasksProvider);
     return Scaffold(
       body: SafeArea(
-        child: tasks.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.s8, AppSpacing.s8, 0),
+              child: Align(alignment: Alignment.centerRight, child: OnboardingSkipButton()),
+            ),
+            Expanded(
+              child: tasks.when(
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load your quest',
             body: '$error',
@@ -59,9 +71,31 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Text('About $minutes minutes', style: AppText.caption),
+                  const Spacer(),
+                  Center(
+                    child: SizedBox(
+                      width: 220,
+                      height: 220,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Clay(circle: true, width: 220, height: 220),
+                          const Well(circle: true, width: 186, height: 186),
+                          Clay(
+                            circle: true,
+                            width: 150,
+                            height: 150,
+                            child: Center(
+                              child: StatDot(stat: task.stat ?? 'intellect', size: 72),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   if (_error != null) ...[
                     const SizedBox(height: AppSpacing.s12),
-                    Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                    Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
                   ],
                   const Spacer(),
                   QButton(
@@ -79,6 +113,9 @@ class _FirstSessionScreenState extends ConsumerState<FirstSessionScreen> {
               ),
             );
           },
+              ),
+            ),
+          ],
         ),
       ),
     );

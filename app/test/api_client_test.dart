@@ -14,9 +14,23 @@ void main() {
     expect(error.message, 'Sign in to continue.');
   });
 
-  test('a transport failure reads as offline', () {
+  test('a transport failure reads as server waking up', () {
     final error = mapFunctionError(const FunctionsFetchException());
     expect(error.code, 'network');
-    expect(error.message, contains('offline'));
+    expect(error.message, contains('waking up'));
+  });
+
+  test('unavailable keeps the server message', () {
+    final error = mapFunctionError(
+      const FunctionException(
+        status: 503,
+        details: {
+          'code': 'unavailable',
+          'message': 'AI judge resting until tomorrow; saved as provisional',
+        },
+      ),
+    );
+    expect(error.code, 'unavailable');
+    expect(error.message, contains('resting until tomorrow'));
   });
 }

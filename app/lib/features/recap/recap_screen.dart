@@ -10,6 +10,7 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/reward_overlay.dart';
 import 'providers/recap_providers.dart';
 import 'recap_copy.dart';
+import '../../core/widgets/loading_skeleton.dart';
 
 /// Swipeable weekly results. Claim plays a reward moment (coins already paid).
 class RecapScreen extends ConsumerStatefulWidget {
@@ -52,7 +53,7 @@ class _RecapScreenState extends ConsumerState<RecapScreen> {
     return Scaffold(
       backgroundColor: AppColors.paper,
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load recap',
           body: 'Check your connection and try again.',

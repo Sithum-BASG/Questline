@@ -9,6 +9,7 @@ import '../../../data/models/player_state.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/models/task.dart';
 import '../home_snapshot.dart';
+import '../../hero/level_road_screen.dart';
 
 class HomeRepository {
   HomeRepository(this._client, this._cache);
@@ -26,19 +27,22 @@ class HomeRepository {
       'id, user_id, name, title, type, tier, hours, max_hp, damage, deadline, created_at, status, last_work_day, coins_eligible, loot, result_seen';
 
   Future<HomeSnapshot> load() async {
+    final uid = _client.auth.currentUser?.id;
     try {
       final snapshot = await _fetchLive();
-      await _cache.save(snapshot.toJson());
+      if (uid != null) await _cache.save(uid, snapshot.toJson());
       return snapshot;
     } catch (_) {
-      final cached = _cache.load();
+      final cached = uid == null ? null : _cache.load(uid);
       if (cached != null) return HomeSnapshot.fromJson(cached, offline: true);
       rethrow;
     }
   }
 
   Future<HomeSnapshot> _fetchLive() async {
-    final profileRow = await _client.from('profiles').select(_profileCols).maybeSingle();
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    final profileRow = await _client.from('profiles').select(_profileCols).eq('id', uid).maybeSingle();
     if (profileRow == null) throw StateError('Profile missing');
     final profile = Profile.fromJson(profileRow);
 
@@ -58,7 +62,7 @@ class HomeRepository {
         .from('bosses')
         .select(_bossCols)
         .inFilter('status', ['active', 'staggered'])
-        .order('deadline')
+        .order('deadline', ascending: true)
         .limit(1);
     final closestBoss = bossRows.isEmpty ? null : Boss.fromJson(bossRows.first);
 
@@ -79,16 +83,47 @@ class HomeRepository {
     final unreadInbox = (unread as List).length;
 
     String? nextRewardLabel;
+    RoadReward? nextReward;
+    int? nextRewardLevel;
     final rewardRows = await _client
         .from('level_rewards')
         .select('level, rewards')
         .gt('level', profile.level)
-        .order('level')
+        .order('level', ascending: true)
         .limit(1);
     if (rewardRows.isNotEmpty) {
-      final level = rewardRows.first['level'] as num;
-      final gap = level.toInt() - profile.level;
-      nextRewardLabel = gap == 1 ? 'Next level reward' : '$gap levels until the next reward';
+      nextRewardLevel = (rewardRows.first['level'] as num).toInt();
+      final entries = [
+        for (final r in (rewardRows.first['rewards'] as List? ?? const []))
+          if (r is Map) Map<String, dynamic>.from(r),
+      ];
+      // Show the item if the level has one, else the title, else the coins.
+      Map<String, dynamic>? pick;
+      for (final type in const ['item', 'title', 'coins']) {
+        pick ??= entries.where((r) => r['type'] == type).firstOrNull;
+      }
+      pick ??= entries.firstOrNull;
+      if (pick != null) {
+        final id = pick['id'];
+        Map<String, dynamic>? item;
+        if (id is String) {
+          item = await _client.from('catalog_items').select('name, type, rarity, slot').eq('id', id).maybeSingle();
+        }
+        final reward = RoadReward(
+          type: pick['type'] as String? ?? 'item',
+          id: id is String ? id : null,
+          amount: (pick['amount'] as num?)?.toInt(),
+          name: item?['name'] as String?,
+          rarity: item?['rarity'] as String?,
+          slot: item?['slot'] as String?,
+          itemType: item?['type'] as String?,
+        );
+        nextReward = reward;
+        final rarity = reward.rarity;
+        final rarityText =
+            rarity == null || rarity == 'common' ? '' : ', ${rarity[0].toUpperCase()}${rarity.substring(1)}';
+        nextRewardLabel = 'Next reward at level $nextRewardLevel: ${reward.label}$rarityText';
+      }
     }
 
     final friends = await _client
@@ -106,6 +141,8 @@ class HomeRepository {
       weeklyRank: weeklyRank,
       unreadInbox: unreadInbox,
       nextRewardLabel: nextRewardLabel,
+      nextReward: nextReward,
+      nextRewardLevel: nextRewardLevel,
       showAddFriends: showAddFriends,
     );
   }
@@ -117,6 +154,7 @@ final homeSnapshotCacheProvider = FutureProvider<HomeSnapshotCache>((ref) async 
 });
 
 final homeRepositoryProvider = FutureProvider<HomeRepository>((ref) async {
+  watchAccount(ref);
   final cache = await ref.watch(homeSnapshotCacheProvider.future);
   return HomeRepository(ref.watch(supabaseClientProvider), cache);
 });

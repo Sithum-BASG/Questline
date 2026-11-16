@@ -46,9 +46,12 @@ class AchievementsRepository {
   final SupabaseClient _client;
 
   Future<AchievementsViewData> load() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
     final profile = await _client
         .from('profiles')
         .select('pinned_badges, title_id')
+        .eq('id', uid)
         .maybeSingle();
     final pinned = [
       for (final id in (profile?['pinned_badges'] as List? ?? const []))
@@ -102,16 +105,25 @@ class AchievementsRepository {
     );
   }
 
+  /// The server rejects updates without a filter, so every profile write names
+  /// the signed-in user's row.
+  String get _uid {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    return uid;
+  }
+
   Future<void> setPinnedBadges(List<String> badgeIds) async {
-    await _client.from('profiles').update({'pinned_badges': badgeIds});
+    await _client.from('profiles').update({'pinned_badges': badgeIds}).eq('id', _uid);
   }
 
   Future<void> setTitleId(String? titleId) async {
-    await _client.from('profiles').update({'title_id': titleId});
+    await _client.from('profiles').update({'title_id': titleId}).eq('id', _uid);
   }
 }
 
 final achievementsRepositoryProvider = Provider<AchievementsRepository>((ref) {
+  watchAccount(ref);
   return AchievementsRepository(ref.watch(supabaseClientProvider));
 });
 

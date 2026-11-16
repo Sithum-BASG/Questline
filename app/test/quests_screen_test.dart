@@ -50,7 +50,7 @@ void main() {
       ProviderScope(
         overrides: [
           insertDraftProvider.overrideWith((ref) {
-            return ({required String title, String? notes, DateTime? dueAt, String? bossId}) async {
+            return ({required String title, String? notes, DateTime? dueAt, String? bossId, String? raidId}) async {
               saved = title;
               return 'task-1';
             };

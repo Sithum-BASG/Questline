@@ -24,6 +24,7 @@ Future<void> replanLocalNotifications(WidgetRef ref) async {
   final dayStat = await client
       .from('daily_stats')
       .select('met_minimum, raw_xp')
+      .eq('user_id', session.user.id)
       .eq('day', today)
       .maybeSingle();
 

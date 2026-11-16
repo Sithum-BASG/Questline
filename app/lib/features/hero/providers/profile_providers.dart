@@ -13,6 +13,7 @@ class ProfileViewData {
     required this.radar30,
     required this.radar7,
     required this.badgeTiers,
+    this.xpTotal,
   });
 
   final Profile profile;
@@ -20,6 +21,9 @@ class ProfileViewData {
   final StatRadarValues radar30;
   final StatRadarValues radar7;
   final Map<String, int> badgeTiers;
+
+  /// Lifetime XP for the nameplate bar. Null when the player row is missing.
+  final int? xpTotal;
 }
 
 class ProfileRepository {
@@ -28,14 +32,21 @@ class ProfileRepository {
   final SupabaseClient _client;
 
   Future<ProfileViewData> load() async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    // Every signed-in user can read all profiles (leaderboards), so filter to ours.
     final profileRow = await _client
         .from('profiles')
         .select(
           'id, username, friend_code, display_name, body_type, level, title_id, equipped_skin_id, equipped_background_id, equipped_frame_id, pinned_badges, guild_id, hide_radar, show_boss_names, created_at',
         )
+        .eq('id', uid)
         .maybeSingle();
     if (profileRow == null) throw StateError('Profile missing');
     final profile = Profile.fromJson(profileRow);
+
+    final player = await _client.from('player_state').select('xp_total').maybeSingle();
+    final xpTotal = (player?['xp_total'] as num?)?.toInt();
 
     String? titleName;
     if (profile.titleId != null) {
@@ -48,6 +59,7 @@ class ProfileRepository {
         .select(
           'user_id, day, xp_intellect, xp_vitality, xp_craft, xp_charisma, raw_xp, focus_minutes, sessions_started, met_minimum, rest_day, paused',
         )
+        .eq('user_id', uid)
         .order('day', ascending: false)
         .limit(30);
     final stats = [for (final row in dayRows) DailyStat.fromJson(row)];
@@ -82,11 +94,13 @@ class ProfileRepository {
       radar30: radar30,
       radar7: radar7,
       badgeTiers: badgeTiers,
+      xpTotal: xpTotal,
     );
   }
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
+  watchAccount(ref);
   return ProfileRepository(ref.watch(supabaseClientProvider));
 });
 

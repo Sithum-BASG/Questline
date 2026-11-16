@@ -23,12 +23,14 @@ class TaskRepository {
     String? notes,
     DateTime? dueAt,
     String? bossId,
+    String? raidId,
   }) async {
     final row = await _client.from('tasks').insert({
       'title': title,
       'notes': ?notes,
       'due_at': ?dueAt?.toUtc().toIso8601String(),
       'boss_id': ?bossId,
+      'raid_id': ?raidId,
     }).select('id').single();
     return row['id'] as String;
   }
@@ -53,6 +55,7 @@ class TaskRepository {
 }
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
+  watchAccount(ref);
   return TaskRepository(ref.watch(supabaseClientProvider));
 });
 
@@ -65,15 +68,17 @@ typedef InsertDraft = Future<String> Function({
   String? notes,
   DateTime? dueAt,
   String? bossId,
+  String? raidId,
 });
 
 final insertDraftProvider = Provider<InsertDraft>((ref) {
-  return ({required String title, String? notes, DateTime? dueAt, String? bossId}) {
+  return ({required String title, String? notes, DateTime? dueAt, String? bossId, String? raidId}) {
     return ref.read(taskRepositoryProvider).insertDraft(
           title: title,
           notes: notes,
           dueAt: dueAt,
           bossId: bossId,
+          raidId: raidId,
         );
   };
 });

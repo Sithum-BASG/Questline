@@ -18,6 +18,8 @@ import 'friend_links.dart';
 import 'providers/friends_providers.dart';
 import 'providers/pending_friend_code.dart';
 import 'providers/presence_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/clay.dart';
 
 /// Friends list, incoming requests, and add by username or friend code.
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -33,10 +35,16 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   String? _error;
   String? _info;
 
+  var _handlingPending = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _consumePendingCode());
+    // Consume a code that arrived before this screen mounted (cold deep link).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final code = ref.read(pendingFriendCodeProvider);
+      if (code != null) _consumePendingCode(code);
+    });
   }
 
   @override
@@ -45,26 +53,30 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     super.dispose();
   }
 
-  Future<void> _consumePendingCode() async {
-    final code = ref.read(pendingFriendCodeProvider);
-    if (code == null || code.isEmpty) return;
+  Future<void> _consumePendingCode(String code) async {
+    if (_handlingPending || code.isEmpty) return;
+    _handlingPending = true;
     ref.read(pendingFriendCodeProvider.notifier).clear();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add friend?', style: AppText.h2),
-        content: Text('Send a request to code $code?', style: AppText.body),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Send')),
-        ],
-      ),
-    );
-    if (confirm != true || !mounted) return;
-    setState(() {
-      _query.text = code;
-    });
-    await _send();
+    try {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Add friend?', style: AppText.h2),
+          content: Text('Send a request to code $code?', style: AppText.body),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Send')),
+          ],
+        ),
+      );
+      if (confirm != true || !mounted) return;
+      setState(() {
+        _query.text = code;
+      });
+      await _send();
+    } finally {
+      _handlingPending = false;
+    }
   }
 
   Future<void> _showMyQr(String code) async {
@@ -160,14 +172,22 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Nested /friends/scan → go('/social/friends') keeps this State alive; listen for new codes.
+    ref.listen<String?>(pendingFriendCodeProvider, (prev, next) {
+      if (next == null || next.isEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _consumePendingCode(next);
+      });
+    });
+
     final async = ref.watch(friendRowsProvider);
     final myCode = ref.watch(myFriendCodeProvider).asData?.value;
     final focusing = ref.watch(focusingFriendsProvider).asData?.value ?? const {};
 
     return Scaffold(
-      appBar: AppBar(title: Text('Friends', style: AppText.h2)),
+      appBar: const ClayHeader(title: 'Friends'),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSkeleton(),
         error: (error, _) => EmptyState(
           title: 'Could not load friends',
           body: 'Check your connection and try again.',
@@ -176,11 +196,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
         ),
         data: (data) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.screen,
               AppSpacing.s8,
               AppSpacing.screen,
-              100,
+              bottomClearance(context),
             ),
             children: [
               if (myCode != null) ...[
@@ -204,16 +224,28 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                           if (mounted) setState(() => _info = 'Code copied.');
                         },
                         icon: const Icon(Icons.copy_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Show QR',
                         onPressed: () => _showMyQr(myCode),
                         icon: const Icon(Icons.qr_code_2_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Share',
                         onPressed: () => _share(myCode),
                         icon: const Icon(Icons.ios_share_outlined),
+                        constraints: const BoxConstraints(
+                          minWidth: AppSpacing.minTap,
+                          minHeight: AppSpacing.minTap,
+                        ),
                       ),
                     ],
                   ),
@@ -252,7 +284,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s8),
-                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.error)),
+                Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
               ],
               if (_info != null) ...[
                 const SizedBox(height: AppSpacing.s8),

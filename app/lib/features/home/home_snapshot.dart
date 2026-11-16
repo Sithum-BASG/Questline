@@ -2,6 +2,7 @@ import '../../data/models/boss.dart';
 import '../../data/models/player_state.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/task.dart';
+import '../hero/level_road_screen.dart';
 
 /// Everything Home needs in one place (and what we cache offline).
 class HomeSnapshot {
@@ -13,6 +14,8 @@ class HomeSnapshot {
     this.weeklyRank,
     this.unreadInbox = 0,
     this.nextRewardLabel,
+    this.nextReward,
+    this.nextRewardLevel,
     this.showAddFriends = false,
     this.offline = false,
   });
@@ -24,6 +27,10 @@ class HomeSnapshot {
   final int? weeklyRank;
   final int unreadInbox;
   final String? nextRewardLabel;
+
+  /// The reward waiting on the level road, and the level it unlocks at.
+  final RoadReward? nextReward;
+  final int? nextRewardLevel;
   final bool showAddFriends;
   final bool offline;
 
@@ -36,6 +43,8 @@ class HomeSnapshot {
       weeklyRank: weeklyRank,
       unreadInbox: unreadInbox,
       nextRewardLabel: nextRewardLabel,
+      nextReward: nextReward,
+      nextRewardLevel: nextRewardLevel,
       showAddFriends: showAddFriends,
       offline: offline ?? this.offline,
     );
@@ -49,6 +58,8 @@ class HomeSnapshot {
         'weeklyRank': weeklyRank,
         'unreadInbox': unreadInbox,
         'nextRewardLabel': nextRewardLabel,
+        'nextReward': nextReward?.toJson(),
+        'nextRewardLevel': nextRewardLevel,
         'showAddFriends': showAddFriends,
       };
 
@@ -68,6 +79,10 @@ class HomeSnapshot {
       weeklyRank: json['weeklyRank'] as int?,
       unreadInbox: (json['unreadInbox'] as num?)?.toInt() ?? 0,
       nextRewardLabel: json['nextRewardLabel'] as String?,
+      nextReward: json['nextReward'] is Map
+          ? RoadReward.fromJson(Map<String, dynamic>.from(json['nextReward'] as Map))
+          : null,
+      nextRewardLevel: (json['nextRewardLevel'] as num?)?.toInt(),
       showAddFriends: json['showAddFriends'] == true,
       offline: offline,
     );

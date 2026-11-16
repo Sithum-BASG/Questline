@@ -11,6 +11,8 @@ class ChestScreenData {
     required this.pityLimit,
     required this.chestCost,
     required this.rates,
+    this.pouchAmounts = const [],
+    this.duplicateRefund = const {},
   });
 
   final int coins;
@@ -20,6 +22,12 @@ class ChestScreenData {
   final int chestCost;
   final Map<String, double> rates;
 
+  /// Coin amounts a Common pouch can hold.
+  final List<int> pouchAmounts;
+
+  /// Coins a duplicate turns into, by rarity.
+  final Map<String, double> duplicateRefund;
+
   int get untilLegendary {
     final left = pityLimit - pityCounter;
     return left < 1 ? 1 : left;
@@ -27,6 +35,7 @@ class ChestScreenData {
 }
 
 final chestScreenProvider = FutureProvider<ChestScreenData>((ref) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final config = ref.watch(gameConfigReaderProvider);
   final row = await client
@@ -43,5 +52,7 @@ final chestScreenProvider = FutureProvider<ChestScreenData>((ref) async {
     pityLimit: await config.legendaryPity(),
     chestCost: await config.chestCost(),
     rates: await config.rarityRates(),
+    pouchAmounts: await config.commonPouchAmounts(),
+    duplicateRefund: await config.duplicateRefund(),
   );
 });

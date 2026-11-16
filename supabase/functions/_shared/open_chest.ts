@@ -88,6 +88,16 @@ export async function openChestDraft(
     throw invalidArgument(`Need ${cost} coins`);
   }
 
+  // Demo mode (allow-list + user_settings.demo_mode): force Mythic for the live reveal.
+  const demoRows = await tx`
+    select
+      coalesce(s.demo_mode, false) as demo_mode,
+      exists(select 1 from demo_allowlist a where a.user_id = ${userId}) as allowlisted
+    from user_settings s
+    where s.user_id = ${userId}
+  `;
+  const forceMythic = demoRows[0]?.demo_mode === true && demoRows[0]?.allowlisted === true;
+
   const ownedRows = await tx`select catalog_id from inventory where user_id = ${userId}`;
   const owned = ownedRows.map((row) => String(row.catalog_id));
   const catalog = await tx`
@@ -118,6 +128,7 @@ export async function openChestDraft(
     mythicSets,
     rng,
     ratesFrom(config),
+    forceMythic ? "mythic" : undefined,
   );
 
   let refund: number | undefined;

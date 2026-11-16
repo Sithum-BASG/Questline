@@ -12,6 +12,10 @@ import '../../core/widgets/reward_overlay.dart';
 import '../../data/models/boss.dart';
 import 'boss_detail_screen.dart';
 import 'providers/boss_providers.dart';
+import '../../core/widgets/loading_skeleton.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/boss_card.dart';
+import '../../core/widgets/clay.dart';
 
 /// Defeated or escaped result. Claim plays the reward moment then returns to the list.
 class BossResultScreen extends ConsumerStatefulWidget {
@@ -62,7 +66,7 @@ class _BossResultScreenState extends ConsumerState<BossResultScreen> {
     return Scaffold(
       body: SafeArea(
         child: async.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSkeleton(),
           error: (error, _) => EmptyState(
             title: 'Could not load result',
             body: 'Try again from the bosses list.',
@@ -91,23 +95,81 @@ class _BossResultScreenState extends ConsumerState<BossResultScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Spacer(),
-                  Text(
-                    escaped ? 'Escaped' : 'Defeated',
-                    style: AppText.h1,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  Text(boss.name, style: AppText.h2, textAlign: TextAlign.center),
                   const SizedBox(height: AppSpacing.s16),
-                  Text(
-                    escaped
-                        ? 'Loot lost. −$penalty coins. XP you earned is kept.'
-                        : loot == 'full'
-                            ? 'Full loot · +$coins coins'
-                            : 'Half loot · +$coins coins',
-                    style: AppText.body,
-                    textAlign: TextAlign.center,
+                  Center(
+                    child: Container(
+                      height: 30,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: escaped ? AppColors.bossHpSoft : AppColors.tealSoft,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text(
+                          escaped ? 'BOSS ESCAPED' : 'BOSS DEFEATED',
+                          style: AppText.label.copyWith(
+                            letterSpacing: 1.6,
+                            color: escaped ? AppColors.bossHpText : AppColors.tealDeep,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Center(
+                    child: SizedBox(
+                      width: 240,
+                      height: 240,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Clay(
+                            circle: true,
+                            width: 240,
+                            height: 240,
+                            gradient: RadialGradient(
+                              colors: escaped
+                                  ? [AppColors.white, AppColors.well]
+                                  : [AppColors.white, AppColors.legendarySoft],
+                            ),
+                          ),
+                          BossArt(tier: boss.tier, size: 200, greyed: escaped),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s32),
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      escaped ? 'Escaped' : 'Defeated',
+                      style: AppText.display,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(boss.name, style: AppText.h2.copyWith(color: AppColors.inkMuted), textAlign: TextAlign.center),
+                  const SizedBox(height: AppSpacing.s24),
+                  Clay(
+                    radius: 24,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    child: Row(
+                      children: [
+                        Image.asset(GameAssets.icon('coin'), width: 32, height: 32),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            escaped
+                                ? 'Loot lost. −$penalty coins. XP you earned is kept.'
+                                : loot == 'full'
+                                    ? 'Full loot · +$coins coins'
+                                    : 'Half loot · +$coins coins',
+                            style: AppText.item,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   QButton(
