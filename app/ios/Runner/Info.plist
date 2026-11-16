@@ -38,7 +38,17 @@
 				<string>questline</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.657368930176-asnhru8sl42g8e39uqauqfm9b82lae9m</string>
+			</array>
+		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>657368930176-asnhru8sl42g8e39uqauqfm9b82lae9m.apps.googleusercontent.com</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
