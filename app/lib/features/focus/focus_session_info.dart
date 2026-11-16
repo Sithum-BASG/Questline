@@ -224,6 +224,13 @@ final focusSessionInfoProvider = FutureProvider.autoDispose.family<FocusTaskInfo
 
 enum FocusRing { live, full, stopped, idle }
 
+/// The clock's sunken track: a softer bottom-right highlight than other wells, so the white ring's
+/// inner edge stays visible there.
+const List<InnerShadow> _trackShade = [
+  InnerShadow(Offset(4, 4), 10, Color(0x24101935)),
+  InnerShadow(Offset(-3, -3), 8, Color(0x80FFFFFF)),
+];
+
 /// The clay focus clock with your hero standing inside it, head and shoulders rising out of the top.
 ///
 /// Drawn on a 260 px grid and scaled to [size]. The widget's height includes the headroom above the clock.
@@ -289,7 +296,7 @@ class FocusMedallion extends StatelessWidget {
                 Positioned(
                   left: 16 * s,
                   top: 16 * s,
-                  child: Well(circle: true, width: 228 * s, height: 228 * s),
+                  child: Well(circle: true, width: 228 * s, height: 228 * s, shade: _trackShade),
                 ),
                 Positioned(
                   left: 16 * s,
@@ -435,7 +442,26 @@ class _RimPainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = AppColors.ink.withValues(alpha: 0.08);
     canvas.drawCircle(centre, 130 * scale - 0.5, rim);
-    canvas.drawCircle(centre, 114 * scale + 0.5, rim..color = AppColors.ink.withValues(alpha: 0.06));
+    // The track's highlight sits on its bottom right and washes into the white ring there,
+    // so the inner edge darkens toward the bottom right.
+    final inner = 114 * scale + 0.75;
+    canvas.drawCircle(
+      centre,
+      inner,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.ink.withValues(alpha: 0.06),
+            AppColors.ink.withValues(alpha: 0.10),
+            AppColors.ink.withValues(alpha: 0.24),
+          ],
+          stops: const [0, 0.5, 1],
+        ).createShader(Rect.fromCircle(center: centre, radius: inner)),
+    );
   }
 
   @override
