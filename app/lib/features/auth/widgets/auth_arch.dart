@@ -23,9 +23,13 @@ class AuthArch extends StatelessWidget {
   static const double nameplateHeight = 46;
   static const double nameplateOverlap = 2;
 
-  /// Arch top from the screen top; pushed down only if the status bar is taller.
+  /// How far the heroes' heads rise above the arch.
+  static const double headRise = 36;
+
+  /// Arch top from the screen top. Pushed down so the heads clear the status bar
+  /// (an iPhone's Dynamic Island inset is 59 pt).
   static double archTop(BuildContext context) =>
-      math.max(archTopMin, MediaQuery.paddingOf(context).top + 12);
+      math.max(archTopMin, MediaQuery.paddingOf(context).top + headRise + 10);
 
   static double height(BuildContext context) =>
       archTop(context) + archHeight - nameplateOverlap + nameplateHeight;
@@ -34,6 +38,8 @@ class AuthArch extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = archTop(context);
     final archBottom = top + archHeight;
+    // The heroes move down with the arch so their heads keep their place above it.
+    final drop = top - archTopMin;
 
     return ExcludeSemantics(
       child: SizedBox(
@@ -64,7 +70,7 @@ class AuthArch extends StatelessWidget {
                       children: [
                         Positioned(
                           left: 13,
-                          top: 44,
+                          top: 44 + drop,
                           child: _HeroSkin(
                             asset: GameAssets.skin('starter', BodyType.b),
                             flip: true,
@@ -72,7 +78,7 @@ class AuthArch extends StatelessWidget {
                         ),
                         Positioned(
                           left: -63,
-                          top: 40,
+                          top: 40 + drop,
                           child: _HeroSkin(
                             asset: GameAssets.skin('starter', BodyType.a),
                           ),
