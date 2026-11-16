@@ -105,12 +105,20 @@ class AchievementsRepository {
     );
   }
 
+  /// The server rejects updates without a filter, so every profile write names
+  /// the signed-in user's row.
+  String get _uid {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('Not signed in');
+    return uid;
+  }
+
   Future<void> setPinnedBadges(List<String> badgeIds) async {
-    await _client.from('profiles').update({'pinned_badges': badgeIds});
+    await _client.from('profiles').update({'pinned_badges': badgeIds}).eq('id', _uid);
   }
 
   Future<void> setTitleId(String? titleId) async {
-    await _client.from('profiles').update({'title_id': titleId});
+    await _client.from('profiles').update({'title_id': titleId}).eq('id', _uid);
   }
 }
 

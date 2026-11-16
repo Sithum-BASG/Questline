@@ -169,7 +169,11 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           'background' => 'equipped_background_id',
           _ => 'equipped_frame_id',
         };
-        await ref.read(supabaseClientProvider).from('profiles').update({column: item.id});
+        final client = ref.read(supabaseClientProvider);
+        final uid = client.auth.currentUser?.id;
+        if (uid == null) throw StateError('Not signed in');
+        // The server rejects updates without a filter: name the user's own row.
+        await client.from('profiles').update({column: item.id}).eq('id', uid);
         ref.invalidate(profileViewProvider);
       }
       ref.invalidate(wardrobeProvider);
