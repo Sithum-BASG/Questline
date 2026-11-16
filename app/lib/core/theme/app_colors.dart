@@ -116,6 +116,12 @@ class AppColors {
   static const Color arenaMid = Color(0xFFD9DBF7);
   static const Color arenaDeep = Color(0xFF9EA3DA);
 
+  /// Boss hours slider: one shade per tier zone, lightest (minion) to deepest (titan).
+  static const List<Color> bossTierZones = [Color(0xFFC9CDE3), Color(0xFFAEB3DD), Color(0xFF8D93D1), Color(0xFF6B71BF)];
+
+  /// Late-boss warning wash.
+  static const Color bossLateSoft = Color(0xFFFCEEF2);
+
   /// Raid navy: tier tags, party tags and the fair-share line.
   static const Color raidInk = Color(0xFF2B3168);
   static const Color raidSoft = Color(0xFFE7E8FB);
