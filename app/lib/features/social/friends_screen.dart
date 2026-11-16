@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/assets/game_assets.dart';
@@ -15,6 +14,7 @@ import '../../core/widgets/member_card.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import 'friend_links.dart';
+import 'friend_qr_sheet.dart';
 import 'providers/friends_providers.dart';
 import 'providers/pending_friend_code.dart';
 import 'providers/presence_providers.dart';
@@ -79,29 +79,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     }
   }
 
-  Future<void> _showMyQr(String code) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Your QR', style: AppText.h2),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            QrImageView(
-              data: friendInviteUri(code),
-              size: 200,
-              backgroundColor: AppColors.white,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(code, style: AppText.body),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
-        ],
-      ),
-    );
-  }
+  Future<void> _showMyQr(String code) => showFriendQrSheet(context, code);
 
   Future<void> _share(String code) async {
     await SharePlus.instance.share(ShareParams(text: friendInviteShareText(code)));

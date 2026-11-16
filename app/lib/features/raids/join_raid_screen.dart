@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../core/assets/game_assets.dart';
 import '../../core/notifications/notification_replan.dart';
@@ -13,6 +12,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/boss_card.dart';
 import '../../core/widgets/clay.dart';
+import '../../core/widgets/qr_scanner_view.dart';
 import '../../core/widgets/q_button.dart';
 import '../../data/models/raid.dart';
 import '../../data/models/raid_member.dart';
@@ -129,25 +129,20 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
     }
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onDetect(String raw) {
     if (!_scan) return;
-    for (final barcode in capture.barcodes) {
-      final raw = barcode.rawValue;
-      if (raw == null || raw.isEmpty) continue;
-      final uri = Uri.tryParse(raw);
-      final fromLink = uri == null ? null : raidCodeFromUri(uri);
-      final code = fromLink ?? (RegExp('^[A-Za-z0-9]{$raidCodeLength}\$').hasMatch(raw) ? raw.toUpperCase() : null);
-      if (code == null) {
-        setState(() => _error = 'That QR is not a Questline party invite.');
-        continue;
-      }
-      setState(() {
-        _scan = false;
-        _code.text = _clean(code);
-      });
-      _lookup();
+    final uri = Uri.tryParse(raw);
+    final fromLink = uri == null ? null : raidCodeFromUri(uri);
+    final code = fromLink ?? (RegExp('^[A-Za-z0-9]{$raidCodeLength}\$').hasMatch(raw) ? raw.toUpperCase() : null);
+    if (code == null) {
+      setState(() => _error = 'That QR is not a Questline party invite.');
       return;
     }
+    setState(() {
+      _scan = false;
+      _code.text = _clean(code);
+    });
+    _lookup();
   }
 
   void _back() {
@@ -273,28 +268,7 @@ class _JoinRaidScreenState extends ConsumerState<JoinRaidScreen> {
           borderRadius: BorderRadius.circular(32),
           child: SizedBox(
             height: 430,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(colors: [AppColors.scanTop, AppColors.scanDeep], radius: 0.9),
-                  ),
-                ),
-                MobileScanner(onDetect: _onDetect),
-                const IgnorePointer(child: CustomPaint(painter: _ScanFramePainter())),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 26,
-                  child: Text(
-                    "Point at the QR on your friend's screen",
-                    textAlign: TextAlign.center,
-                    style: AppText.title.copyWith(fontSize: 14, color: AppColors.white),
-                  ),
-                ),
-              ],
-            ),
+            child: QrScannerView(onCode: _onDetect, hint: "Point at the QR on your friend's screen"),
           ),
         ),
         const SizedBox(height: 16),
@@ -554,40 +528,3 @@ class _CodeBoxes extends StatelessWidget {
   }
 }
 
-/// Teal corner brackets and a glowing scan line over the camera.
-class _ScanFramePainter extends CustomPainter {
-  const _ScanFramePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final side = size.width * 0.62;
-    final rect = Rect.fromCenter(center: Offset(size.width / 2, size.height * 0.45), width: side, height: side);
-    final paint = Paint()
-      ..color = AppColors.teal
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
-    const arm = 34.0;
-    for (final (corner, dx, dy) in [
-      (rect.topLeft, 1.0, 1.0),
-      (rect.topRight, -1.0, 1.0),
-      (rect.bottomLeft, 1.0, -1.0),
-      (rect.bottomRight, -1.0, -1.0),
-    ]) {
-      canvas.drawLine(corner, corner + Offset(arm * dx, 0), paint);
-      canvas.drawLine(corner, corner + Offset(0, arm * dy), paint);
-    }
-    final y = rect.center.dy;
-    final glow = Paint()
-      ..shader = LinearGradient(colors: [
-        AppColors.teal.withValues(alpha: 0),
-        AppColors.tealLight,
-        AppColors.teal.withValues(alpha: 0),
-      ]).createShader(Rect.fromLTWH(rect.left, y - 2, rect.width, 4))
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-    canvas.drawRect(Rect.fromLTWH(rect.left + 8, y - 1.5, rect.width - 16, 3), glow);
-  }
-
-  @override
-  bool shouldRepaint(_ScanFramePainter old) => false;
-}
