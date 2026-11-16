@@ -444,20 +444,22 @@ class _RimPainter extends CustomPainter {
     canvas.drawCircle(centre, 130 * scale - 0.5, rim);
     // The track's highlight sits on its bottom right and washes into the white ring there,
     // so the inner edge darkens toward the bottom right.
-    final inner = 114 * scale + 0.75;
+    // A soft blurred shade rather than a line, so it blends into the track.
+    final inner = 114 * scale;
     canvas.drawCircle(
       centre,
       inner,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
+        ..strokeWidth = 4 * scale
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.5 * scale)
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.ink.withValues(alpha: 0.06),
-            AppColors.ink.withValues(alpha: 0.10),
-            AppColors.ink.withValues(alpha: 0.24),
+            AppColors.ink.withValues(alpha: 0),
+            AppColors.ink.withValues(alpha: 0.04),
+            AppColors.ink.withValues(alpha: 0.12),
           ],
           stops: const [0, 0.5, 1],
         ).createShader(Rect.fromCircle(center: centre, radius: inner)),
