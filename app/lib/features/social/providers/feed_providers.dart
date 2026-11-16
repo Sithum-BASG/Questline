@@ -6,16 +6,35 @@ import '../feed_copy.dart';
 
 const feedPageSize = 20;
 
+/// The look of the friend behind a feed row, for their framed portrait.
+class FeedActor {
+  const FeedActor({
+    required this.name,
+    this.skinId = 'starter',
+    this.backgroundId = 'starter',
+    this.frameId = 'apprentice',
+    this.bodyType = 'a',
+  });
+
+  final String name;
+  final String skinId;
+  final String backgroundId;
+  final String frameId;
+  final String bodyType;
+}
+
 class FeedItem {
   const FeedItem({
     required this.event,
     required this.line,
     required this.actorName,
+    this.actor,
   });
 
   final ActivityEvent event;
   final String line;
   final String actorName;
+  final FeedActor? actor;
 }
 
 class FeedPage {
@@ -28,8 +47,14 @@ class FeedPage {
   final bool hasMore;
 }
 
+String _short(Object? id, String prefix, String fallback) {
+  if (id is! String || id.isEmpty) return fallback;
+  return id.startsWith(prefix) ? id.substring(prefix.length) : id;
+}
+
 final feedPageProvider =
     FutureProvider.autoDispose.family<FeedPage, int>((ref, pageIndex) async {
+  watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
   final from = pageIndex * feedPageSize;
   final to = from + feedPageSize - 1;
@@ -49,18 +74,29 @@ final feedPageProvider =
   }
 
   final actorIds = events.map((e) => e.actorId).toSet().toList();
-  final profiles = await client.from('profiles').select('id, display_name').inFilter('id', actorIds);
-  final names = <String, String>{
-    for (final row in profiles) row['id'] as String: row['display_name'] as String,
+  final profiles = await client
+      .from('profiles')
+      .select('id, display_name, equipped_skin_id, equipped_background_id, equipped_frame_id, body_type')
+      .inFilter('id', actorIds);
+  final actors = <String, FeedActor>{
+    for (final row in profiles)
+      row['id'] as String: FeedActor(
+        name: row['display_name'] as String? ?? 'A friend',
+        skinId: _short(row['equipped_skin_id'], 'skin_', 'starter'),
+        backgroundId: _short(row['equipped_background_id'], 'bg_', 'starter'),
+        frameId: _short(row['equipped_frame_id'], 'frame_', 'apprentice'),
+        bodyType: row['body_type'] as String? ?? 'a',
+      ),
   };
 
   final items = [
     for (final event in events)
       FeedItem(
         event: event,
-        actorName: names[event.actorId] ?? 'A friend',
+        actor: actors[event.actorId],
+        actorName: actors[event.actorId]?.name ?? 'A friend',
         line: activityFeedLine(
-          actorName: names[event.actorId] ?? 'A friend',
+          actorName: actors[event.actorId]?.name ?? 'A friend',
           type: event.type,
           payload: event.payload,
         ),
