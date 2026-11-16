@@ -84,10 +84,10 @@ void main() {
     ));
     expect(find.text('01:05'), findsOneWidget);
 
-    await tester.tap(find.text('End session'));
+    await tester.tap(find.byTooltip('End session'));
     await tester.pump();
-    expect(find.text('End session?'), findsOneWidget);
-    await tester.tap(find.text('End'));
+    expect(find.text('End this session?'), findsOneWidget);
+    await tester.tap(find.text('End session'));
     await tester.pump();
     expect(ended, isTrue);
     await tester.pumpWidget(const SizedBox());

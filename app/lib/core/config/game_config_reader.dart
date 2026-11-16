@@ -136,6 +136,32 @@ class GameConfigReader {
   }
 
   /// Most members a guild can hold.
+  /// Session XP rates used to preview what a session earns. The server computes the real numbers.
+  Future<XpRates> xpRates() async {
+    final map = await load();
+    double d(String key, double fallback) {
+      final value = map[key];
+      return value is num ? value.toDouble() : fallback;
+    }
+
+    final raw = map['xp_difficulty_multipliers'];
+    final multipliers = raw is List ? [for (final v in raw) if (v is num) v.toDouble()] : const <double>[];
+    return XpRates(
+      multipliers: multipliers.isEmpty ? const [0.5, 0.75, 1.0, 1.3, 1.6] : multipliers,
+      focusCapRatio: d('xp_focus_cap_ratio', 1.5),
+      activityCapRatio: d('xp_activity_cap_ratio', 1),
+      activityShare: d('xp_activity_share', 0.8),
+      onTimeBonus: d('xp_on_time_bonus', 0.1),
+      latePenaltyPerDay: d('xp_late_penalty_per_day', 0.1),
+      lateFloor: d('xp_late_floor', 0.5),
+      reschedulePenalty: d('xp_reschedule_penalty', 0.2),
+      potionMultiplier: d('potion_multiplier', 1.5),
+      potionMinMinutes: d('potion_min_minutes', 25),
+      minEarningMinutes: d('session_min_minutes', 5),
+      graceSeconds: d('xp_grace_seconds', 30).round(),
+    );
+  }
+
   Future<int> guildMax() => _int('guild_max', 10);
 
   Future<Map<String, double>> rarityRates() async {
@@ -156,3 +182,56 @@ class GameConfigReader {
 final gameConfigReaderProvider = Provider<GameConfigReader>((ref) {
   return GameConfigReader(ref.watch(supabaseClientProvider));
 });
+
+/// The `game_config` XP numbers a session preview needs.
+class XpRates {
+  const XpRates({
+    required this.multipliers,
+    required this.focusCapRatio,
+    required this.activityCapRatio,
+    required this.activityShare,
+    required this.onTimeBonus,
+    required this.latePenaltyPerDay,
+    required this.lateFloor,
+    required this.reschedulePenalty,
+    required this.potionMultiplier,
+    required this.potionMinMinutes,
+    required this.minEarningMinutes,
+    required this.graceSeconds,
+  });
+
+  static const defaults = XpRates(
+    multipliers: [0.5, 0.75, 1.0, 1.3, 1.6],
+    focusCapRatio: 1.5,
+    activityCapRatio: 1,
+    activityShare: 0.8,
+    onTimeBonus: 0.1,
+    latePenaltyPerDay: 0.1,
+    lateFloor: 0.5,
+    reschedulePenalty: 0.2,
+    potionMultiplier: 1.5,
+    potionMinMinutes: 25,
+    minEarningMinutes: 5,
+    graceSeconds: 30,
+  );
+
+  final List<double> multipliers;
+  final double focusCapRatio;
+  final double activityCapRatio;
+  final double activityShare;
+  final double onTimeBonus;
+  final double latePenaltyPerDay;
+  final double lateFloor;
+  final double reschedulePenalty;
+  final double potionMultiplier;
+  final double potionMinMinutes;
+
+  /// Sessions shorter than this earn no XP or damage (the server's minimum).
+  final double minEarningMinutes;
+
+  /// How long you can leave a focus session before it ends.
+  final int graceSeconds;
+
+  double multiplier(int difficulty) =>
+      difficulty >= 1 && difficulty <= multipliers.length ? multipliers[difficulty - 1] : 1;
+}

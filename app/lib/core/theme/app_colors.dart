@@ -221,6 +221,15 @@ class AppColors {
   static const Color tealButtonStart = Color(0xFF128A7D);
   static const Color tealButtonEnd = Color(0xFF0D6B63);
 
+  /// Focus clock: deep end of the ring, stopped ring, idle dashes, inner face foot.
+  static const Color focusRingDeep = Color(0xFF0F9488);
+  static const Color focusRingStopped = Color(0xFFB8BFCC);
+  static const Color focusRingIdle = Color(0xFFD5DAE3);
+  static const Color focusFaceFoot = Color(0xFFF3F6FA);
+
+  /// Strong ember for the session-ended notch and icons.
+  static const Color emberDeep = Color(0xFFEA580C);
+
   /// Password strength meter.
   static const Color strengthFilled = Color(0xFF14B8A6);
   static const Color strengthEmpty = Color(0xFFDDE2EA);
