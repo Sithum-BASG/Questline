@@ -345,33 +345,43 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final barBottom = AppSpacing.s16 + media.viewPadding.bottom * 0.5;
-    // Screens under the floating bar see it as part of the bottom inset, so
-    // SafeArea docks and bottomClearance() lists stay above it.
-    final clearance = barBottom + FloatingTabBar.height + AppSpacing.s8;
+    // Out here the insets still include the keyboard.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
-      body: Stack(
-        children: [
-          MediaQuery(
-            data: media.copyWith(
-              padding: media.padding.copyWith(bottom: clearance),
-              viewPadding: media.viewPadding.copyWith(bottom: clearance),
-            ),
-            child: navigationShell,
-          ),
-          Positioned(
-            left: AppSpacing.s16,
-            right: AppSpacing.s16,
-            bottom: barBottom,
-            child: FloatingTabBar(
-              index: navigationShell.currentIndex,
-              onSelected: (index) {
-                navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
-              },
-            ),
-          ),
-        ],
+      // Read the media inside the Scaffold: it has already made room for the keyboard and removed
+      // it from the insets. Reading it above the Scaffold passed the keyboard height down again,
+      // so tab screens made room for it twice and text fields left their screens nearly empty.
+      body: Builder(
+        builder: (context) {
+          final media = MediaQuery.of(context);
+          final barBottom = AppSpacing.s16 + media.viewPadding.bottom * 0.5;
+          // Screens under the floating bar see it as part of the bottom inset, so
+          // SafeArea docks and bottomClearance() lists stay above it. While typing the bar hides.
+          final clearance = keyboardOpen ? media.padding.bottom : barBottom + FloatingTabBar.height + AppSpacing.s8;
+          return Stack(
+            children: [
+              MediaQuery(
+                data: media.copyWith(
+                  padding: media.padding.copyWith(bottom: clearance),
+                  viewPadding: media.viewPadding.copyWith(bottom: keyboardOpen ? media.viewPadding.bottom : clearance),
+                ),
+                child: navigationShell,
+              ),
+              if (!keyboardOpen)
+                Positioned(
+                  left: AppSpacing.s16,
+                  right: AppSpacing.s16,
+                  bottom: barBottom,
+                  child: FloatingTabBar(
+                    index: navigationShell.currentIndex,
+                    onSelected: (index) {
+                      navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+                    },
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
