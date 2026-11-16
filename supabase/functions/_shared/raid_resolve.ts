@@ -139,7 +139,7 @@ export async function resolveRaidsDraft(
             isMvp: mvpId === userId,
             mvpItem: mvpId === userId ? mvpItem : null,
             leftRaid: left,
-          })}::jsonb
+          })}::text::jsonb
         )
       `;
 
@@ -149,7 +149,7 @@ export async function resolveRaidsDraft(
           values (
             ${userId},
             'raid_won',
-            ${JSON.stringify({ raidId, result, name: String(raid.name) })}::jsonb,
+            ${JSON.stringify({ raidId, result, name: String(raid.name) })}::text::jsonb,
             coalesce(
               (select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'),
               '{}'

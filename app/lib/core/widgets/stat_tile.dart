@@ -39,21 +39,55 @@ class StatTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ExcludeSemantics(
-            child: Clay(
-              circle: true,
+            child: SizedBox(
               width: size,
               height: size,
-              onTap: onTap,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack(
                 children: [
-                  Icon(glyph, size: size * 0.25, color: tint),
-                  const SizedBox(height: 2),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(value, style: AppText.stat, textAlign: TextAlign.center),
+                  // A deeper drop shadow and a faint rim lift the orb off the page.
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.ink.withValues(alpha: 0.14),
+                            offset: Offset(0, size * 0.12),
+                            blurRadius: size * 0.26,
+                          ),
+                          BoxShadow(
+                            color: AppColors.ink.withValues(alpha: 0.07),
+                            offset: Offset(0, size * 0.025),
+                            blurRadius: size * 0.05,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Clay(
+                    circle: true,
+                    width: size,
+                    height: size,
+                    onTap: onTap,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: const Alignment(0, -0.35),
+                          radius: 0.55,
+                          colors: [tint.withValues(alpha: 0.14), tint.withValues(alpha: 0)],
+                        ),
+                      ),
+                      child: _OrbContent(glyph: glyph, tint: tint, value: value, size: size),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.ink.withValues(alpha: 0.07)),
+                      ),
+                      child: const SizedBox.expand(),
                     ),
                   ),
                 ],
@@ -64,6 +98,33 @@ class StatTile extends StatelessWidget {
           Text(label, style: AppText.caption, textAlign: TextAlign.center, softWrap: true),
         ],
       ),
+    );
+  }
+}
+
+class _OrbContent extends StatelessWidget {
+  const _OrbContent({required this.glyph, required this.tint, required this.value, required this.size});
+
+  final IconData glyph;
+  final Color tint;
+  final String value;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(glyph, size: size * 0.25, color: tint),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(value, style: AppText.stat, textAlign: TextAlign.center),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -45,7 +45,7 @@ export async function runDeadlinesDraft(
     await tx`
       update bosses set
         status = 'escaped',
-        loot = ${JSON.stringify({ loot: "none", coins: 0 })}::jsonb,
+        loot = ${JSON.stringify({ loot: "none", coins: 0 })}::text::jsonb,
         result_seen = false
       where id = ${boss.id} and user_id = ${userId}
     `;
@@ -64,7 +64,7 @@ export async function runDeadlinesDraft(
           name: String(boss.name),
           tier: String(boss.tier),
           penalty: deducted,
-        })}::jsonb
+        })}::text::jsonb
       )
     `;
     escaped += 1;
@@ -97,7 +97,7 @@ export async function runDeadlinesDraft(
           xpTotal: 0,
           level: 1,
           rewards: [],
-        })}::jsonb
+        })}::text::jsonb
       where id = ${session.id} and user_id = ${session.user_id} and status = 'active'
     `;
     sessionsClosed += 1;

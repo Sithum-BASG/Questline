@@ -1,3 +1,4 @@
+import { jsonObject } from "./json_value.ts";
 import { z } from "zod";
 
 import { loadConfig, type GameConfig } from "./config.ts";
@@ -71,7 +72,8 @@ export async function openChestDraft(
   const prior = await tx`
     select result from processed_requests where user_id = ${userId} and request_id = ${input.requestId}
   `;
-  if (prior[0]?.result) return prior[0].result as OpenChestResult;
+  const stored = jsonObject<OpenChestResult>(prior[0]?.result);
+  if (stored) return stored;
 
   const states = await tx`
     select coins, free_chests, chests_since_legendary, shields, potions, scrolls
@@ -177,7 +179,7 @@ export async function openChestDraft(
     await tx`
       insert into activity_events (actor_id, type, payload, visible_to)
       values (
-        ${userId}, 'chest_drop', ${JSON.stringify({ rarity: roll.rarity })}::jsonb,
+        ${userId}, 'chest_drop', ${JSON.stringify({ rarity: roll.rarity })}::text::jsonb,
         coalesce((select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'), '{}')
       )
     `;
@@ -191,7 +193,7 @@ export async function openChestDraft(
   };
   await tx`
     insert into processed_requests (user_id, request_id, result)
-    values (${userId}, ${input.requestId}, ${JSON.stringify(result)}::jsonb)
+    values (${userId}, ${input.requestId}, ${JSON.stringify(result)}::text::jsonb)
   `;
   return result;
 }
