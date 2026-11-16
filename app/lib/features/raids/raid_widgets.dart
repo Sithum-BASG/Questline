@@ -8,6 +8,7 @@ import '../../core/config/game_config_reader.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/widgets/clay.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Raid numbers from `game_config`, for display only.
 class RaidRules {
@@ -375,6 +376,7 @@ class HeroHead extends StatelessWidget {
               height: imageWidth * 1.5,
               fit: BoxFit.fill,
               filterQuality: FilterQuality.medium,
+              cacheWidth: decodeWidth(context, imageWidth),
             ),
           ),
         ),

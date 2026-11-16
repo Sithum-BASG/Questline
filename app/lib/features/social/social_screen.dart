@@ -15,6 +15,7 @@ import 'providers/friends_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/assets/game_assets.dart';
 import '../../core/widgets/clay.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Social tab default: weekly friends leaderboard (KEY). Sub-routes cover feed / friends / guild.
 class SocialScreen extends ConsumerWidget {
@@ -327,6 +328,7 @@ class _PodiumPlace extends StatelessWidget {
                     GameAssets.skin(entry.skinId, entry.body),
                     height: skinH,
                     fit: BoxFit.contain,
+                    cacheWidth: decodeWidth(context, skinH / 1.5),
                   ),
                 ),
               ),

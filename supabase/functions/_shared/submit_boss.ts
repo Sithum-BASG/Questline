@@ -1,3 +1,4 @@
+import { jsonObject } from "./json_value.ts";
 import { z } from "zod";
 
 import { applyAchievementProgress } from "./apply_achievements.ts";
@@ -45,7 +46,7 @@ export async function submitBossDraft(
   const boss = bosses[0];
   if (!boss) throw notFound("Boss not found");
   if (boss.status === "defeated") {
-    const stored = boss.loot as Record<string, unknown> | null;
+    const stored = jsonObject(boss.loot);
     if (stored && typeof stored === "object") {
       return {
         result: "defeated",
@@ -88,19 +89,19 @@ export async function submitBossDraft(
   await tx`
     update bosses set
       status = 'defeated',
-      loot = ${JSON.stringify(lootPayload)}::jsonb,
+      loot = ${JSON.stringify(lootPayload)}::text::jsonb,
       result_seen = false
     where id = ${bossId} and user_id = ${userId}
   `;
 
-  const counters = (state.counters ?? {}) as Record<string, unknown>;
+  const counters = jsonObject(state.counters) ?? {};
   const defeated = numberFrom(counters.bosses_defeated, 0) + 1;
   const nextCounters = { ...counters, bosses_defeated: defeated };
   await tx`
     update player_state set
       coins = coins + ${paid.coins},
       boss_coins_this_week = boss_coins_this_week + ${paid.coins},
-      counters = ${JSON.stringify(nextCounters)}::jsonb
+      counters = ${JSON.stringify(nextCounters)}::text::jsonb
     where user_id = ${userId}
   `;
   await applyAchievementProgress(userId, { badge: "boss_hunter", progress: defeated }, tx);
@@ -117,7 +118,7 @@ export async function submitBossDraft(
         tier: tier.tier,
         name: showName ? String(boss.name) : null,
         loot: paid.loot,
-      })}::jsonb,
+      })}::text::jsonb,
       coalesce((select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'), '{}')
     )
   `;

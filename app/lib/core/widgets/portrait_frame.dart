@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../assets/game_assets.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 enum PortraitFrameSize { leaderboard, compact, profile }
 
@@ -58,7 +59,12 @@ class PortraitFrame extends StatelessWidget {
               ),
             ),
           ),
-          Image.asset(GameAssets.frame(frameId), fit: BoxFit.fill, filterQuality: FilterQuality.medium),
+          Image.asset(
+            GameAssets.frame(frameId),
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.medium,
+            cacheWidth: decodeWidth(context, extent),
+          ),
         ],
       ),
     );
@@ -91,6 +97,7 @@ class _CroppedStageLayer extends StatelessWidget {
                 height: GameAssets.stageCanvas.height * scale,
                 fit: BoxFit.fill,
                 filterQuality: FilterQuality.medium,
+                cacheWidth: decodeWidth(context, GameAssets.stageCanvas.width * scale),
               ),
             ),
           ),

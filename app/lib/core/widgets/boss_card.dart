@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 import 'clay.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Boss encounter card: the boss breaks out of a rose portal on the left,
 /// then the eyebrow, name, HP bar, HP numbers and time left.
@@ -128,7 +129,13 @@ class BossArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget img = Image.asset(GameAssets.boss(tier), width: size, height: size, fit: BoxFit.contain);
+    Widget img = Image.asset(
+      GameAssets.boss(tier),
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      cacheWidth: decodeWidth(context, size),
+    );
     if (greyed) {
       img = Opacity(
         opacity: 0.35,

@@ -1,3 +1,4 @@
+import { jsonObject } from "./json_value.ts";
 import { z } from "zod";
 
 import { loadConfig, type GameConfig } from "./config.ts";
@@ -105,7 +106,8 @@ export async function endDraft(
   `;
   const session = sessions[0];
   if (!session) throw notFound("Session not found");
-  if (session.processed && session.summary) return session.summary as SessionSummary;
+  const stored = jsonObject<SessionSummary>(session.summary);
+  if (session.processed && stored) return stored;
 
   const tasks = await tx`
     select difficulty, est_minutes, stat, due_at, rescheduled, scroll_used, status, boss_id, raid_id
@@ -210,7 +212,7 @@ export async function endDraft(
     await tx`
       insert into activity_events (actor_id, type, payload, visible_to)
       values (
-        ${userId}, 'level_up', ${JSON.stringify({ level: nextLevel })}::jsonb,
+        ${userId}, 'level_up', ${JSON.stringify({ level: nextLevel })}::text::jsonb,
         coalesce((select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'), '{}')
       )
     `;
@@ -412,7 +414,7 @@ export async function endDraft(
   const status = broken ? "broken" : "completed";
   await tx`
     update sessions set status = ${status}, ended_at = ${now.toISOString()}, verified_minutes = ${verifiedMinutes},
-      interruption_seconds = ${Math.round(awayMs / 1000)}, processed = true, summary = ${JSON.stringify(summary)}::jsonb
+      interruption_seconds = ${Math.round(awayMs / 1000)}, processed = true, summary = ${JSON.stringify(summary)}::text::jsonb
     where id = ${input.sessionId} and user_id = ${userId}
   `;
   return summary;

@@ -9,6 +9,7 @@ import '../../core/supabase/supabase_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/widgets/clay.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/loading_skeleton.dart';
 
@@ -84,13 +85,16 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
     }
   }
 
+  Duration get _turn => Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 150 : 280);
+
   void _advance() {
     if (_card >= 6) return;
-    final reduce = MediaQuery.disableAnimationsOf(context);
-    _pages.nextPage(
-      duration: Duration(milliseconds: reduce ? 150 : 280),
-      curve: Curves.easeOut,
-    );
+    _pages.nextPage(duration: _turn, curve: Curves.easeOut);
+  }
+
+  void _back() {
+    if (_card <= 0) return;
+    _pages.previousPage(duration: _turn, curve: Curves.easeOut);
   }
 
   @override
@@ -106,52 +110,79 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
           final name = value?.displayName ?? '';
           final last = _card == 6;
           return SafeArea(
-            child: Stack(
+            child: Column(
               children: [
-                PageView.builder(
-                  controller: _pages,
-                  itemCount: 7,
-                  onPageChanged: (card) => setState(() => _card = card),
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: _advance,
-                      child: Column(
-                        children: [
-                          Expanded(child: _StoryImage(card: index + 1, body: body)),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.screen,
-                              AppSpacing.s8,
-                              AppSpacing.screen,
-                              AppSpacing.s20,
-                            ),
-                            child: index == 6
-                                ? _LastCard(name: name)
-                                : Text(storyCards[index], style: AppText.h2),
-                          ),
-                          const SizedBox(height: AppSpacing.minTap + AppSpacing.s16),
-                        ],
-                      ),
-                    );
-                  },
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 9, AppSpacing.screen, 0),
+                  child: _StoryProgress(card: _card),
                 ),
-                Positioned(
-                  right: AppSpacing.screen,
-                  bottom: AppSpacing.s16,
-                  child: QButton(
-                    label: last ? 'Begin' : 'Skip',
-                    variant: last ? QButtonVariant.primary : QButtonVariant.secondary,
-                    loading: _busy,
-                    onPressed: _busy ? null : _finish,
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pages,
+                    itemCount: 7,
+                    onPageChanged: (card) => setState(() => _card = card),
+                    itemBuilder: (context, index) => GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _advance,
+                      child: _StoryCard(index: index, body: body, name: name, onSkip: _busy ? null : _finish),
+                    ),
                   ),
                 ),
                 if (_error != null)
-                  Positioned(
-                    left: AppSpacing.screen,
-                    right: AppSpacing.screen,
-                    bottom: AppSpacing.minTap + AppSpacing.s24,
-                    child: Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, 8),
+                    child: Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: AppText.bodySmall.copyWith(color: AppColors.errorText),
+                    ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 4, AppSpacing.screen, AppSpacing.s16),
+                  child: last
+                      ? QButton(
+                          label: 'Begin',
+                          icon: Icons.auto_awesome_rounded,
+                          loading: _busy,
+                          onPressed: _busy ? null : _finish,
+                        )
+                      : SizedBox(
+                          height: 64,
+                          child: Row(
+                            children: [
+                              Opacity(
+                                opacity: _card == 0 ? 0.4 : 1,
+                                child: ClayIconButton(
+                                  icon: Icons.chevron_left_rounded,
+                                  tooltip: 'Previous card',
+                                  size: 56,
+                                  onPressed: _card == 0 ? null : _back,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Tap or swipe',
+                                  textAlign: TextAlign.center,
+                                  style: AppText.bodySmall.copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              Semantics(
+                                button: true,
+                                label: 'Next card',
+                                excludeSemantics: true,
+                                child: Clay(
+                                  kind: ClayKind.teal,
+                                  circle: true,
+                                  width: 64,
+                                  height: 64,
+                                  onTap: _advance,
+                                  child: const Icon(Icons.chevron_right_rounded, size: 30, color: AppColors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
               ],
             ),
           );
@@ -161,6 +192,145 @@ class _StoryScreenState extends ConsumerState<StoryScreen> {
   }
 }
 
+const _kickers = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN'];
+
+class _StoryProgress extends StatelessWidget {
+  const _StoryProgress({required this.card});
+
+  final int card;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Card ${card + 1} of 7',
+      excludeSemantics: true,
+      child: Row(
+        children: [
+          for (var i = 0; i < 7; i++) ...[
+            if (i > 0) const SizedBox(width: 5),
+            Expanded(
+              child: Container(
+                height: 4,
+                decoration: BoxDecoration(color: AppColors.strengthEmpty, borderRadius: BorderRadius.circular(2)),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: i < card ? 1 : (i == card ? 0.55 : 0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: AppColors.tealDeep, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StoryCard extends StatelessWidget {
+  const _StoryCard({required this.index, required this.body, required this.name, required this.onSkip});
+
+  final int index;
+  final BodyType body;
+  final String name;
+
+  /// Skip sits on the picture on every card but the last.
+  final VoidCallback? onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final last = index == 6;
+    return Column(
+      children: [
+        const SizedBox(height: 18),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 438),
+              child: Clay(
+                radius: 34,
+                padding: const EdgeInsets.all(8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(27),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      const ColoredBox(color: AppColors.sceneMid),
+                      Image.asset(
+                        GameAssets.story(index + 1, body),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        semanticLabel: _alts[index],
+                      ),
+                      if (!last)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Semantics(
+                            button: true,
+                            label: 'Skip',
+                            excludeSemantics: true,
+                            child: Clay(
+                              kind: ClayKind.onScene,
+                              radius: 17,
+                              height: 34,
+                              onTap: onSkip,
+                              padding: const EdgeInsets.fromLTRB(14, 0, 10, 0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Skip', style: AppText.title.copyWith(fontSize: 13, height: 16 / 13)),
+                                  const SizedBox(width: 2),
+                                  const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.ink),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 26, 28, 12),
+          child: Column(
+            children: [
+              Text(
+                _kickers[index],
+                style: AppText.label.copyWith(fontSize: 11, height: 14 / 11, letterSpacing: 1.5, color: AppColors.tealDeep),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 29 * 4,
+                child: last
+                    ? _LastCard(name: name)
+                    : Text(storyCards[index], textAlign: TextAlign.center, style: _lineStyle),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+const _alts = [
+  'A student slumped over a planner at night',
+  'Ink rising out of the planner with glowing eyes',
+  'Ink monsters hiding around the campus',
+  'A deadline golem grown huge in the dorm room',
+  'The planner glowing teal as the student focuses',
+  'The student striking an ink monster with light',
+  'Friends looking out over a magical campus',
+];
+
+final _lineStyle = AppText.h2.copyWith(fontSize: 21, height: 29 / 21, fontWeight: FontWeight.w600, letterSpacing: -0.4);
+
 class _LastCard extends StatelessWidget {
   const _LastCard({required this.name});
 
@@ -169,43 +339,16 @@ class _LastCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text.rich(
+      textAlign: TextAlign.center,
       TextSpan(
-        style: AppText.h2,
+        style: _lineStyle,
         children: [
           const TextSpan(text: 'You\'re not the only one who can see them. '),
           TextSpan(
-            text: '$name, your first quest is waiting.',
-            style: AppText.h2.copyWith(color: AppColors.tealDeep),
+            text: name.isEmpty ? 'Your first quest is waiting.' : '$name, your first quest is waiting.',
+            style: _lineStyle.copyWith(color: AppColors.tealDeep),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StoryImage extends StatelessWidget {
-  const _StoryImage({required this.card, required this.body});
-
-  final int card;
-  final BodyType body;
-
-  @override
-  Widget build(BuildContext context) {
-    return ShaderMask(
-      blendMode: BlendMode.dstIn,
-      shaderCallback: (bounds) {
-        return const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFFFFF), Color(0xFFFFFFFF), Color(0x00FFFFFF)],
-          stops: [0, GameAssets.storyFadeStart, 1],
-        ).createShader(bounds);
-      },
-      child: Image.asset(
-        GameAssets.story(card, body),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        alignment: Alignment.topCenter,
       ),
     );
   }

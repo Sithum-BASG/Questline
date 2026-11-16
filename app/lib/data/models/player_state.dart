@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'player_state.freezed.dart';
@@ -43,5 +45,23 @@ abstract class PlayerState with _$PlayerState {
   }) = _PlayerState;
 
   factory PlayerState.fromJson(Map<String, dynamic> json) =>
-      _$PlayerStateFromJson(json);
+      _$PlayerStateFromJson(_withJsonObjects(json, const ['counters', 'onboarding_bonus']));
+}
+
+/// Some rows hold a jsonb object as a JSON string (written before the T164 server fix).
+/// Decodes those keys so one bad value doesn't fail the whole row.
+Map<String, dynamic> _withJsonObjects(Map<String, dynamic> json, List<String> keys) {
+  if (!keys.any((key) => json[key] is String)) return json;
+  final copy = Map<String, dynamic>.from(json);
+  for (final key in keys) {
+    final value = copy[key];
+    if (value is! String) continue;
+    try {
+      final decoded = jsonDecode(value);
+      copy[key] = decoded is Map ? Map<String, dynamic>.from(decoded) : <String, dynamic>{};
+    } on FormatException {
+      copy[key] = <String, dynamic>{};
+    }
+  }
+  return copy;
 }

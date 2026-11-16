@@ -20,6 +20,9 @@ class AppColors {
 
   static const Color inkMuted = Color(0xFF5B6178);
   static const Color inkFaint = Color(0xFF9AA0B4);
+
+  /// Secondary body text on light scenes, e.g. quest notes.
+  static const Color inkSoft = Color(0xFF4F5A70);
   static const Color line = Color(0xFFE8E6E1);
   static const Color ember = Color(0xFFF97316);
   static const Color streakEmber = ember;
@@ -112,6 +115,12 @@ class AppColors {
   static const Color arenaLight = Color(0xFFF4F3FF);
   static const Color arenaMid = Color(0xFFD9DBF7);
   static const Color arenaDeep = Color(0xFF9EA3DA);
+
+  /// Boss hours slider: one shade per tier zone, lightest (minion) to deepest (titan).
+  static const List<Color> bossTierZones = [Color(0xFFC9CDE3), Color(0xFFAEB3DD), Color(0xFF8D93D1), Color(0xFF6B71BF)];
+
+  /// Late-boss warning wash.
+  static const Color bossLateSoft = Color(0xFFFCEEF2);
 
   /// Raid navy: tier tags, party tags and the fair-share line.
   static const Color raidInk = Color(0xFF2B3168);
@@ -220,6 +229,15 @@ class AppColors {
   /// Soft teal primary button gradient (145°).
   static const Color tealButtonStart = Color(0xFF128A7D);
   static const Color tealButtonEnd = Color(0xFF0D6B63);
+
+  /// Focus clock: deep end of the ring, stopped ring, idle dashes, inner face foot.
+  static const Color focusRingDeep = Color(0xFF0F9488);
+  static const Color focusRingStopped = Color(0xFFB8BFCC);
+  static const Color focusRingIdle = Color(0xFFD5DAE3);
+  static const Color focusFaceFoot = Color(0xFFF3F6FA);
+
+  /// Strong ember for the session-ended notch and icons.
+  static const Color emberDeep = Color(0xFFEA580C);
 
   /// Password strength meter.
   static const Color strengthFilled = Color(0xFF14B8A6);

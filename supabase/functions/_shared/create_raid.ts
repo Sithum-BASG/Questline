@@ -317,7 +317,7 @@ export async function createRaidDraft(
     });
     await tx`
       insert into inbox (user_id, type, payload)
-      select user_id, 'guild_fight', ${payload}::jsonb
+      select user_id, 'guild_fight', ${payload}::text::jsonb
       from guild_members
       where guild_id = ${input.guildId} and user_id <> ${userId}
     `;

@@ -83,7 +83,7 @@ export async function sendFriendRequestDraft(
         fromUid: userId,
         username: me[0].username,
         displayName: me[0].display_name,
-      })}::jsonb
+      })}::text::jsonb
     )
   `;
   return { ok: true };

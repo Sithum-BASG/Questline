@@ -18,6 +18,7 @@ import '../../data/models/raid_member.dart';
 import '../bosses/boss_time.dart';
 import 'providers/raid_detail_providers.dart';
 import 'raid_widgets.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Live raid: the boss in its arena, HP, the party on stage, the battle log
 /// and a docked Attack button.
@@ -699,6 +700,7 @@ class _HeroRow extends StatelessWidget {
                         height: figure * 1.5,
                         fit: BoxFit.fill,
                         filterQuality: FilterQuality.medium,
+                        cacheWidth: decodeWidth(context, figure),
                       ),
                     ),
                     if (showDots && focusingIds.contains(m.userId))

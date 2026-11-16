@@ -284,7 +284,7 @@ export async function runWeeklyResetDraft(
           bestDay: split.bestDay,
           bestDayXp: split.bestDayXp,
           bossesBeaten,
-        })}::jsonb
+        })}::text::jsonb
       )
     `;
 

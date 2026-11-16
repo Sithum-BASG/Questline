@@ -42,36 +42,34 @@ class HomeRepository {
   Future<HomeSnapshot> _fetchLive() async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) throw StateError('Not signed in');
-    final profileRow = await _client.from('profiles').select(_profileCols).eq('id', uid).maybeSingle();
+    // Profile and player state first (the rest needs the level and week), then the rest at once.
+    final (profileRow, playerRow) = await (
+      _client.from('profiles').select(_profileCols).eq('id', uid).maybeSingle(),
+      _client.from('player_state').select(_playerCols).maybeSingle(),
+    ).wait;
     if (profileRow == null) throw StateError('Profile missing');
-    final profile = Profile.fromJson(profileRow);
-
-    final playerRow = await _client.from('player_state').select(_playerCols).maybeSingle();
     if (playerRow == null) throw StateError('Player state missing');
+    final profile = Profile.fromJson(profileRow);
     final player = PlayerState.fromJson(playerRow);
 
-    final taskRows = await _client
-        .from('tasks')
-        .select(_taskCols)
-        .eq('status', 'open')
-        .order('due_at', ascending: true)
-        .limit(3);
-    final tasks = [for (final row in taskRows) Task.fromJson(row)];
+    final (taskRows, bossRows, scores, unread, rewardRows, friends) = await (
+      _client.from('tasks').select(_taskCols).eq('status', 'open').order('due_at', ascending: true).limit(3),
+      _client
+          .from('bosses')
+          .select(_bossCols)
+          .inFilter('status', ['active', 'staggered'])
+          .order('deadline', ascending: true)
+          .limit(1),
+      _client.from('weekly_scores').select('user_id, raw_xp').eq('week_id', player.weekId).order('raw_xp', ascending: false),
+      _client.from('inbox').select('id').isFilter('read_at', null),
+      _client.from('level_rewards').select('level, rewards').gt('level', profile.level).order('level', ascending: true).limit(1),
+      _client.from('friendships').select('friend_id').eq('status', 'accepted').limit(1),
+    ).wait;
 
-    final bossRows = await _client
-        .from('bosses')
-        .select(_bossCols)
-        .inFilter('status', ['active', 'staggered'])
-        .order('deadline', ascending: true)
-        .limit(1);
+    final tasks = [for (final row in taskRows) Task.fromJson(row)];
     final closestBoss = bossRows.isEmpty ? null : Boss.fromJson(bossRows.first);
 
     int? weeklyRank;
-    final scores = await _client
-        .from('weekly_scores')
-        .select('user_id, raw_xp')
-        .eq('week_id', player.weekId)
-        .order('raw_xp', ascending: false);
     for (var i = 0; i < scores.length; i++) {
       if (scores[i]['user_id'] == profile.id) {
         weeklyRank = i + 1;
@@ -79,18 +77,11 @@ class HomeRepository {
       }
     }
 
-    final unread = await _client.from('inbox').select('id').isFilter('read_at', null);
-    final unreadInbox = (unread as List).length;
+    final unreadInbox = unread.length;
 
     String? nextRewardLabel;
     RoadReward? nextReward;
     int? nextRewardLevel;
-    final rewardRows = await _client
-        .from('level_rewards')
-        .select('level, rewards')
-        .gt('level', profile.level)
-        .order('level', ascending: true)
-        .limit(1);
     if (rewardRows.isNotEmpty) {
       nextRewardLevel = (rewardRows.first['level'] as num).toInt();
       final entries = [
@@ -126,12 +117,7 @@ class HomeRepository {
       }
     }
 
-    final friends = await _client
-        .from('friendships')
-        .select('friend_id')
-        .eq('status', 'accepted')
-        .limit(1);
-    final showAddFriends = (friends as List).isEmpty;
+    final showAddFriends = friends.isEmpty;
 
     return HomeSnapshot(
       profile: profile,

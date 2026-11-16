@@ -1,3 +1,4 @@
+import { jsonObject } from "./json_value.ts";
 import { type BadgeId, tierRewards } from "./game/achievements.ts";
 
 type Tx = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<Record<string, unknown>[]>;
@@ -52,7 +53,7 @@ export async function applyAchievementProgress(
       values (
         ${userId},
         'badge',
-        ${JSON.stringify({ badge: badgeId, tier: reward.tier })}::jsonb,
+        ${JSON.stringify({ badge: badgeId, tier: reward.tier })}::text::jsonb,
         coalesce(
           (select array_agg(friend_id) from friendships where user_id = ${userId} and status = 'accepted'),
           '{}'
@@ -83,7 +84,7 @@ export async function bumpCounters(
   const rows = await tx`
     select counters from player_state where user_id = ${userId} for update
   `;
-  const current = (rows[0]?.counters ?? {}) as Record<string, unknown>;
+  const current = jsonObject(rows[0]?.counters) ?? {};
   const next: Record<string, number> = {};
   for (const [key, value] of Object.entries(current)) {
     next[key] = numberFrom(value, 0);
@@ -92,7 +93,7 @@ export async function bumpCounters(
     next[key] = numberFrom(next[key], 0) + delta;
   }
   await tx`
-    update player_state set counters = ${JSON.stringify(next)}::jsonb
+    update player_state set counters = ${JSON.stringify(next)}::text::jsonb
     where user_id = ${userId}
   `;
   return next;
