@@ -224,6 +224,20 @@ final focusSessionInfoProvider = FutureProvider.autoDispose.family<FocusTaskInfo
 
 enum FocusRing { live, full, stopped, idle }
 
+// Clock geometry on the 260 px grid: the clay ring runs from the window (r 100) to the rim (r 130),
+// and progress fills that ring. The hero fills the window and rises out of the top.
+const double _window = 100;
+const double _ringRadius = 115;
+const double _ringStroke = 18;
+
+/// Hero art width on the 260 grid, and the canvas line (y in the 1024x1536 skin) placed on the window's top edge.
+const double _heroWidth = 480;
+const Map<BodyType, double> _heroAnchor = {BodyType.a: 300, BodyType.b: 330};
+
+/// Left edges (on the 260 grid) of the opening above the clock and of the neck through the ring.
+const double _crownLeft = 58;
+const double _neckLeft = 82;
+
 /// The clay focus clock with your hero standing inside it, head and shoulders rising out of the top.
 ///
 /// Drawn on a 260 px grid and scaled to [size]. The widget's height includes the headroom above the clock.
@@ -243,7 +257,7 @@ class FocusMedallion extends StatelessWidget {
   final HeroLook? look;
   final Color? faceGlow;
 
-  static double headroomFor(double size) => 90 * size / 260;
+  static double headroomFor(double size) => 120 * size / 260;
 
   @override
   Widget build(BuildContext context) {
@@ -264,33 +278,43 @@ class FocusMedallion extends StatelessWidget {
             height: size,
             child: Stack(
               children: [
-                Clay(circle: true, width: size, height: size),
-                Positioned(
-                  left: 16 * s,
-                  top: 16 * s,
-                  child: Well(circle: true, width: 228 * s, height: 228 * s),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.16),
+                          offset: Offset(0, 16 * s),
+                          blurRadius: 34 * s,
+                        ),
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.08),
+                          offset: Offset(0, 3 * s),
+                          blurRadius: 6 * s,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                Positioned(
-                  left: 16 * s,
-                  top: 16 * s,
-                  width: 228 * s,
-                  height: 228 * s,
+                Clay(circle: true, width: size, height: size),
+                Positioned.fill(
                   child: CustomPaint(
                     painter: _RingPainter(progress: progress, ring: ring, scale: s),
                   ),
                 ),
                 Positioned(
-                  left: 42 * s,
-                  top: 42 * s,
-                  width: 176 * s,
-                  height: 176 * s,
+                  left: (130 - _window) * s,
+                  top: (130 - _window) * s,
+                  width: _window * 2 * s,
+                  height: _window * 2 * s,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [AppColors.white, AppColors.focusFaceFoot],
+                        colors: [AppColors.focusWindowTop, AppColors.focusWindowFoot],
                       ),
                     ),
                     child: DecoratedBox(
@@ -310,8 +334,8 @@ class FocusMedallion extends StatelessWidget {
                         painter: InnerShadowPainter(
                           circle: true,
                           shadows: [
-                            InnerShadow(Offset(3, 4), 10, Color(0x1A101935)),
-                            InnerShadow(Offset(-3, -3), 8, Color(0xFFFFFFFF)),
+                            InnerShadow(Offset(4, 6), 12, Color(0x33101935)),
+                            InnerShadow(Offset(-3, -3), 8, Color(0xB3FFFFFF)),
                           ],
                         ),
                       ),
@@ -348,11 +372,11 @@ class _HeroCutout extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = size / 260;
     final headroom = FocusMedallion.headroomFor(size);
-    final imageWidth = 410 * s;
+    final imageWidth = _heroWidth * s;
     final scale = imageWidth / GameAssets.stageCanvas.width;
     final crop = GameAssets.portraitCrop(look.skinId, look.body);
     final left = size / 2 - crop.center.dx * scale;
-    final top = headroom + (look.body == BodyType.b ? -60 : -42) * s;
+    final top = headroom + (130 - _window) * s - _heroAnchor[look.body]! * scale;
     Widget image = Image.asset(
       GameAssets.skin(look.skinId, look.body),
       width: imageWidth,
@@ -381,7 +405,8 @@ const List<double> _greyMatrix = [
   0, 0, 0, 1, 0, //
 ];
 
-/// The inner circle of the clock plus a column above it, so only the head and shoulders rise out.
+/// The window of the clock plus a head-wide neck through the top of the ring, so only the head
+/// rises out. Above the clock the opening widens a little, with a rounded top, for hair and crowns.
 class _HeroClip extends CustomClipper<Path> {
   _HeroClip({required this.scale, required this.headroom});
 
@@ -391,9 +416,18 @@ class _HeroClip extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final centre = Offset(130 * scale, headroom + 130 * scale);
+    final crown = Radius.circular(70 * scale);
     return Path()
-      ..addOval(Rect.fromCircle(center: centre, radius: 88 * scale))
-      ..addRect(Rect.fromLTRB(80 * scale, 0, 180 * scale, centre.dy));
+      ..addOval(Rect.fromCircle(center: centre, radius: _window * scale))
+      ..addRRect(RRect.fromLTRBAndCorners(
+        _crownLeft * scale,
+        0,
+        (260 - _crownLeft) * scale,
+        headroom + 2 * scale,
+        topLeft: crown,
+        topRight: crown,
+      ))
+      ..addRect(Rect.fromLTRB(_neckLeft * scale, headroom - 4 * scale, (260 - _neckLeft) * scale, centre.dy));
   }
 
   @override
@@ -410,9 +444,15 @@ class _RingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final centre = size.center(Offset.zero);
-    final radius = 104 * scale;
+    final radius = _ringRadius * scale;
     final rect = Rect.fromCircle(center: centre, radius: radius);
-    final stroke = 10 * scale;
+    final stroke = _ringStroke * scale;
+    final rim = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = AppColors.ink.withValues(alpha: 0.07);
+    canvas.drawCircle(centre, 130 * scale - 0.5, rim);
+    canvas.drawCircle(centre, _window * scale + 0.5, rim);
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
@@ -423,7 +463,7 @@ class _RingPainter extends CustomPainter {
           ..color = AppColors.focusRingIdle
           ..strokeCap = StrokeCap.butt;
         final dash = 3 * scale / radius;
-        final gap = 9.6 * scale / radius;
+        final gap = 10 * scale / radius;
         for (var a = 0.0; a < math.pi * 2; a += dash + gap) {
           canvas.drawArc(rect, a, dash, false, paint);
         }

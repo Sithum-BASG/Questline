@@ -249,9 +249,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, box) {
-              final size = box.maxHeight < 720 ? 210.0 : 250.0;
+              final size = box.maxHeight < 800 ? 210.0 : 250.0;
               // Tall screens spread the parts out; short ones scroll with fixed gaps.
-              final roomy = box.maxHeight >= 680;
+              final roomy = box.maxHeight >= 740;
               const padding = EdgeInsets.fromLTRB(AppSpacing.screen, 8, AppSpacing.screen, AppSpacing.s16);
               final column = Column(
                 mainAxisSize: roomy ? MainAxisSize.max : MainAxisSize.min,

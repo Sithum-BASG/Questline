@@ -310,7 +310,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     ];
     return [
       Center(
-        child: FocusMedallion(size: 182, progress: 1, ring: FocusRing.full, look: look),
+        child: FocusMedallion(size: 170, progress: 1, ring: FocusRing.full, look: look),
       ),
       const SizedBox(height: 2),
       Center(
@@ -375,7 +375,7 @@ class _SessionCompleteScreenState extends ConsumerState<SessionCompleteScreen> {
     final damage = _number('bossDamage') > 0 ? _number('bossDamage') : _number('raidDamage');
     return [
       Center(
-        child: FocusMedallion(size: 182, progress: _progress(info), ring: FocusRing.stopped, look: look),
+        child: FocusMedallion(size: 170, progress: _progress(info), ring: FocusRing.stopped, look: look),
       ),
       const SizedBox(height: 4),
       Semantics(
