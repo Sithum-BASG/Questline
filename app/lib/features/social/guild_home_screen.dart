@@ -13,6 +13,9 @@ import '../../core/widgets/progress_bar.dart';
 import '../../core/widgets/q_button.dart';
 import '../../core/widgets/q_card.dart';
 import '../../core/widgets/q_chip.dart';
+import '../bosses/boss_time.dart';
+import '../bosses/providers/boss_providers.dart';
+import '../../core/widgets/boss_card.dart';
 import 'guild_emblems.dart';
 import 'providers/guild_providers.dart';
 import '../../core/widgets/loading_skeleton.dart';
@@ -167,6 +170,13 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
                   trailing: '${guild.questProgress} / ${guild.questGoal}',
                 ),
               ),
+              for (final fight in [
+                for (final r in ref.watch(myRaidsProvider).asData?.value ?? const <RaidSummary>[])
+                  if (r.isGuild && r.isActive && r.raid.guildId == guild.id) r,
+              ]) ...[
+                const SizedBox(height: AppSpacing.s16),
+                _GuildFightCard(fight: fight),
+              ],
               const SizedBox(height: AppSpacing.s24),
               Row(
                 children: [
@@ -237,6 +247,65 @@ class _GuildHomeScreenState extends ConsumerState<GuildHomeScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// An active guild battle: the boss, how many are in, time left, and a way in.
+class _GuildFightCard extends StatelessWidget {
+  const _GuildFightCard({required this.fight});
+
+  final RaidSummary fight;
+
+  @override
+  Widget build(BuildContext context) {
+    final raid = fight.raid;
+    final tier = raid.tier.isEmpty ? raid.tier : raid.tier[0].toUpperCase() + raid.tier.substring(1);
+    return Clay(
+      radius: AppRadius.feature,
+      height: 100,
+      padding: const EdgeInsets.fromLTRB(10, 0, 14, 0),
+      onTap: () => context.go('/raids/${raid.id}'),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 76,
+            height: 76,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                const BossPortal(size: 66),
+                Positioned(top: -22, child: BossArt(tier: raid.tier, size: 92)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GUILD FIGHT · ACTIVE',
+                  style: AppText.label.copyWith(fontSize: 10, height: 12 / 10, color: AppColors.sceneMid),
+                ),
+                const SizedBox(height: 4),
+                Text(raid.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 15)),
+                const SizedBox(height: 2),
+                Text(
+                  '$tier · ${fight.members.length} in · ${bossTimeLeft(raid.deadline, DateTime.now())}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          QButton(label: 'Open', height: 40, onPressed: () => context.go('/raids/${raid.id}')),
+        ],
       ),
     );
   }

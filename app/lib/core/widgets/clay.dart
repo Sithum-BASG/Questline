@@ -742,7 +742,11 @@ class SectionLabel extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(label.toUpperCase(), style: AppText.label),
+          // The label takes most of the row and ellipsizes only when it must.
+          Flexible(
+            flex: 6,
+            child: Text(label.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.label),
+          ),
           if (showRule) ...[
             const SizedBox(width: 10),
             const Expanded(child: Divider(height: 1, thickness: 1, color: AppColors.hairline)),

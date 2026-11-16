@@ -14,7 +14,7 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/clay.dart';
 import '../../core/theme/app_colors.dart';
 
-/// Solo bosses sorted by deadline. Raids land in a later phase.
+/// Solo bosses and raids (party raids and guild battles) by deadline.
 class BossesScreen extends ConsumerWidget {
   const BossesScreen({super.key});
 
@@ -61,6 +61,7 @@ class BossesScreen extends ConsumerWidget {
                 ],
               ),
               data: (bosses) {
+                final raids = ref.watch(myRaidsProvider).asData?.value ?? const <RaidSummary>[];
                 final results = [
                   for (final b in bosses)
                     if ((b.status == 'defeated' || b.status == 'escaped') && !b.resultSeen) b,
@@ -74,6 +75,14 @@ class BossesScreen extends ConsumerWidget {
                   }
                 }
                 final rest = [for (final b in fights) if (b != featured) b];
+                // Solo bosses and active raids share one list, soonest deadline first.
+                final allFights = <({DateTime deadline, Widget tile})>[
+                  for (final boss in rest) (deadline: boss.deadline, tile: _BossTile(boss: boss, now: now)),
+                  for (final raid in raids)
+                    if (raid.isActive) (deadline: raid.raid.deadline, tile: _RaidTile(summary: raid, now: now)),
+                ]..sort((a, b) => a.deadline.compareTo(b.deadline));
+                final finishedRaids = [for (final raid in raids) if (!raid.isActive) raid]
+                  ..sort((a, b) => b.raid.deadline.compareTo(a.raid.deadline));
                 return ListView(
                   padding: const EdgeInsets.only(bottom: AppSpacing.aboveDockedButton + 40),
                   children: [
@@ -95,7 +104,7 @@ class BossesScreen extends ConsumerWidget {
                             const SizedBox(height: AppSpacing.s12),
                             _ResultRow(boss: boss),
                           ],
-                          if (bosses.isEmpty) ...[
+                          if (bosses.isEmpty && raids.isEmpty) ...[
                             const SizedBox(height: 64),
                             const _EmptyArena(),
                           ],
@@ -103,16 +112,29 @@ class BossesScreen extends ConsumerWidget {
                             const SizedBox(height: 72),
                             _FeaturedFight(boss: featured, now: now),
                           ],
-                          if (rest.isNotEmpty) ...[
-                            const SizedBox(height: 32),
+                          if (allFights.isNotEmpty) ...[
+                            SizedBox(height: featured == null ? 24 : 32),
                             SectionLabel(
-                              label: 'All fights',
-                              count: '${rest.length}',
+                              label: 'All fights · by deadline',
+                              count: '${allFights.length}',
                               gemColor: AppColors.bossHp,
                             ),
                             const SizedBox(height: 14),
-                            for (final boss in rest) ...[
-                              _BossTile(boss: boss, now: now),
+                            for (final fight in allFights) ...[
+                              fight.tile,
+                              const SizedBox(height: 14),
+                            ],
+                          ],
+                          if (finishedRaids.isNotEmpty) ...[
+                            const SizedBox(height: 18),
+                            SectionLabel(
+                              label: 'Finished raids',
+                              count: '${finishedRaids.length}',
+                              gemColor: AppColors.rare,
+                            ),
+                            const SizedBox(height: 14),
+                            for (final raid in finishedRaids) ...[
+                              _RaidTile(summary: raid, now: now),
                               const SizedBox(height: 14),
                             ],
                           ],
@@ -127,6 +149,7 @@ class BossesScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 2,
                     child: QButton(
                       label: 'Start raid',
                       variant: QButtonVariant.secondary,
@@ -136,7 +159,7 @@ class BossesScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: QButton(
                       label: 'New boss',
                       icon: Icons.add_rounded,
@@ -554,6 +577,149 @@ class _BossTile extends StatelessWidget {
                         TextSpan(text: ' / ${boss.maxHp} HP'),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A party raid or guild battle in the fight list.
+class _RaidTile extends StatelessWidget {
+  const _RaidTile({required this.summary, required this.now});
+
+  final RaidSummary summary;
+  final DateTime now;
+
+  static const _avatarStats = ['charisma', 'intellect', 'craft', 'vitality'];
+
+  String get _resultLabel => switch (summary.raid.status) {
+        'victory' => 'Victory',
+        'narrow_win' => 'Narrow win',
+        'escaped' => 'Escaped',
+        _ => 'Active',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final raid = summary.raid;
+    final hpLeft = summary.hpLeft;
+    final hp = raid.maxHp <= 0 ? 0.0 : hpLeft / raid.maxHp;
+    final kind = summary.isGuild ? 'GUILD BATTLE' : 'PARTY RAID';
+    final time = summary.isActive ? bossTimeLeft(raid.deadline, now) : _resultLabel;
+    return Semantics(
+      button: true,
+      label: '${summary.isGuild ? 'Guild battle' : 'Party raid'}: ${raid.name}, ${raid.tier}, '
+          '$hpLeft of ${raid.maxHp} HP, ${summary.members.length} members, $time',
+      excludeSemantics: true,
+      child: Clay(
+        radius: 26,
+        onTap: () => context.go(summary.isActive ? '/raids/${raid.id}' : '/raids/${raid.id}/results'),
+        padding: const EdgeInsets.fromLTRB(10, 12, 14, 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 72,
+              height: 72,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  const BossPortal(size: 64),
+                  Positioned(
+                    top: -14,
+                    child: Opacity(
+                      opacity: summary.isActive ? 1 : 0.55,
+                      child: BossArt(tier: raid.tier, size: 80),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(raid.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 15)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _TierTag(tier: raid.tier),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        flex: 5,
+                        child: Container(
+                          height: 20,
+                          padding: const EdgeInsets.symmetric(horizontal: 7),
+                          decoration: BoxDecoration(
+                            color: summary.isGuild ? AppColors.tealSoft : AppColors.raritySoft('rare'),
+                            borderRadius: const BorderRadius.all(Radius.circular(10)),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            kind,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.label.copyWith(
+                              fontSize: 9,
+                              height: 12 / 9,
+                              color: summary.isGuild ? AppColors.tealDeep : AppColors.rarityText('rare'),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      const SizedBox(width: 6),
+                      _TimeChip(label: time, small: true),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClayBar(value: hp, gradient: hpFillGradient, height: 8),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      for (final (i, name) in summary.members.take(4).indexed)
+                        Align(
+                          widthFactor: 0.75,
+                          child: Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.stat(_avatarStats[i % _avatarStats.length]),
+                              border: Border.all(color: AppColors.white, width: 2),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              name.isEmpty ? '?' : name[0].toUpperCase(),
+                              style: AppText.label.copyWith(fontSize: 9, height: 10 / 9, color: AppColors.white),
+                            ),
+                          ),
+                        ),
+                      if (summary.members.length > 4)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Text('+${summary.members.length - 4}', style: AppText.caption),
+                        ),
+                      const Spacer(),
+                      Text.rich(
+                        TextSpan(
+                          style: AppText.caption,
+                          children: [
+                            TextSpan(
+                              text: '$hpLeft',
+                              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+                            ),
+                            TextSpan(text: ' / ${raid.maxHp} HP'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
