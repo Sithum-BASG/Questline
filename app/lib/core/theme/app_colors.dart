@@ -227,10 +227,6 @@ class AppColors {
   static const Color focusRingIdle = Color(0xFFD5DAE3);
   static const Color focusFaceFoot = Color(0xFFF3F6FA);
 
-  /// Focus clock window behind the hero, a shade darker than the ring so the ring stands out.
-  static const Color focusWindowTop = Color(0xFFE8ECF2);
-  static const Color focusWindowFoot = Color(0xFFDCE2EB);
-
   /// Strong ember for the session-ended notch and icons.
   static const Color emberDeep = Color(0xFFEA580C);
 
