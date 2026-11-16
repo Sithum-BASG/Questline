@@ -4,6 +4,7 @@ import '../assets/game_assets.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Circular badge. Tier 0 is locked and greyscale. Tiers 1–3 use the badge art.
 class BadgeMedallion extends StatelessWidget {
@@ -29,6 +30,7 @@ class BadgeMedallion extends StatelessWidget {
       locked ? GameAssets.badgeFrame(1) : GameAssets.badge(id, tier.clamp(1, 3)),
       width: size,
       height: size,
+      cacheWidth: decodeWidth(context, size),
     );
     return Column(
       mainAxisSize: MainAxisSize.min,

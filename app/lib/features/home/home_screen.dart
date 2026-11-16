@@ -122,6 +122,8 @@ class _HomeBody extends ConsumerWidget {
     final ceiling = curve.totalForLevel(profile.level + 1);
     final now = DateTime.now();
     final skinId = _catalogShort(profile.equippedSkinId, 'skin_');
+    // Most iPhones are under 880 pt tall: tighten the top so the stats sit above the docked button.
+    final compact = MediaQuery.sizeOf(context).height < 880;
     final backgroundId = _catalogShort(profile.equippedBackgroundId, 'bg_');
 
     return Stack(
@@ -189,7 +191,7 @@ class _HomeBody extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 28),
+              SizedBox(height: compact ? 20 : 28),
               Semantics(
                 header: true,
                 label: 'Hi, ${profile.displayName}',
@@ -218,6 +220,7 @@ class _HomeBody extends ConsumerWidget {
                 nextReward: snapshot.nextRewardLabel ?? 'Next reward',
                 rewardItem: snapshot.nextReward,
                 rewardLevel: snapshot.nextRewardLevel,
+                height: compact ? 250 : 300,
               ),
               const SizedBox(height: 32),
               Row(
@@ -443,11 +446,15 @@ class _HeroWindow extends StatelessWidget {
     required this.nextReward,
     this.rewardItem,
     this.rewardLevel,
+    this.height = 300,
   });
 
   final String skinId;
   final String backgroundId;
   final BodyType body;
+
+  /// Shorter on phones under 880 pt tall so the stat circles' labels clear the docked button.
+  final double height;
   final int level;
   final int xpIn;
   final int xpSpan;
@@ -463,7 +470,7 @@ class _HeroWindow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 300,
+      height: height,
       child: LayoutBuilder(
         builder: (context, box) {
           final inner = box.maxWidth - 16;

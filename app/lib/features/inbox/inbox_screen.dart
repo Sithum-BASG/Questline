@@ -18,6 +18,7 @@ import '../social/guild_emblems.dart';
 import '../social/providers/friends_providers.dart';
 import 'inbox_copy.dart';
 import 'providers/inbox_providers.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Looks of the people who sent friend requests, by user id.
 final _senderLooksProvider = FutureProvider.autoDispose.family<Map<String, Map<String, dynamic>>, String>((ref, ids) async {
@@ -404,7 +405,7 @@ class _BossCircle extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(color: wash, shape: BoxShape.circle))),
-          Positioned(left: -6, top: -12, child: Image.asset(GameAssets.boss(tier), width: 54, height: 54)),
+          Positioned(left: -6, top: -12, child: Image.asset(GameAssets.boss(tier), width: 54, height: 54, cacheWidth: decodeWidth(context, 54))),
         ],
       ),
     );

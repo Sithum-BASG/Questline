@@ -14,6 +14,7 @@ import '../../core/widgets/quest_seal.dart';
 import '../bosses/providers/boss_providers.dart';
 import '../onboarding/onboarding_skip_button.dart';
 import 'providers/task_providers.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 final _onTimeBonusProvider = FutureProvider.autoDispose<double>(
   (ref) async => (await ref.read(gameConfigReaderProvider).xpRates()).onTimeBonus,
@@ -521,7 +522,7 @@ class _FightCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(left: 41, top: -18, child: Image.asset(GameAssets.boss(tier), width: 68, height: 68)),
+              Positioned(left: 41, top: -18, child: Image.asset(GameAssets.boss(tier), width: 68, height: 68, cacheWidth: decodeWidth(context, 68))),
               Positioned(
                 left: 12,
                 right: 10,

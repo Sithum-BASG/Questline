@@ -14,6 +14,7 @@ import '../../core/widgets/gear_socket.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/portrait_frame.dart';
 import 'providers/profile_providers.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// One reward on a level: coins, a catalog item or a title.
 class RoadReward {
@@ -641,7 +642,7 @@ class RewardArt extends StatelessWidget {
     }
     switch (reward.itemType) {
       case 'gear':
-        return Center(child: Image.asset(GameAssets.gear(_short(id, 'gear_')), width: 40, height: 40));
+        return Center(child: Image.asset(GameAssets.gear(_short(id, 'gear_')), width: 40, height: 40, cacheWidth: decodeWidth(context, 40)));
       case 'background':
         return Image.asset(GameAssets.background(_short(id, 'bg_')), fit: BoxFit.cover);
       case 'frame':

@@ -22,6 +22,7 @@ import '../../core/widgets/quest_seal.dart';
 import '../../core/widgets/stat_icon.dart';
 import '../focus/focus_session_info.dart';
 import '../onboarding/onboarding_skip_button.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 const questStats = ['intellect', 'vitality', 'craft', 'charisma'];
 
@@ -1102,7 +1103,7 @@ class _BossStrip extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(left: -2, top: -22, child: Image.asset(GameAssets.boss(tier), width: 92, height: 92)),
+                  Positioned(left: -2, top: -22, child: Image.asset(GameAssets.boss(tier), width: 92, height: 92, cacheWidth: decodeWidth(context, 92))),
                 ],
               ),
             ),

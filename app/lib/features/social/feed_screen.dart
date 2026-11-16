@@ -12,6 +12,7 @@ import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/portrait_frame.dart';
 import '../../core/widgets/q_button.dart';
 import 'providers/feed_providers.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Paginated friends activity feed (`activity_events` via `visible_to` RLS), grouped by day.
 class FeedScreen extends ConsumerStatefulWidget {
@@ -302,7 +303,7 @@ class _BossThumb extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           const Positioned.fill(child: _Thumb(wash: AppColors.tealSoft, child: SizedBox.expand())),
-          Positioned(left: -6, top: -14, child: Image.asset(GameAssets.boss(safe), width: 64, height: 64)),
+          Positioned(left: -6, top: -14, child: Image.asset(GameAssets.boss(safe), width: 64, height: 64, cacheWidth: decodeWidth(context, 64))),
           Positioned(
             right: -3,
             bottom: -3,
@@ -396,7 +397,7 @@ class _BadgeThumb extends StatelessWidget {
     if (!GameAssets.badgeIds.contains(id)) {
       return const _IconThumb(icon: Icons.military_tech_rounded, wash: AppColors.legendarySoft, color: AppColors.legendaryText);
     }
-    return SizedBox(width: 52, height: 52, child: Image.asset(GameAssets.badge(id, tier), width: 54, height: 54));
+    return SizedBox(width: 52, height: 52, child: Image.asset(GameAssets.badge(id, tier), width: 54, height: 54, cacheWidth: decodeWidth(context, 54)));
   }
 }
 

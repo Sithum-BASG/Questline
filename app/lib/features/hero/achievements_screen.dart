@@ -13,6 +13,7 @@ import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import 'achievement_copy.dart';
 import 'providers/achievements_providers.dart';
+import 'package:questline/core/assets/decode_size.dart';
 
 /// Coins for tiers I, II, III from game_config.
 final badgeTierCoinsProvider = FutureProvider<List<int>>((ref) {
@@ -299,6 +300,7 @@ class _BadgeCard extends StatelessWidget {
       GameAssets.badge(badgeShortId(badge.badgeId), tier < 1 ? 1 : tier),
       width: 84,
       height: 84,
+      cacheWidth: decodeWidth(context, 84),
     );
     return Semantics(
       label: '${badge.name}, ${tierLabel.toLowerCase()}, ${badge.progress} of $next',
