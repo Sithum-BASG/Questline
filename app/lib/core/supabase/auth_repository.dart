@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'supabase_config.dart';
 
 /// Email and password auth. Google sign-in is added on the welcome screen.
 abstract class AuthApi {
@@ -38,7 +41,12 @@ class AuthRepository implements AuthApi {
     }
     final google = GoogleSignIn.instance;
     if (!_googleReady) {
-      await google.initialize(serverClientId: serverClientId);
+      // On iOS the app signs in with its own iOS client; the web client id still sets the token's
+      // audience, which Supabase checks. Without an override the SDK uses GIDClientID from Info.plist.
+      final iosClient = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS && googleIosClientId.isNotEmpty
+          ? googleIosClientId
+          : null;
+      await google.initialize(clientId: iosClient, serverClientId: serverClientId);
       _googleReady = true;
     }
     try {
