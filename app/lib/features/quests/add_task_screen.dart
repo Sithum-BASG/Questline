@@ -13,13 +13,16 @@ import '../onboarding/onboarding_skip_button.dart';
 
 /// Title, optional notes and due date. Judge inserts a draft row.
 class AddTaskScreen extends ConsumerStatefulWidget {
-  const AddTaskScreen({super.key, this.onboarding = false, this.bossId});
+  const AddTaskScreen({super.key, this.onboarding = false, this.bossId, this.raidId});
 
   /// Onboarding saves the draft and lets the first-task screen show the judgement.
   final bool onboarding;
 
   /// When set, the draft is created under this boss.
   final String? bossId;
+
+  /// Party raid or guild battle this task fights.
+  final String? raidId;
 
   @override
   ConsumerState<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -60,6 +63,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         notes: notes.isEmpty ? null : notes,
         dueAt: _due,
         bossId: widget.bossId,
+        raidId: widget.raidId,
       );
       ref.invalidate(tasksProvider);
       if (!mounted) return;

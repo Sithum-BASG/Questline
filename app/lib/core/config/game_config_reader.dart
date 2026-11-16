@@ -106,6 +106,35 @@ class GameConfigReader {
 
   Future<int> consumableOverflowCoins() => _int('consumable_overflow_coins', 100);
 
+  /// Share of the fair share (HP ÷ members) a raider must deal to earn loot.
+  Future<double> raidFairShareRatio() => _double('raid_fair_share_ratio', 0.5);
+
+  /// Share of the raid HP that still counts as a narrow win.
+  Future<double> raidNarrowThreshold() => _double('raid_narrow_threshold', 0.75);
+
+  /// Extra loot for beating a raid before its deadline (0.25 = +25%).
+  Future<double> raidVictoryBonus() => _double('raid_victory_bonus', 0.25);
+
+  /// Coins lost by raiders below their share when the boss escapes.
+  Future<int> bossEscapePenalty() => _int('boss_escape_penalty', 100);
+
+  /// Smallest and largest party a raid can start with.
+  Future<int> partyMin() => _int('party_min', 2);
+  Future<int> partyMax() => _int('party_max', 8);
+
+  /// Boss tiers as (name, hours below which it applies, base loot coins).
+  Future<List<(String, double, int)>> bossTiers() async {
+    final raw = (await load())['boss_tiers'];
+    const fallback = [('minion', 4.0, 100), ('brute', 12.0, 150), ('warlord', 25.0, 200), ('titan', 999.0, 300)];
+    if (raw is! List) return fallback;
+    final tiers = [
+      for (final row in raw)
+        if (row is List && row.length >= 4 && row[0] is String && row[2] is num && row[3] is num)
+          (row[0] as String, (row[2] as num).toDouble(), (row[3] as num).round()),
+    ];
+    return tiers.isEmpty ? fallback : tiers;
+  }
+
   /// Most members a guild can hold.
   Future<int> guildMax() => _int('guild_max', 10);
 

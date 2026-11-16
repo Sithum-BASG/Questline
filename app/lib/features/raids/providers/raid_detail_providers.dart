@@ -17,6 +17,8 @@ class RaidDetailSnapshot {
     required this.events,
     required this.focusingIds,
     required this.isCreator,
+    this.damageByUser = const {},
+    this.myId,
     this.reconnecting = false,
   });
 
@@ -25,6 +27,11 @@ class RaidDetailSnapshot {
   final List<RaidEvent> events;
   final Set<String> focusingIds;
   final bool isCreator;
+
+  /// Exact damage per raider. RLS returns only your own row, or every row
+  /// for the raid creator.
+  final Map<String, int> damageByUser;
+  final String? myId;
   final bool reconnecting;
 
   RaidDetailSnapshot copyWith({bool? reconnecting}) {
@@ -34,6 +41,8 @@ class RaidDetailSnapshot {
       events: events,
       focusingIds: focusingIds,
       isCreator: isCreator,
+      damageByUser: damageByUser,
+      myId: myId,
       reconnecting: reconnecting ?? this.reconnecting,
     );
   }
@@ -70,12 +79,20 @@ Future<RaidDetailSnapshot?> loadRaidDetail(SupabaseClient client, String raidId,
     }
   }
 
+  final damageRows = await client.from('raid_damage').select('user_id, damage').eq('raid_id', raidId);
+  final damageByUser = <String, int>{
+    for (final d in damageRows)
+      if (d['user_id'] is String && d['damage'] is num) d['user_id'] as String: (d['damage'] as num).toInt(),
+  };
+
   return RaidDetailSnapshot(
     raid: raid,
     members: members,
     events: events,
     focusingIds: focusing,
     isCreator: myId != null && raid.createdBy == myId,
+    damageByUser: damageByUser,
+    myId: myId,
   );
 }
 

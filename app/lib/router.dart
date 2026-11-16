@@ -94,6 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   path: 'new',
                   builder: (context, state) => AddTaskScreen(
                     bossId: state.uri.queryParameters['bossId'],
+                    raidId: state.uri.queryParameters['raidId'],
                   ),
                 ),
                 GoRoute(

@@ -108,6 +108,34 @@ class AppColors {
   static const Color sceneMid = Color(0xFF2A2D74);
   static const Color sceneDeep = Color(0xFF1B1D4F);
 
+  /// Lavender boss arena: centre, middle and rim stops.
+  static const Color arenaLight = Color(0xFFF4F3FF);
+  static const Color arenaMid = Color(0xFFD9DBF7);
+  static const Color arenaDeep = Color(0xFF9EA3DA);
+
+  /// Raid navy: tier tags, party tags and the fair-share line.
+  static const Color raidInk = Color(0xFF2B3168);
+  static const Color raidSoft = Color(0xFFE7E8FB);
+  static const Color raidLight = Color(0xFF8EA2FF);
+
+  /// Party stage strip behind the raid heroes.
+  static const Color partyStripMid = Color(0xFFE9EAFB);
+  static const Color partyStripRim = Color(0xFFD3D6F3);
+
+  /// Camera panel behind the QR scanner.
+  static const Color scanTop = Color(0xFF2A3050);
+  static const Color scanDeep = Color(0xFF0E1328);
+
+  /// Raid result fields: teal for a win, rose for an escape.
+  static const Color winFieldLight = Color(0xFFF0FDFA);
+  static const Color winFieldMid = Color(0xFFB9EDE4);
+  static const Color winFieldDeep = Color(0xFF6FC2BF);
+  static const Color escapeFieldLight = Color(0xFFFDF1F4);
+  static const Color escapeFieldMid = Color(0xFFF1C3D0);
+  static const Color escapeFieldDeep = Color(0xFFB97A99);
+  static const Color escapeInk = Color(0xFF7A1F3D);
+  static const Color stampTealLight = Color(0xFF2DD4BF);
+
   /// Dim behind sheets and dialogs (ink at 38%).
   static const Color scrim = Color(0x61101935);
 
