@@ -20,6 +20,9 @@ class AppColors {
 
   static const Color inkMuted = Color(0xFF5B6178);
   static const Color inkFaint = Color(0xFF9AA0B4);
+
+  /// Secondary body text on light scenes, e.g. quest notes.
+  static const Color inkSoft = Color(0xFF4F5A70);
   static const Color line = Color(0xFFE8E6E1);
   static const Color ember = Color(0xFFF97316);
   static const Color streakEmber = ember;

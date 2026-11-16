@@ -12,9 +12,12 @@ import '../../core/widgets/clay.dart';
 
 /// The boss or raid a quest hits.
 class FocusTarget {
-  const FocusTarget({required this.name, required this.damage, required this.maxHp, required this.raid});
+  const FocusTarget({required this.name, required this.damage, required this.maxHp, required this.raid, this.tier = 'brute'});
 
   final String name;
+
+  /// Boss art tier (minion, brute, warlord, titan).
+  final String tier;
   final int damage;
   final int maxHp;
   final bool raid;
@@ -170,23 +173,25 @@ final focusTaskInfoProvider = FutureProvider.autoDispose.family<FocusTaskInfo?, 
   final bossId = task['boss_id'] as String?;
   final raidId = task['raid_id'] as String?;
   if (bossId != null) {
-    final boss = await client.from('bosses').select('name, damage, max_hp').eq('id', bossId).maybeSingle();
+    final boss = await client.from('bosses').select('name, damage, max_hp, tier').eq('id', bossId).maybeSingle();
     if (boss != null) {
       target = FocusTarget(
         name: boss['name'] as String? ?? 'Boss',
         damage: _int(boss['damage']),
         maxHp: _int(boss['max_hp']),
         raid: false,
+        tier: boss['tier'] as String? ?? 'brute',
       );
     }
   } else if (raidId != null) {
-    final raid = await client.from('raids').select('name, damage, max_hp').eq('id', raidId).maybeSingle();
+    final raid = await client.from('raids').select('name, damage, max_hp, tier').eq('id', raidId).maybeSingle();
     if (raid != null) {
       target = FocusTarget(
         name: raid['name'] as String? ?? 'Raid',
         damage: _int(raid['damage']),
         maxHp: _int(raid['max_hp']),
         raid: true,
+        tier: raid['tier'] as String? ?? 'brute',
       );
     }
   }

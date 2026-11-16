@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Careful writing.'), findsOneWidget);
     expect(find.text('129'), findsOneWidget);
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Save quest'));
     await tester.pumpAndSettle();
     expect(saved, 'task-1');
     expect(find.text('list'), findsOneWidget);
@@ -111,7 +111,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Disagree?'), findsNothing);
-    await tester.tap(find.text('Save'));
+    await tester.scrollUntilVisible(find.text('Save quest'), 200);
+    await tester.tap(find.text('Save quest'));
     await tester.pumpAndSettle();
     expect(step, 'first_task');
   });
@@ -153,7 +154,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Discard'));
+    await tester.tap(find.byTooltip('Discard'));
     await tester.pumpAndSettle();
     expect(discarded, 'task-1');
   });
@@ -186,7 +187,8 @@ void main() {
       ),
     );
     await tester.enterText(find.byType(TextField), 'It is only a paragraph.');
-    await tester.tap(find.text('Send'));
+    await tester.pump();
+    await tester.tap(find.text('Send to the Judge'));
     await tester.pumpAndSettle();
     expect(sent, 'It is only a paragraph.');
   });

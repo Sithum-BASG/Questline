@@ -71,7 +71,8 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField).first, 'Revise chapter 3');
-    await tester.tap(find.text('Judge'));
+    await tester.pump();
+    await tester.tap(find.text('Judge quest'));
     await tester.pumpAndSettle();
     expect(saved, 'Revise chapter 3');
     expect(find.text('task-1'), findsOneWidget);

@@ -38,7 +38,7 @@ class JudgementCard extends StatelessWidget {
   final VoidCallback? onSplit;
   final VoidCallback? onMakeBoss;
 
-  static const _diffWords = ['Easy', 'Light', 'Steady', 'Hard', 'Brutal'];
+  static const _diffWords = ['Trivial', 'Light', 'Moderate', 'Demanding', 'Very demanding'];
 
   @override
   Widget build(BuildContext context) {

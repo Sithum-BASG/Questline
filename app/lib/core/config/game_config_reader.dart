@@ -159,6 +159,7 @@ class GameConfigReader {
       potionMinMinutes: d('potion_min_minutes', 25),
       minEarningMinutes: d('session_min_minutes', 5),
       graceSeconds: d('xp_grace_seconds', 30).round(),
+      tickShare: d('xp_tick_share', 0.5),
     );
   }
 
@@ -198,6 +199,7 @@ class XpRates {
     required this.potionMinMinutes,
     required this.minEarningMinutes,
     required this.graceSeconds,
+    required this.tickShare,
   });
 
   static const defaults = XpRates(
@@ -213,6 +215,7 @@ class XpRates {
     potionMinMinutes: 25,
     minEarningMinutes: 5,
     graceSeconds: 30,
+    tickShare: 0.5,
   );
 
   final List<double> multipliers;
@@ -231,6 +234,9 @@ class XpRates {
 
   /// How long you can leave a focus session before it ends.
   final int graceSeconds;
+
+  /// Share of XP a quest ticked off without focus earns.
+  final double tickShare;
 
   double multiplier(int difficulty) =>
       difficulty >= 1 && difficulty <= multipliers.length ? multipliers[difficulty - 1] : 1;

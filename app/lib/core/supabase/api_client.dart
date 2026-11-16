@@ -100,6 +100,11 @@ class ApiClient {
     return invoke('tasks', 'judgeTask', {'taskId': taskId});
   }
 
+  /// Ticks a quest off without a focus session (reduced XP, no boss damage).
+  Future<Map<String, dynamic>> tickTask(String taskId) {
+    return invoke('tasks', 'tickTask', {'taskId': taskId});
+  }
+
   Future<Map<String, dynamic>> challengeTask(String taskId, String context) {
     return invoke('tasks', 'challengeTask', {'taskId': taskId, 'context': context});
   }
