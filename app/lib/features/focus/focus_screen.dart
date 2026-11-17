@@ -14,6 +14,8 @@ import '../../core/widgets/q_button.dart';
 import '../../core/widgets/timer_display.dart';
 import '../../core/widgets/clay.dart';
 import '../../core/widgets/stat_icon.dart';
+import '../home/providers/home_providers.dart';
+import '../quests/providers/task_providers.dart';
 import 'focus_clock.dart';
 import 'focus_leave_store.dart';
 import 'focus_session_info.dart';
@@ -99,8 +101,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     }
   }
 
+  /// Focus seconds so far; demo sessions run faster than the wall clock.
+  int _elapsed() {
+    final real = _clock.elapsedSeconds(DateTime.now());
+    return _info?.focusSeconds(real) ?? real;
+  }
+
   Future<void> _refreshOngoing() async {
-    final label = TimerDisplay.format(_clock.elapsedSeconds(DateTime.now()));
+    final label = TimerDisplay.format(_elapsed());
     if (_ongoingInFlight || label == _lastOngoingLabel) return;
     _ongoingInFlight = true;
     _lastOngoingLabel = label;
@@ -143,7 +151,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     }
   }
 
-  double get _minutes => _clock.elapsedSeconds(DateTime.now()) / 60;
+  double get _minutes => _elapsed() / 60;
 
   FocusTaskInfo? get _info => ref.read(focusSessionInfoProvider(widget.sessionId)).asData?.value;
 
@@ -203,8 +211,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final interruptions = _clock.interruptions.map((item) => item.toJson()).toList();
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
-      final elapsed = _clock.elapsedSeconds(DateTime.now());
+      final elapsed = _elapsed();
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
+      // The server may have finished the quest; drop the cached lists so it leaves Quests and Home.
+      final taskId = _info?.taskId;
+      ref.invalidate(tasksProvider);
+      if (taskId != null) ref.invalidate(taskProvider(taskId));
+      ref.invalidate(homeSnapshotProvider);
       await _leaveStore.clear();
       _presence.finish(DateTime.now());
       if (!mounted) return;
@@ -232,8 +245,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    final elapsed = _clock.elapsedSeconds(DateTime.now());
     final info = ref.watch(focusSessionInfoProvider(widget.sessionId)).asData?.value;
+    final real = _clock.elapsedSeconds(DateTime.now());
+    final elapsed = info?.focusSeconds(real) ?? real;
     final look = ref.watch(heroLookProvider).asData?.value;
     final stat = info?.stat ?? widget.stat;
     final statLabel = StatIcon.labelFor(stat);

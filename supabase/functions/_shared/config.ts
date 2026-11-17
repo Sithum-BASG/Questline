@@ -79,7 +79,7 @@ export const defaults = {
   ai_timeout_ms: 10000,
   notif_daily_cap: 2,
   presence_stale_seconds: 120,
-  demo_seconds_per_5_minutes: 30,
+  demo_seconds_per_5_minutes: 10,
 } as const;
 
 export type GameConfig = { [K in keyof typeof defaults]: unknown };

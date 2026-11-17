@@ -18,7 +18,9 @@ function task(over: Record<string, unknown> = {}) {
   };
 }
 
-function scripted(options: { task?: Record<string, unknown> | null; active?: boolean; potions?: number; focusToday?: number } = {}) {
+function scripted(
+  options: { task?: Record<string, unknown> | null; active?: boolean; potions?: number; focusToday?: number; demo?: boolean; allowed?: boolean } = {},
+) {
   const queries: { text: string; values: unknown[] }[] = [];
   const tx = (strings: TemplateStringsArray, ...values: unknown[]) => {
     const text = strings.join(" ");
@@ -30,6 +32,8 @@ function scripted(options: { task?: Record<string, unknown> | null; active?: boo
     if (text.includes("from player_state")) {
       return Promise.resolve([{ potions: options.potions ?? 0, focus_minutes_today: options.focusToday ?? 0 }]);
     }
+    if (text.includes("from demo_allowlist")) return Promise.resolve(options.allowed ? [{ user_id: userId }] : []);
+    if (text.includes("from user_settings")) return Promise.resolve([{ demo_mode: options.demo === true }]);
     if (text.includes("insert into sessions")) {
       return Promise.resolve([{ id: "33333333-3333-3333-3333-333333333333", started_at: "2026-10-19T02:00:00.000Z" }]);
     }
@@ -45,6 +49,7 @@ Deno.test("a focus session starts and the cap is 1.5 times the estimate", async 
     sessionId: "33333333-3333-3333-3333-333333333333",
     startedAt: "2026-10-19T02:00:00.000Z",
     capMinutes: 90,
+    demo: false,
   });
   assertEquals(queries.every((query) => query.values.includes(userId)), true);
 });
@@ -94,4 +99,18 @@ Deno.test("the daily focus limit shrinks the cap", async () => {
   const { tx } = scripted({ focusToday: 470 });
   const result = await startDraft(userId, { taskId, mode: "focus" }, tx, defaults);
   assertEquals(result.capMinutes, 10);
+});
+
+Deno.test("an allow-listed player with demo on starts a demo session", async () => {
+  const { tx, queries } = scripted({ demo: true, allowed: true });
+  const result = await startDraft(userId, { taskId, mode: "focus" }, tx, defaults);
+  assertEquals(result.demo, true);
+  const insert = queries.find((query) => query.text.includes("insert into sessions"));
+  assertEquals(insert?.values.at(-1), true);
+});
+
+Deno.test("demo mode is ignored for a player not on the allow-list", async () => {
+  const { tx } = scripted({ demo: true, allowed: false });
+  const result = await startDraft(userId, { taskId, mode: "focus" }, tx, defaults);
+  assertEquals(result.demo, false);
 });

@@ -39,6 +39,7 @@ function scripted(options: {
         mode: "focus",
         started_at: started,
         status: "active",
+        demo: options.demo === true,
         potion: false,
         processed: options.processed === true,
         summary: options.summary ?? null,
@@ -149,13 +150,21 @@ Deno.test("a processed session returns the stored summary", async () => {
   assertEquals(queries.some((query) => query.text.includes("insert into daily_stats")), false);
 });
 
-Deno.test("demo mode counts 30 seconds as 5 minutes", async () => {
+Deno.test("a demo session counts 2 seconds as 1 minute", async () => {
   const { tx } = scripted({
     demo: true,
-    startedAt: new Date(now.getTime() - 30 * 1000).toISOString(),
+    startedAt: new Date(now.getTime() - 50 * 1000).toISOString(),
+  });
+  const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, { ...defaults, demo_seconds_per_5_minutes: 10 }, now);
+  assertEquals(summary.verifiedMinutes, 25);
+});
+
+Deno.test("a session started outside demo counts real minutes", async () => {
+  const { tx } = scripted({
+    startedAt: new Date(now.getTime() - 50 * 1000).toISOString(),
   });
   const summary = await endDraft(userId, { sessionId, interruptions: [] }, tx, defaults, now);
-  assertEquals(summary.verifiedMinutes, 5);
+  assertEquals(summary.verifiedMinutes, 0);
 });
 
 Deno.test("under 5 verified minutes earns nothing and leaves the task open", async () => {

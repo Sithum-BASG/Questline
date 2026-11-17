@@ -160,6 +160,7 @@ class GameConfigReader {
       minEarningMinutes: d('session_min_minutes', 5),
       graceSeconds: d('xp_grace_seconds', 30).round(),
       tickShare: d('xp_tick_share', 0.5),
+      demoSecondsPerMinute: d('demo_seconds_per_5_minutes', 10) / 5,
     );
   }
 
@@ -200,6 +201,7 @@ class XpRates {
     required this.minEarningMinutes,
     required this.graceSeconds,
     required this.tickShare,
+    this.demoSecondsPerMinute = 2,
   });
 
   static const defaults = XpRates(
@@ -237,6 +239,9 @@ class XpRates {
 
   /// Share of XP a quest ticked off without focus earns.
   final double tickShare;
+
+  /// Real seconds that count as one focus minute in a demo session.
+  final double demoSecondsPerMinute;
 
   double multiplier(int difficulty) =>
       difficulty >= 1 && difficulty <= multipliers.length ? multipliers[difficulty - 1] : 1;

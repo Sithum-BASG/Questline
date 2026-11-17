@@ -174,6 +174,18 @@ class ApiClient {
     });
   }
 
+  /// Whether demo mode is offered to this account, and whether it is on.
+  Future<({bool allowed, bool enabled})> demoStatus() async {
+    final json = await invoke('account', 'demoStatus', {});
+    return (allowed: json['allowed'] == true, enabled: json['enabled'] == true);
+  }
+
+  /// Turns demo mode on or off; only allow-listed accounts can. New sessions use it.
+  Future<bool> setDemoMode(bool enabled) async {
+    final json = await invoke('account', 'setDemoMode', {'enabled': enabled});
+    return json['enabled'] == true;
+  }
+
   Future<void> deleteAccount() {
     return invoke('account', 'deleteAccount', {});
   }

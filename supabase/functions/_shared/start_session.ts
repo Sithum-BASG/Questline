@@ -16,6 +16,7 @@ export interface StartSessionResult {
   sessionId: string;
   startedAt: string;
   capMinutes: number;
+  demo: boolean;
 }
 
 function numberFrom(value: unknown, fallback: number): number {
@@ -69,9 +70,14 @@ export async function startDraft(
   const daily = numberFrom(config.xp_daily_focus_minutes_limit, 480);
   const capMinutes = Math.max(0, Math.min(estimate * ratio, daily - focusToday));
 
+  // Demo sessions run on compressed time; the flag is fixed for the whole session.
+  const allowed = await tx`select user_id from demo_allowlist where user_id = ${userId}`;
+  const settings = await tx`select demo_mode from user_settings where user_id = ${userId}`;
+  const demo = allowed.length > 0 && settings[0]?.demo_mode === true;
+
   const inserted = await tx`
-    insert into sessions (user_id, task_id, mode, potion)
-    values (${userId}, ${input.taskId}, ${input.mode}, ${input.usePotion === true})
+    insert into sessions (user_id, task_id, mode, potion, demo)
+    values (${userId}, ${input.taskId}, ${input.mode}, ${input.usePotion === true}, ${demo})
     returning id, started_at
   `;
   const row = inserted[0];
@@ -79,6 +85,7 @@ export async function startDraft(
     sessionId: String(row.id),
     startedAt: new Date(String(row.started_at)).toISOString(),
     capMinutes,
+    demo,
   };
 }
 

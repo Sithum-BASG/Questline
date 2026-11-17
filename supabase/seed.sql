@@ -202,5 +202,5 @@ insert into game_config (key, value) values
   ('ai_timeout_ms', '10000'),
   ('notif_daily_cap', '2'),
   ('presence_stale_seconds', '120'),
-  ('demo_seconds_per_5_minutes', '30')
+  ('demo_seconds_per_5_minutes', '10')
 on conflict (key) do update set value = excluded.value, updated_at = now();
