@@ -101,7 +101,7 @@ export async function endDraft(
 ): Promise<SessionSummary> {
   const input = inputSchema.parse(body);
   const sessions = await tx`
-    select id, task_id, mode, started_at, status, potion, processed, summary
+    select id, task_id, mode, started_at, status, potion, demo, processed, summary
     from sessions where id = ${input.sessionId} and user_id = ${userId} for update
   `;
   const session = sessions[0];
@@ -130,12 +130,14 @@ export async function endDraft(
   }
   const elapsedMs = now.getTime() - Date.parse(String(session.started_at));
   let verifiedMinutes = Math.max(0, Math.floor((elapsedMs - awayMs) / 60_000));
-  const settings = await tx`select demo_mode from user_settings where user_id = ${userId}`;
-  const allowed = await tx`select user_id from demo_allowlist where user_id = ${userId}`;
-  if (settings[0]?.demo_mode === true && allowed.length > 0) {
+  // Demo is decided when the session starts, so switching it off mid-session doesn't change the count.
+  const allowed = session.demo === true
+    ? await tx`select user_id from demo_allowlist where user_id = ${userId}`
+    : [];
+  if (allowed.length > 0) {
     const elapsedSeconds = Math.max(0, Math.floor((elapsedMs - awayMs) / 1000));
-    // game_config.demo_seconds_per_5_minutes (default 30 → 5 min ⇒ 6 s per verified minute).
-    const demoSecondsPer5 = numberFrom(config.demo_seconds_per_5_minutes, 30);
+    // game_config.demo_seconds_per_5_minutes (default 10: 2 s per verified minute).
+    const demoSecondsPer5 = numberFrom(config.demo_seconds_per_5_minutes, 10);
     const secondsPerMinute = Math.max(1, demoSecondsPer5 / 5);
     verifiedMinutes = Math.floor(elapsedSeconds / secondsPerMinute);
   }

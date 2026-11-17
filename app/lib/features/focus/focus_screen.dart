@@ -99,8 +99,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     }
   }
 
+  /// Focus seconds so far; demo sessions run faster than the wall clock.
+  int _elapsed() {
+    final real = _clock.elapsedSeconds(DateTime.now());
+    return _info?.focusSeconds(real) ?? real;
+  }
+
   Future<void> _refreshOngoing() async {
-    final label = TimerDisplay.format(_clock.elapsedSeconds(DateTime.now()));
+    final label = TimerDisplay.format(_elapsed());
     if (_ongoingInFlight || label == _lastOngoingLabel) return;
     _ongoingInFlight = true;
     _lastOngoingLabel = label;
@@ -143,7 +149,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
     }
   }
 
-  double get _minutes => _clock.elapsedSeconds(DateTime.now()) / 60;
+  double get _minutes => _elapsed() / 60;
 
   FocusTaskInfo? get _info => ref.read(focusSessionInfoProvider(widget.sessionId)).asData?.value;
 
@@ -203,7 +209,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
       final interruptions = _clock.interruptions.map((item) => item.toJson()).toList();
       final left = _clock.leftAt;
       if (left != null) interruptions.add({'leftAt': left.toUtc().toIso8601String()});
-      final elapsed = _clock.elapsedSeconds(DateTime.now());
+      final elapsed = _elapsed();
       final summary = await ref.read(endSessionProvider)(widget.sessionId, interruptions, broken: broken);
       await _leaveStore.clear();
       _presence.finish(DateTime.now());
@@ -232,8 +238,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    final elapsed = _clock.elapsedSeconds(DateTime.now());
     final info = ref.watch(focusSessionInfoProvider(widget.sessionId)).asData?.value;
+    final real = _clock.elapsedSeconds(DateTime.now());
+    final elapsed = info?.focusSeconds(real) ?? real;
     final look = ref.watch(heroLookProvider).asData?.value;
     final stat = info?.stat ?? widget.stat;
     final statLabel = StatIcon.labelFor(stat);

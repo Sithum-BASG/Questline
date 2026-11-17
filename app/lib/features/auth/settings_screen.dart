@@ -62,11 +62,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   var _hideRadar = false;
   var _showBossNames = true;
   var _loaded = false;
+  var _demoAllowed = false;
+  var _demoOn = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadDemo();
+  }
+
+  /// Demo mode is only offered to allow-listed accounts; the server says which.
+  Future<void> _loadDemo() async {
+    try {
+      final status = await ref.read(apiClientProvider).demoStatus();
+      if (!mounted) return;
+      setState(() {
+        _demoAllowed = status.allowed;
+        _demoOn = status.enabled;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _toggleDemo(bool value) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _demoOn = value;
+    });
+    try {
+      final enabled = await ref.read(apiClientProvider).setDemoMode(value);
+      if (mounted) setState(() => _demoOn = enabled);
+    } on ApiException catch (error) {
+      if (mounted) {
+        setState(() {
+          _demoOn = !value;
+          _error = error.message;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _load() async {
@@ -499,6 +535,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          if (_demoAllowed) ...[
+            const SizedBox(height: 26),
+            Text('DEMO', style: AppText.label),
+            const SizedBox(height: 10),
+            ClayList(
+              dividerIndent: 16,
+              radius: 26,
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              children: [
+                SwitchListTile(
+                  key: const Key('demo-mode-switch'),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  title: Text('Demo mode', style: AppText.title.copyWith(fontSize: 15), softWrap: true),
+                  subtitle: Text(
+                    '2 seconds of focus count as 1 minute. Applies to sessions you start after switching.',
+                    style: AppText.bodySmall,
+                    softWrap: true,
+                  ),
+                  value: _demoOn,
+                  onChanged: _busy ? null : _toggleDemo,
+                ),
+              ],
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: AppSpacing.s8),
             Text(_error!, style: AppText.bodySmall.copyWith(color: AppColors.errorText)),

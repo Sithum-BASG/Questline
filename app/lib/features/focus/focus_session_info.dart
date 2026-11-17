@@ -42,6 +42,7 @@ class FocusTaskInfo {
     required this.streak,
     required this.rates,
     this.potion = false,
+    this.demo = false,
   });
 
   final String taskId;
@@ -61,7 +62,17 @@ class FocusTaskInfo {
   /// Whether the session was started with a Focus Potion.
   final bool potion;
 
-  FocusTaskInfo withPotion(bool value) => FocusTaskInfo(
+  /// Whether the session runs on demo time, where a few real seconds count as a minute.
+  final bool demo;
+
+  /// Seconds of focus that [realSeconds] count as: sped up in a demo session, unchanged otherwise.
+  int focusSeconds(int realSeconds) {
+    if (!demo) return realSeconds;
+    final rate = rates.demoSecondsPerMinute < 1 ? 1.0 : rates.demoSecondsPerMinute;
+    return (realSeconds * 60 / rate).floor();
+  }
+
+  FocusTaskInfo forSession({required bool potion, required bool demo}) => FocusTaskInfo(
     taskId: taskId,
     title: title,
     stat: stat,
@@ -75,7 +86,8 @@ class FocusTaskInfo {
     bodyType: bodyType,
     streak: streak,
     rates: rates,
-    potion: value,
+    potion: potion,
+    demo: demo,
   );
 
   /// Days late if finished [now]; 0 when on time or undated.
@@ -220,11 +232,11 @@ final focusTaskInfoProvider = FutureProvider.autoDispose.family<FocusTaskInfo?, 
 final focusSessionInfoProvider = FutureProvider.autoDispose.family<FocusTaskInfo?, String>((ref, sessionId) async {
   watchAccount(ref);
   final client = ref.watch(supabaseClientProvider);
-  final session = await client.from('sessions').select('task_id, potion').eq('id', sessionId).maybeSingle();
+  final session = await client.from('sessions').select('task_id, potion, demo').eq('id', sessionId).maybeSingle();
   final taskId = session?['task_id'] as String?;
   if (taskId == null) return null;
   final info = await ref.watch(focusTaskInfoProvider(taskId).future);
-  return info?.withPotion(session?['potion'] == true);
+  return info?.forSession(potion: session?['potion'] == true, demo: session?['demo'] == true);
 });
 
 enum FocusRing { live, full, stopped, idle }
