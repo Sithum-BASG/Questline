@@ -6,6 +6,7 @@ import 'package:questline/core/theme/app_theme.dart';
 import 'package:questline/features/focus/focus_screen.dart';
 import 'package:questline/features/focus/presence_session.dart';
 import 'package:questline/features/focus/session_alerts.dart';
+import 'package:questline/features/quests/providers/task_providers.dart';
 
 class _Alerts implements SessionAlerts {
   int shown = 0;
@@ -132,6 +133,40 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
     expect(alerts.shown, 0);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('ending a session reloads the quest list', (tester) async {
+    var loads = 0;
+    await tester.pumpWidget(_app(
+      home: FocusScreen(
+        sessionId: 'session-1',
+        startedAt: DateTime.now().subtract(const Duration(minutes: 30)),
+        estimateMinutes: 25,
+      ),
+      overrides: [
+        sessionAlertsProvider.overrideWithValue(_Alerts()),
+        focusPresenceProvider.overrideWithValue(_Presence()),
+        tasksProvider.overrideWith((ref) async {
+          loads += 1;
+          return [];
+        }),
+        endSessionProvider.overrideWith((ref) {
+          return (sessionId, interruptions, {required bool broken}) async => {'verifiedMinutes': 30};
+        }),
+      ],
+    ));
+    final container = ProviderScope.containerOf(tester.element(find.byType(FocusScreen)));
+    await container.read(tasksProvider.future);
+    expect(loads, 1);
+
+    await tester.tap(find.byTooltip('End session'));
+    await tester.pump();
+    await tester.tap(find.text('End session'));
+    await tester.pump();
+    await tester.pump();
+    await container.read(tasksProvider.future);
+    expect(loads, 2);
     await tester.pumpWidget(const SizedBox());
   });
 }
